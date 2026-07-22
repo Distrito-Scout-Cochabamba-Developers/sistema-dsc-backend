@@ -18,7 +18,7 @@
     "Tester"
   ],
   "workflows": {
-    "breakdown": "user_stories_sistema_dsc.md -> Technical Spec per layer",
+    "breakdown": "User Stories (HUs) -> Technical Spec per layer",
     "map_out": "Domain & Application layer contracts (Entities, Interfaces, DTOs)",
     "automate": "Infrastructure & API layer implementations",
     "deliver": "Unit/Integration testing & PR verification"
