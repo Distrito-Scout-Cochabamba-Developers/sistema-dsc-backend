@@ -1,0 +1,26 @@
+{
+  "name": "DSC.Backend",
+  "version": "1.0.0",
+  "framework": "BMAD-METHOD",
+  "methodology": "Breakthrough Method for Agile AI-Driven Development",
+  "architecture": "Clean Architecture",
+  "tech_stack": {
+    "language": "C#",
+    "runtime": ".NET 10",
+    "web_framework": "ASP.NET Core Web API",
+    "test_framework": "xUnit"
+  },
+  "roles": [
+    "Analyst",
+    "ProductManager",
+    "Architect",
+    "Developer",
+    "Tester"
+  ],
+  "workflows": {
+    "breakdown": "user_stories_sistema_dsc.md -> Technical Spec per layer",
+    "map_out": "Domain & Application layer contracts (Entities, Interfaces, DTOs)",
+    "automate": "Infrastructure & API layer implementations",
+    "deliver": "Unit/Integration testing & PR verification"
+  }
+}

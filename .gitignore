@@ -1,0 +1,21 @@
+## Ignore Visual Studio, .NET CLI, & JetBrains temporary files
+bin/
+obj/
+out/
+.vs/
+.vscode/
+.idea/
+*.user
+*.userossc
+*.suo
+*.userprefs
+*.sln.docstates
+
+## User Secrets & Local AppSettings
+appsettings.Local.json
+appsettings.Development.local.json
+secrets.json
+
+## OS generated files
+.DS_Store
+Thumbs.db
