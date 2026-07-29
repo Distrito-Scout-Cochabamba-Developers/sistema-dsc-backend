@@ -486,7 +486,7 @@ $RECYCLE.BIN/
 # Vim temporary swap files
 *.swp
 
-# BMad Personal Configurations
-_bmad/config.user.toml
+# BMad Personal Overrides (optional local overrides)
 _bmad/custom/*.user.toml
+
 
