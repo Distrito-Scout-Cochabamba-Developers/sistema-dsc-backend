@@ -1,41 +1,48 @@
+using DSC.Api.Middlewares;
+using DSC.Application;
+using DSC.Domain.Entities;
+using DSC.Infrastructure;
+using DSC.Infrastructure.Persistence;
+
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
+// 1. Register Layer Services
+builder.Services.AddControllers();
 builder.Services.AddOpenApi();
+
+builder.Services.AddApplication();
+builder.Services.AddInfrastructure(builder.Configuration.GetConnectionString("DefaultConnection") ?? "");
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
+// 2. Global Exception Handling RFC 7807 Problem Details
+app.UseMiddleware<GlobalExceptionHandlingMiddleware>();
+
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
 }
 
 app.UseHttpsRedirection();
+app.UseAuthorization();
+app.MapControllers();
 
-var summaries = new[]
+// 3. Seed initial training module for testing/demo
+using (var scope = app.Services.CreateScope())
 {
-    "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
-};
+    var dbContext = scope.ServiceProvider.GetRequiredService<ScoutDbContext>();
+    dbContext.Database.EnsureCreated();
 
-app.MapGet("/weatherforecast", () =>
-{
-    var forecast =  Enumerable.Range(1, 5).Select(index =>
-        new WeatherForecast
-        (
-            DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
-            Random.Shared.Next(-20, 55),
-            summaries[Random.Shared.Next(summaries.Length)]
-        ))
-        .ToArray();
-    return forecast;
-})
-.WithName("GetWeatherForecast");
+    if (!dbContext.TrainingModules.Any())
+    {
+        var sampleModule = TrainingModule.Create(
+            "Módulo de Formación Institucional 2026",
+            "MOD-2026-CBBA",
+            DateTime.UtcNow
+        );
+        dbContext.TrainingModules.Add(sampleModule);
+        dbContext.SaveChanges();
+    }
+}
 
 app.Run();
-
-record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
-{
-    public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
-}

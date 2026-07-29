@@ -10,6 +10,7 @@
   <ItemGroup>
     <PackageReference Include="coverlet.collector" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" />
     <PackageReference Include="xunit" />
     <PackageReference Include="xunit.runner.visualstudio" />
   </ItemGroup>
@@ -19,6 +20,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\src\DSC.Infrastructure\DSC.Infrastructure.csproj" />
     <ProjectReference Include="..\..\src\DSC.Application\DSC.Application.csproj" />
     <ProjectReference Include="..\..\src\DSC.Domain\DSC.Domain.csproj" />
   </ItemGroup>
