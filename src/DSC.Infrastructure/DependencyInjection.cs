@@ -18,12 +18,18 @@ public static class DependencyInjection
             }
             else
             {
-                // Sqlite or SqlServer can be passed here
-                options.UseInMemoryDatabase("DscInMemoryDb");
+                options.UseNpgsql(connectionString, npgsqlOptions =>
+                {
+                    npgsqlOptions.MigrationsAssembly(typeof(ScoutDbContext).Assembly.FullName);
+                    npgsqlOptions.EnableRetryOnFailure(
+                        maxRetryCount: 3,
+                        maxRetryDelay: TimeSpan.FromSeconds(5),
+                        errorCodesToAdd: null);
+                });
             }
         });
 
-        services.AddScoped<IScoutAdultRepository, ScoutAdultRepository>();
+        services.AddScoped<IScoutLeaderRepository, ScoutLeaderRepository>();
         services.AddScoped<ITrainingModuleRepository, TrainingModuleRepository>();
         services.AddScoped<IModuleAttendanceRepository, ModuleAttendanceRepository>();
 
