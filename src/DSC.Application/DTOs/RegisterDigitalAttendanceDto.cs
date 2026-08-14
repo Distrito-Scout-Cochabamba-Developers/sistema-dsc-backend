@@ -1,6 +1,6 @@
 namespace DSC.Application.DTOs;
 
-public record class RegisterDigitalAttendanceRequest(
+public record class RegisterDigitalAttendanceDto(
     string SessionToken,
     string CiNumber,
     string Extension,
