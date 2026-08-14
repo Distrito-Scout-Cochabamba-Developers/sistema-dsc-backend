@@ -12,6 +12,12 @@ public class ModuleAttendanceConfiguration : IEntityTypeConfiguration<ModuleAtte
 
         builder.HasKey(x => x.Id);
 
+        builder.Property(x => x.TrainingModuleId)
+            .IsRequired();
+
+        builder.Property(x => x.ScoutLeaderId)
+            .IsRequired();
+
         builder.Property(x => x.RegisteredAt)
             .IsRequired();
 
@@ -20,13 +26,12 @@ public class ModuleAttendanceConfiguration : IEntityTypeConfiguration<ModuleAtte
             .HasForeignKey(x => x.TrainingModuleId)
             .OnDelete(DeleteBehavior.Restrict);
 
-        builder.HasOne(x => x.ScoutAdult)
+        builder.HasOne(x => x.ScoutLeader)
             .WithMany()
-            .HasForeignKey(x => x.ScoutAdultId)
+            .HasForeignKey(x => x.ScoutLeaderId)
             .OnDelete(DeleteBehavior.Restrict);
 
-        // Unique index preventing double registration for the same session
-        builder.HasIndex(x => new { x.TrainingModuleId, x.ScoutAdultId })
+        builder.HasIndex(x => new { x.TrainingModuleId, x.ScoutLeaderId })
             .IsUnique();
     }
 }

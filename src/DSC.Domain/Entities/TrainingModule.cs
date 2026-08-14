@@ -1,32 +1,18 @@
-using DSC.Domain.Exceptions;
-
 namespace DSC.Domain.Entities;
 
+/// <summary>
+/// Catálogo general de módulos de formación curricular estándar.
+/// </summary>
 public class TrainingModule
 {
-    public Guid Id { get; private set; }
-    public string Title { get; private set; } = string.Empty;
-    public string SessionToken { get; private set; } = string.Empty;
-    public DateTime EventDate { get; private set; }
-    public bool IsActive { get; private set; }
+    public long Id { get; set; }
+    public string Code { get; set; } = string.Empty;
+    public string Name { get; set; } = string.Empty;
+    public string? Description { get; set; }
+    public short ModuleTypeId { get; set; }
 
-    private TrainingModule() { }
-
-    public static TrainingModule Create(string title, string sessionToken, DateTime eventDate)
-    {
-        if (string.IsNullOrWhiteSpace(title))
-            throw new DomainException("El título del módulo no puede estar vacío.");
-
-        if (string.IsNullOrWhiteSpace(sessionToken))
-            throw new DomainException("El token de sesión QR no puede estar vacío.");
-
-        return new TrainingModule
-        {
-            Id = Guid.NewGuid(),
-            Title = title.Trim(),
-            SessionToken = sessionToken.Trim(),
-            EventDate = eventDate,
-            IsActive = true
-        };
-    }
+    // Navegación
+    public ModuleType ModuleType { get; set; } = null!;
+    public ICollection<TrainingModuleSession> Sessions { get; set; } = [];
+    public ICollection<TrainingModuleLessonPlanTemplate> LessonPlanTemplates { get; set; } = [];
 }
