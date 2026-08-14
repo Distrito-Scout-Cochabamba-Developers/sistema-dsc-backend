@@ -8,60 +8,104 @@ namespace DSC.Application.Commands;
 
 public class RegisterDigitalAttendanceCommandHandler(
     ITrainingModuleRepository moduleRepository,
-    IScoutAdultRepository adultRepository,
+    IScoutLeaderRepository leaderRepository,
     IModuleAttendanceRepository attendanceRepository)
 {
     public async Task<ModuleAttendanceResultDto> HandleAsync(
-        RegisterDigitalAttendanceRequest request,
+        RegisterDigitalAttendanceDto request,
         CancellationToken cancellationToken)
     {
         if (string.IsNullOrWhiteSpace(request.SessionToken))
             throw new DomainException("El token de sesión no puede estar vacío.");
 
-        // 1. Verify training module session existence
-        var module = await moduleRepository.GetBySessionTokenAsync(request.SessionToken, cancellationToken)
-            ?? throw new KeyNotFoundException($"No se encontró ningún módulo de capacitación activo con el token de sesión '{request.SessionToken}'.");
+        // 1. Verify training module existence by code
+        var module = await moduleRepository.GetByCodeAsync(request.SessionToken, cancellationToken)
+            ?? throw new KeyNotFoundException($"No se encontró ningún módulo de capacitación activo con el código '{request.SessionToken}'.");
 
         // 2. Validate CI Value Object
         var ci = new CiNumber(request.CiNumber, request.Extension);
 
-        // 3. Find or Create Scout Adult Leader
-        var adult = await adultRepository.GetByCiNumberAsync(ci.Number, cancellationToken);
-        if (adult == null)
+        // 3. Find or Create Person / Scout Leader
+        var person = await leaderRepository.GetByCiNumberAsync(ci.Number, cancellationToken);
+        if (person == null)
         {
-            adult = ScoutAdult.Create(
-                request.FirstName,
-                request.LastName,
-                ci,
-                request.Phone,
-                isPartialRegistration: true
-            );
-            await adultRepository.AddAsync(adult, cancellationToken);
+            person = new Person
+            {
+                IdCard = ci.Number,
+                IdCardExtension = string.IsNullOrWhiteSpace(ci.Extension) ? null : ci.Extension,
+                FirstName = request.FirstName.Trim(),
+                FirstLastName = request.LastName.Trim(),
+                PersonStatusId = 1, // ACTIVE
+                IsProfileComplete = false,
+                ScoutLeader = new ScoutLeader
+                {
+                    IsSpeakerEligible = false
+                }
+            };
+
+            if (!string.IsNullOrWhiteSpace(request.Phone))
+            {
+                person.ContactMechanisms.Add(new PersonContactMechanism
+                {
+                    ContactMechanismTypeId = 2, // CELLPHONE
+                    ContactPurposeTypeId = 1,   // PERSONAL
+                    ContactValue = request.Phone.Trim(),
+                    IsPrimary = true,
+                    ValidFrom = DateOnly.FromDateTime(DateTime.UtcNow)
+                });
+            }
+
+            await leaderRepository.AddAsync(person, cancellationToken);
         }
         else
         {
-            adult.UpdateProfile(request.FirstName, request.LastName, request.Phone);
-            await adultRepository.UpdateAsync(adult, cancellationToken);
+            if (!string.IsNullOrWhiteSpace(request.FirstName))
+                person.FirstName = request.FirstName.Trim();
+
+            if (!string.IsNullOrWhiteSpace(request.LastName))
+                person.FirstLastName = request.LastName.Trim();
+
+            if (!string.IsNullOrWhiteSpace(request.Phone))
+            {
+                var phoneMechanism = person.ContactMechanisms.FirstOrDefault(cm => cm.ContactMechanismTypeId == 2);
+                if (phoneMechanism != null)
+                {
+                    phoneMechanism.ContactValue = request.Phone.Trim();
+                }
+                else
+                {
+                    person.ContactMechanisms.Add(new PersonContactMechanism
+                    {
+                        ContactMechanismTypeId = 2,
+                        ContactPurposeTypeId = 1,
+                        ContactValue = request.Phone.Trim(),
+                        IsPrimary = true,
+                        ValidFrom = DateOnly.FromDateTime(DateTime.UtcNow)
+                    });
+                }
+            }
+
+            await leaderRepository.UpdateAsync(person, cancellationToken);
         }
 
         // 4. Prevent duplicate attendance per session
-        var alreadyRegistered = await attendanceRepository.ExistsAsync(module.Id, adult.Id, cancellationToken);
+        var alreadyRegistered = await attendanceRepository.ExistsAsync(module.Id, person.Id, cancellationToken);
         if (alreadyRegistered)
-            throw new InvalidOperationException($"El dirigente con CI '{ci}' ya registró su asistencia para el módulo '{module.Title}'.");
+            throw new InvalidOperationException($"El dirigente con CI '{ci}' ya registró su asistencia para el módulo '{module.Name}'.");
 
         // 5. Create Attendance Record
-        var attendance = ModuleAttendance.Create(module.Id, adult.Id);
+        var attendance = ModuleAttendance.Create(module.Id, person.Id);
         await attendanceRepository.AddAsync(attendance, cancellationToken);
 
         return new ModuleAttendanceResultDto(
             attendance.Id,
             module.Id,
-            module.Title,
-            adult.Id,
-            $"{adult.FirstName} {adult.LastName}".Trim(),
-            adult.Ci.FullValue,
+            module.Name,
+            person.Id,
+            person.FullName,
+            ci.FullValue,
             attendance.RegisteredAt,
-            adult.IsPartialRegistration
+            !person.IsProfileComplete
         );
     }
 }

@@ -8,14 +8,14 @@ namespace DSC.Api.Controllers;
 [ApiController]
 [Route("api/attendance")]
 public class AttendanceController(
-    LookupAdultByCiQueryHandler lookupHandler,
+    LookupLeaderByCiQueryHandler lookupHandler,
     RegisterDigitalAttendanceCommandHandler registerHandler) : ControllerBase
 {
     /// <summary>
     /// Busca un dirigente scout por número de CI para autocompletar el formulario de asistencia.
     /// </summary>
     [HttpGet("lookup-ci/{ci}")]
-    [ProducesResponseType(typeof(ScoutAdultDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ScoutLeaderDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> LookupByCi(
@@ -23,7 +23,7 @@ public class AttendanceController(
         [FromQuery] string extension = "",
         CancellationToken cancellationToken = default)
     {
-        var result = await lookupHandler.HandleAsync(new LookupAdultByCiQuery(ci, extension), cancellationToken);
+        var result = await lookupHandler.HandleAsync(new LookupLeaderByCiQuery(ci, extension), cancellationToken);
 
         if (result == null)
             return NotFound(new ProblemDetails
@@ -45,7 +45,7 @@ public class AttendanceController(
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status409Conflict)]
     public async Task<IActionResult> RegisterAttendance(
-        [FromBody] RegisterDigitalAttendanceRequest request,
+        [FromBody] RegisterDigitalAttendanceDto request,
         CancellationToken cancellationToken = default)
     {
         var result = await registerHandler.HandleAsync(request, cancellationToken);

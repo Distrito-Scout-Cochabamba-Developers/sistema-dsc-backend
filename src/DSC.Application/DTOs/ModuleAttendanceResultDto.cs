@@ -2,10 +2,10 @@ namespace DSC.Application.DTOs;
 
 public record class ModuleAttendanceResultDto(
     Guid AttendanceId,
-    Guid TrainingModuleId,
+    long TrainingModuleId,
     string ModuleTitle,
-    Guid ScoutAdultId,
-    string ScoutAdultFullName,
+    long ScoutLeaderId,
+    string ScoutLeaderFullName,
     string CiNumber,
     DateTime RegisteredAt,
     bool IsPartialRegistration

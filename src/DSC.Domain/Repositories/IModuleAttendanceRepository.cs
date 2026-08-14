@@ -4,6 +4,6 @@ namespace DSC.Domain.Repositories;
 
 public interface IModuleAttendanceRepository
 {
-    Task<bool> ExistsAsync(Guid trainingModuleId, Guid scoutAdultId, CancellationToken cancellationToken);
+    Task<bool> ExistsAsync(long trainingModuleId, long scoutLeaderId, CancellationToken cancellationToken);
     Task AddAsync(ModuleAttendance attendance, CancellationToken cancellationToken);
 }
