@@ -17,6 +17,7 @@ builder.Services.AddOpenApi();
 
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(connectionString);
+builder.Services.AddProblemDetails();
 
 var app = builder.Build();
 
@@ -46,8 +47,10 @@ static string ResolveConnectionString(IConfiguration configuration)
     if (!string.IsNullOrWhiteSpace(conn))
     {
         // Handle postgres:// URI format (e.g., Supabase / Neon / Docker)
-        if (conn.StartsWith("postgres://", StringComparison.OrdinalIgnoreCase) ||
-            conn.StartsWith("postgresql://", StringComparison.OrdinalIgnoreCase))
+        if (
+            conn.StartsWith("postgres://", StringComparison.OrdinalIgnoreCase)
+            || conn.StartsWith("postgresql://", StringComparison.OrdinalIgnoreCase)
+        )
         {
             var uri = new Uri(conn);
             var userInfo = uri.UserInfo.Split(':');

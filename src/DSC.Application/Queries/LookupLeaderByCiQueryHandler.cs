@@ -17,7 +17,7 @@ public class LookupLeaderByCiQueryHandler(IScoutLeaderRepository leaderRepositor
             return null;
 
         var phone = person.ContactMechanisms
-            .FirstOrDefault(cm => cm.ContactMechanismTypeId == 2 || cm.IsPrimary)?.ContactValue 
+            .FirstOrDefault(cm => cm.ContactMechanismTypeId == 2 || cm.IsPrimary)?.ContactValue
             ?? string.Empty;
 
         return new ScoutLeaderDto(

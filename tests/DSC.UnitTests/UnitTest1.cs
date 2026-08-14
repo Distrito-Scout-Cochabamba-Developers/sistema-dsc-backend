@@ -1,4 +1,4 @@
-﻿namespace DSC.UnitTests;
+namespace DSC.UnitTests;
 
 public class UnitTest1
 {
