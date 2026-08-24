@@ -10,7 +10,8 @@ public static class DependencyInjection
     {
         services.AddScoped<LookupLeaderByCiQueryHandler>();
         services.AddScoped<RegisterDigitalAttendanceCommandHandler>();
-
+        services.AddScoped<RegisterManualAttendanceCommandHandler>();
+        
         return services;
     }
 }
