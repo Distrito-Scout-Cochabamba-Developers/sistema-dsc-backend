@@ -1,3 +1,4 @@
+using DSC.Domain.Enums;
 using DSC.Domain.Repositories;
 using DSC.Infrastructure.Persistence;
 using DSC.Infrastructure.Persistence.Repositories;
@@ -20,6 +21,10 @@ public static class DependencyInjection
             {
                 options.UseNpgsql(connectionString, npgsqlOptions =>
                 {
+                    // MapEnum aquí (no en NpgsqlDataSourceBuilder) es lo que hace que
+                    // EF Core reconozca GenderType <-> gender_type al generar sus
+                    // comandos; sin esto, EF sigue mandando el enum como integer.
+                    npgsqlOptions.MapEnum<GenderType>("gender_type");
                     npgsqlOptions.MigrationsAssembly(typeof(ScoutDbContext).Assembly.FullName);
                     npgsqlOptions.EnableRetryOnFailure(
                         maxRetryCount: 3,

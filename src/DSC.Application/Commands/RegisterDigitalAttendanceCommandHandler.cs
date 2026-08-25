@@ -18,6 +18,9 @@ public class RegisterDigitalAttendanceCommandHandler(
         if (string.IsNullOrWhiteSpace(request.SessionToken))
             throw new DomainException("El token de sesión no puede estar vacío.");
 
+        if (string.IsNullOrWhiteSpace(request.FirstName) || string.IsNullOrWhiteSpace(request.LastName))
+            throw new DomainException("El nombre completo (nombre y apellido) es obligatorio.");
+
         // 1. Verify training module existence by code
         var module = await moduleRepository.GetByCodeAsync(request.SessionToken, cancellationToken)
             ?? throw new KeyNotFoundException($"No se encontró ningún módulo de capacitación activo con el código '{request.SessionToken}'.");

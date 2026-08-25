@@ -70,7 +70,7 @@ public class PersonConfiguration : IEntityTypeConfiguration<Person>
 
         builder.Property(x => x.Gender)
             .HasColumnName("gender")
-            .HasConversion<string>();
+            .HasColumnType("gender_type");
 
         builder.Property(x => x.BirthDate)
             .HasColumnName("birth_date");

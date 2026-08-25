@@ -151,6 +151,39 @@ public class RegisterDigitalAttendanceHandlerTests
         Assert.Contains("exclusivamente numérico", exception.Message);
     }
 
+    [Theory]
+    [InlineData("", "Pérez")]
+    [InlineData("Juan", "")]
+    [InlineData("   ", "   ")]
+    public async Task RegisterAttendance_WithMissingFullName_ShouldThrowDomainException(string firstName, string lastName)
+    {
+        // Arrange
+        using var db = CreateInMemoryDbContext();
+        var sampleModule = new TrainingModule { Code = "TOKEN-NO-NAME", Name = "Módulo de Prueba", ModuleTypeId = 1 };
+        db.TrainingModules.Add(sampleModule);
+        await db.SaveChangesAsync();
+
+        var moduleRepo = new TrainingModuleRepository(db);
+        var leaderRepo = new ScoutLeaderRepository(db);
+        var attendanceRepo = new ModuleAttendanceRepository(db);
+        var handler = new RegisterDigitalAttendanceCommandHandler(moduleRepo, leaderRepo, attendanceRepo);
+
+        var request = new RegisterDigitalAttendanceDto(
+            SessionToken: "TOKEN-NO-NAME",
+            CiNumber: "7654321",
+            Extension: "CB",
+            FirstName: firstName,
+            LastName: lastName,
+            Phone: "77712345"
+        );
+
+        // Act & Assert
+        var exception = await Assert.ThrowsAsync<DomainException>(() =>
+            handler.HandleAsync(request, CancellationToken.None));
+
+        Assert.Contains("nombre completo", exception.Message);
+    }
+
     [Fact]
     public async Task LookupLeaderByCi_WhenExists_ShouldReturnDto()
     {
@@ -188,5 +221,20 @@ public class RegisterDigitalAttendanceHandlerTests
         Assert.Equal("Montaño", result.LastName);
         Assert.Equal("71234567", result.Phone);
         Assert.True(result.IsProfileComplete);
+    }
+
+    [Fact]
+    public async Task LookupLeaderByCi_WhenNotExists_ShouldReturnNull()
+    {
+        // Arrange
+        using var db = CreateInMemoryDbContext();
+        var leaderRepo = new ScoutLeaderRepository(db);
+        var handler = new LookupLeaderByCiQueryHandler(leaderRepo);
+
+        // Act
+        var result = await handler.HandleAsync(new LookupLeaderByCiQuery("9999999", "LP"), CancellationToken.None);
+
+        // Assert
+        Assert.Null(result);
     }
 }

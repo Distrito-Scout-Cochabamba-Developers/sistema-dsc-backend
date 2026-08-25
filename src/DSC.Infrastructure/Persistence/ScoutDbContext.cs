@@ -1,4 +1,5 @@
 using DSC.Domain.Entities;
+using DSC.Domain.Enums;
 using Microsoft.EntityFrameworkCore;
 
 namespace DSC.Infrastructure.Persistence;
@@ -71,6 +72,12 @@ public class ScoutDbContext(DbContextOptions<ScoutDbContext> options) : DbContex
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
+
+        // Declara el ENUM nativo de Postgres en el modelo de EF (además del
+        // registro a nivel de conexión en NpgsqlDataSourceBuilder.MapEnum);
+        // ambos son necesarios para que EF genere el tipo de columna correcto.
+        modelBuilder.HasPostgresEnum<GenderType>("gender_type");
+
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(ScoutDbContext).Assembly);
     }
 }
