@@ -9,7 +9,8 @@ namespace DSC.Api.Controllers;
 [Route("api/attendance")]
 public class AttendanceController(
     LookupLeaderByCiQueryHandler lookupHandler,
-    RegisterDigitalAttendanceCommandHandler registerHandler) : ControllerBase
+    RegisterDigitalAttendanceCommandHandler registerHandler,
+    RegisterManualAttendanceCommandHandler manualRegisterHandler) : ControllerBase
 {
     /// <summary>
     /// Busca un dirigente scout por número de CI para autocompletar el formulario de asistencia.
@@ -49,6 +50,22 @@ public class AttendanceController(
         CancellationToken cancellationToken = default)
     {
         var result = await registerHandler.HandleAsync(request, cancellationToken);
+        return CreatedAtAction(nameof(LookupByCi), new { ci = request.CiNumber }, result);
+    }
+
+    /// <summary>
+    /// Registra la asistencia de forma manual por parte de la Secretaría.
+    /// </summary>
+    [HttpPost("manual-register")]
+    [ProducesResponseType(typeof(ModuleAttendanceResultDto), StatusCodes.Status201Created)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
+    public async Task<IActionResult> ManualRegisterAttendance(
+        [FromBody] RegisterManualAttendanceDto request,
+        CancellationToken cancellationToken = default)
+    {
+        var result = await manualRegisterHandler.HandleAsync(request, cancellationToken);
         return CreatedAtAction(nameof(LookupByCi), new { ci = request.CiNumber }, result);
     }
 }
