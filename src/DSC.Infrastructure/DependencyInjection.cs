@@ -1,4 +1,5 @@
 using DSC.Application.Interfaces;
+using DSC.Domain.Enums;
 using DSC.Domain.Repositories;
 using DSC.Infrastructure.Persistence;
 using DSC.Infrastructure.Persistence.Repositories;
@@ -26,6 +27,7 @@ public static class DependencyInjection
                     connectionString,
                     npgsqlOptions =>
                     {
+                        npgsqlOptions.MapEnum<GenderType>("gender_type");
                         npgsqlOptions.MigrationsAssembly(typeof(ScoutDbContext).Assembly.FullName);
                         npgsqlOptions.EnableRetryOnFailure(
                             maxRetryCount: 3,

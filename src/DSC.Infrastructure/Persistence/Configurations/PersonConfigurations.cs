@@ -53,7 +53,7 @@ public class PersonConfiguration : IEntityTypeConfiguration<Person>
 
         builder.Property(x => x.SecondLastName).HasColumnName("second_last_name").HasMaxLength(120);
 
-        builder.Property(x => x.Gender).HasColumnName("gender").HasConversion<string>();
+        builder.Property(x => x.Gender).HasColumnName("gender").HasColumnType("gender_type");
 
         builder.Property(x => x.BirthDate).HasColumnName("birth_date");
 
