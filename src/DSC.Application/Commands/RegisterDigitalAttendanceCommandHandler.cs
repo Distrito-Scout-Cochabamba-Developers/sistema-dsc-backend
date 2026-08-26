@@ -9,18 +9,23 @@ namespace DSC.Application.Commands;
 public class RegisterDigitalAttendanceCommandHandler(
     ITrainingModuleRepository moduleRepository,
     IScoutLeaderRepository leaderRepository,
-    IModuleAttendanceRepository attendanceRepository)
+    IModuleAttendanceRepository attendanceRepository
+)
 {
     public async Task<ModuleAttendanceResultDto> HandleAsync(
         RegisterDigitalAttendanceDto request,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken
+    )
     {
         if (string.IsNullOrWhiteSpace(request.SessionToken))
             throw new DomainException("El token de sesión no puede estar vacío.");
 
         // 1. Verify training module existence by code
-        var module = await moduleRepository.GetByCodeAsync(request.SessionToken, cancellationToken)
-            ?? throw new KeyNotFoundException($"No se encontró ningún módulo de capacitación activo con el código '{request.SessionToken}'.");
+        var module =
+            await moduleRepository.GetByCodeAsync(request.SessionToken, cancellationToken)
+            ?? throw new KeyNotFoundException(
+                $"No se encontró ningún módulo de capacitación activo con el código '{request.SessionToken}'."
+            );
 
         // 2. Validate CI Value Object
         var ci = new CiNumber(request.CiNumber, request.Extension);
@@ -37,22 +42,21 @@ public class RegisterDigitalAttendanceCommandHandler(
                 FirstLastName = request.LastName.Trim(),
                 PersonStatusId = 1, // ACTIVE
                 IsProfileComplete = false,
-                ScoutLeader = new ScoutLeader
-                {
-                    IsSpeakerEligible = false
-                }
+                ScoutLeader = new ScoutLeader { IsSpeakerEligible = false },
             };
 
             if (!string.IsNullOrWhiteSpace(request.Phone))
             {
-                person.ContactMechanisms.Add(new PersonContactMechanism
-                {
-                    ContactMechanismTypeId = 2, // CELLPHONE
-                    ContactPurposeTypeId = 1,   // PERSONAL
-                    ContactValue = request.Phone.Trim(),
-                    IsPrimary = true,
-                    ValidFrom = DateOnly.FromDateTime(DateTime.UtcNow)
-                });
+                person.ContactMechanisms.Add(
+                    new PersonContactMechanism
+                    {
+                        ContactMechanismTypeId = 2, // CELLPHONE
+                        ContactPurposeTypeId = 1, // PERSONAL
+                        ContactValue = request.Phone.Trim(),
+                        IsPrimary = true,
+                        ValidFrom = DateOnly.FromDateTime(DateTime.UtcNow),
+                    }
+                );
             }
 
             await leaderRepository.AddAsync(person, cancellationToken);
@@ -67,21 +71,25 @@ public class RegisterDigitalAttendanceCommandHandler(
 
             if (!string.IsNullOrWhiteSpace(request.Phone))
             {
-                var phoneMechanism = person.ContactMechanisms.FirstOrDefault(cm => cm.ContactMechanismTypeId == 2);
+                var phoneMechanism = person.ContactMechanisms.FirstOrDefault(cm =>
+                    cm.ContactMechanismTypeId == 2
+                );
                 if (phoneMechanism != null)
                 {
                     phoneMechanism.ContactValue = request.Phone.Trim();
                 }
                 else
                 {
-                    person.ContactMechanisms.Add(new PersonContactMechanism
-                    {
-                        ContactMechanismTypeId = 2,
-                        ContactPurposeTypeId = 1,
-                        ContactValue = request.Phone.Trim(),
-                        IsPrimary = true,
-                        ValidFrom = DateOnly.FromDateTime(DateTime.UtcNow)
-                    });
+                    person.ContactMechanisms.Add(
+                        new PersonContactMechanism
+                        {
+                            ContactMechanismTypeId = 2,
+                            ContactPurposeTypeId = 1,
+                            ContactValue = request.Phone.Trim(),
+                            IsPrimary = true,
+                            ValidFrom = DateOnly.FromDateTime(DateTime.UtcNow),
+                        }
+                    );
                 }
             }
 
@@ -89,9 +97,15 @@ public class RegisterDigitalAttendanceCommandHandler(
         }
 
         // 4. Prevent duplicate attendance per session
-        var alreadyRegistered = await attendanceRepository.ExistsAsync(module.Id, person.Id, cancellationToken);
+        var alreadyRegistered = await attendanceRepository.ExistsAsync(
+            module.Id,
+            person.Id,
+            cancellationToken
+        );
         if (alreadyRegistered)
-            throw new InvalidOperationException($"El dirigente con CI '{ci}' ya registró su asistencia para el módulo '{module.Name}'.");
+            throw new InvalidOperationException(
+                $"El dirigente con CI '{ci}' ya registró su asistencia para el módulo '{module.Name}'."
+            );
 
         // 5. Create Attendance Record
         var attendance = ModuleAttendance.Create(module.Id, person.Id);

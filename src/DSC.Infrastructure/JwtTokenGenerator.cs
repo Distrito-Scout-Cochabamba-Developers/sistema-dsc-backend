@@ -24,17 +24,21 @@ public class JwtTokenGenerator : IJwtTokenGenerator
         {
             new(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
             new(ClaimTypes.NameIdentifier, user.Id.ToString()),
-            new(ClaimTypes.Email, user.Email)
+            new(ClaimTypes.Email, user.Email),
         };
-        claims.AddRange(user.UserRoles
-            .Where(userRole => userRole.Role.IsActive)
-            .Select(userRole => new Claim(ClaimTypes.Role, userRole.Role.Code)));
+        claims.AddRange(
+            user.UserRoles.Where(userRole => userRole.Role.IsActive)
+                .Select(userRole => new Claim(ClaimTypes.Role, userRole.Role.Code))
+        );
 
         var credentials = new SigningCredentials(
             new SymmetricSecurityKey(Encoding.UTF8.GetBytes(key)),
             SecurityAlgorithms.HmacSha256
         );
-        var expiresMinutes = int.TryParse(_configuration["Jwt:ExpiresMinutes"], out var configuredMinutes)
+        var expiresMinutes = int.TryParse(
+            _configuration["Jwt:ExpiresMinutes"],
+            out var configuredMinutes
+        )
             ? configuredMinutes
             : 60;
         var token = new JwtSecurityToken(

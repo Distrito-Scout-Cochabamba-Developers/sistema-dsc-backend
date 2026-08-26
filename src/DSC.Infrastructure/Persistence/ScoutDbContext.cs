@@ -20,7 +20,8 @@ public class ScoutDbContext(DbContextOptions<ScoutDbContext> options) : DbContex
     // 3. Estructura Organizacional y Parties
     public DbSet<Branch> Branches => Set<Branch>();
     public DbSet<ScoutGroup> ScoutGroups => Set<ScoutGroup>();
-    public DbSet<ScoutGroupContactMechanism> ScoutGroupContactMechanisms => Set<ScoutGroupContactMechanism>();
+    public DbSet<ScoutGroupContactMechanism> ScoutGroupContactMechanisms =>
+        Set<ScoutGroupContactMechanism>();
     public DbSet<ScoutPosition> ScoutPositions => Set<ScoutPosition>();
     public DbSet<PersonStatus> PersonStatuses => Set<PersonStatus>();
     public DbSet<Person> Persons => Set<Person>();
@@ -38,32 +39,43 @@ public class ScoutDbContext(DbContextOptions<ScoutDbContext> options) : DbContex
     public DbSet<TrainingStage> TrainingStages => Set<TrainingStage>();
     public DbSet<TrainingLevel> TrainingLevels => Set<TrainingLevel>();
     public DbSet<TrainingModule> TrainingModules => Set<TrainingModule>();
-    public DbSet<TrainingModuleLessonPlanTemplate> TrainingModuleLessonPlanTemplates => Set<TrainingModuleLessonPlanTemplate>();
-    public DbSet<TrainingModuleLessonPlanTemplateActivity> TrainingModuleLessonPlanTemplateActivities => Set<TrainingModuleLessonPlanTemplateActivity>();
+    public DbSet<TrainingModuleLessonPlanTemplate> TrainingModuleLessonPlanTemplates =>
+        Set<TrainingModuleLessonPlanTemplate>();
+    public DbSet<TrainingModuleLessonPlanTemplateActivity> TrainingModuleLessonPlanTemplateActivities =>
+        Set<TrainingModuleLessonPlanTemplateActivity>();
 
     // 6. Convocatorias, Sesiones y Trazabilidad de Estados
-    public DbSet<TrainingModuleSessionStatus> TrainingModuleSessionStatuses => Set<TrainingModuleSessionStatus>();
+    public DbSet<TrainingModuleSessionStatus> TrainingModuleSessionStatuses =>
+        Set<TrainingModuleSessionStatus>();
     public DbSet<TrainingModuleSession> TrainingModuleSessions => Set<TrainingModuleSession>();
-    public DbSet<TrainingModuleSessionStatusHistory> TrainingModuleSessionStatusHistories => Set<TrainingModuleSessionStatusHistory>();
+    public DbSet<TrainingModuleSessionStatusHistory> TrainingModuleSessionStatusHistories =>
+        Set<TrainingModuleSessionStatusHistory>();
     public DbSet<TrainingModuleSchedule> TrainingModuleSchedules => Set<TrainingModuleSchedule>();
-    public DbSet<TrainingModuleInstructor> TrainingModuleInstructors => Set<TrainingModuleInstructor>();
+    public DbSet<TrainingModuleInstructor> TrainingModuleInstructors =>
+        Set<TrainingModuleInstructor>();
 
     // 7. Planificación Específica de la Sesión
-    public DbSet<TrainingModuleLessonPlan> TrainingModuleLessonPlans => Set<TrainingModuleLessonPlan>();
-    public DbSet<TrainingModuleLessonPlanActivity> TrainingModuleLessonPlanActivities => Set<TrainingModuleLessonPlanActivity>();
+    public DbSet<TrainingModuleLessonPlan> TrainingModuleLessonPlans =>
+        Set<TrainingModuleLessonPlan>();
+    public DbSet<TrainingModuleLessonPlanActivity> TrainingModuleLessonPlanActivities =>
+        Set<TrainingModuleLessonPlanActivity>();
 
     // 8. Asistencia y Evaluaciones
     public DbSet<EnrollmentSource> EnrollmentSources => Set<EnrollmentSource>();
-    public DbSet<TrainingModuleEnrollment> TrainingModuleEnrollments => Set<TrainingModuleEnrollment>();
+    public DbSet<TrainingModuleEnrollment> TrainingModuleEnrollments =>
+        Set<TrainingModuleEnrollment>();
     public DbSet<EvaluatorType> EvaluatorTypes => Set<EvaluatorType>();
     public DbSet<EvaluationCriterion> EvaluationCriteria => Set<EvaluationCriterion>();
-    public DbSet<TrainingModuleEvaluation> TrainingModuleEvaluations => Set<TrainingModuleEvaluation>();
-    public DbSet<TrainingModuleEvaluationDetail> TrainingModuleEvaluationDetails => Set<TrainingModuleEvaluationDetail>();
+    public DbSet<TrainingModuleEvaluation> TrainingModuleEvaluations =>
+        Set<TrainingModuleEvaluation>();
+    public DbSet<TrainingModuleEvaluationDetail> TrainingModuleEvaluationDetails =>
+        Set<TrainingModuleEvaluationDetail>();
 
     // 9. Perfil del Dirigente y Kárdex
     public DbSet<ScoutLeader> ScoutLeaders => Set<ScoutLeader>();
     public DbSet<LeaderTrainingStatus> LeaderTrainingStatuses => Set<LeaderTrainingStatus>();
-    public DbSet<ScoutLeaderTrainingLevel> ScoutLeaderTrainingLevels => Set<ScoutLeaderTrainingLevel>();
+    public DbSet<ScoutLeaderTrainingLevel> ScoutLeaderTrainingLevels =>
+        Set<ScoutLeaderTrainingLevel>();
 
     // Legacy Support (si existen consultas previas)
     public DbSet<ModuleAttendance> ModuleAttendances => Set<ModuleAttendance>();
