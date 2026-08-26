@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using DSC.Domain.Enums;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
@@ -13,10 +13,17 @@ namespace DSC.Infrastructure.Persistence.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder
-                .AlterDatabase()
-                .Annotation("Npgsql:Enum:gender_type", "female,male,other")
-                .Annotation("Npgsql:Enum:gender_type.gender_type", "male,female,other");
+            migrationBuilder.Sql(
+                @"
+                DO $$
+                BEGIN
+                    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'gender_type') THEN
+                        CREATE TYPE gender_type AS ENUM ('female', 'male', 'other');
+                    END IF;
+                END
+                $$;
+            "
+            );
 
             migrationBuilder.CreateTable(
                 name: "branch",

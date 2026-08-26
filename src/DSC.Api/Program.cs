@@ -86,6 +86,42 @@ public partial class Program
             {
                 try
                 {
+                    // Si la base de datos ya tenía tablas previas pero no el historial de migraciones, hacemos baseline automático
+                    var hasExistingTables =
+                        dbContext
+                            .Database.SqlQueryRaw<int>(
+                                @"SELECT COUNT(*)::int AS ""Value"" FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'branch'"
+                            )
+                            .AsEnumerable()
+                            .FirstOrDefault() > 0;
+
+                    if (hasExistingTables)
+                    {
+                        dbContext.Database.ExecuteSqlRaw(
+                            @"
+                            CREATE TABLE IF NOT EXISTS ""__EFMigrationsHistory"" (
+                                ""MigrationId"" character varying(150) NOT NULL,
+                                ""ProductVersion"" character varying(32) NOT NULL,
+                                CONSTRAINT ""PK___EFMigrationsHistory"" PRIMARY KEY (""MigrationId"")
+                            );
+                            INSERT INTO ""__EFMigrationsHistory"" (""MigrationId"", ""ProductVersion"")
+                            SELECT '20260826031552_InitialMigration', '9.0.2'
+                            WHERE NOT EXISTS (
+                                SELECT 1 FROM ""__EFMigrationsHistory"" WHERE ""MigrationId"" = '20260826031552_InitialMigration'
+                            );
+                            -- Asegurar que la columna username y su índice existan si la tabla user fue creada previamente
+                            ALTER TABLE ""user"" ADD COLUMN IF NOT EXISTS username VARCHAR(50);
+                            DO $$
+                            BEGIN
+                                IF NOT EXISTS (SELECT 1 FROM pg_indexes WHERE indexname = 'IX_user_username') THEN
+                                    CREATE UNIQUE INDEX ""IX_user_username"" ON ""user"" (username);
+                                END IF;
+                            END
+                            $$;
+                        "
+                        );
+                    }
+
                     dbContext.Database.Migrate();
                 }
                 catch (Exception ex)
