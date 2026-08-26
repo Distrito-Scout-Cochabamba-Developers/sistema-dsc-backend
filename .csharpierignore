@@ -1,0 +1,11 @@
+# Ignore build and generated artifacts
+**/bin/**
+**/obj/**
+**/Generated Files/**
+_bmad/**
+_bmad-output/**
+.vs/**
+.idea/**
+node_modules/**
+.agent/**
+.claude/**

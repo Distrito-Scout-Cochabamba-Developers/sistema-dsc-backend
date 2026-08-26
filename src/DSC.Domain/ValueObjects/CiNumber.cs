@@ -7,12 +7,21 @@ public record class CiNumber
 {
     private static readonly HashSet<string> ValidExtensions = new(StringComparer.OrdinalIgnoreCase)
     {
-        "CB", "LP", "SC", "OR", "PT", "TJ", "CH", "BE", "PD"
+        "CB",
+        "LP",
+        "SC",
+        "OR",
+        "PT",
+        "TJ",
+        "CH",
+        "BE",
+        "PD",
     };
 
     public string Number { get; }
     public string Extension { get; }
-    public string FullValue => string.IsNullOrWhiteSpace(Extension) ? Number : $"{Number}-{Extension.ToUpperInvariant()}";
+    public string FullValue =>
+        string.IsNullOrWhiteSpace(Extension) ? Number : $"{Number}-{Extension.ToUpperInvariant()}";
 
     public CiNumber(string number, string extension = "")
     {
@@ -23,11 +32,15 @@ public record class CiNumber
 
         // Enforce numeric validation exclusively (reject alphabetic characters or phone-length strings > 10 digits)
         if (!Regex.IsMatch(trimmedNumber, @"^\d{4,10}$"))
-            throw new DomainException($"El CI '{number}' no es un número de carnet válido. Debe ser exclusivamente numérico entre 4 y 10 dígitos.");
+            throw new DomainException(
+                $"El CI '{number}' no es un número de carnet válido. Debe ser exclusivamente numérico entre 4 y 10 dígitos."
+            );
 
         var trimmedExt = extension?.Trim().ToUpperInvariant() ?? string.Empty;
         if (!string.IsNullOrEmpty(trimmedExt) && !ValidExtensions.Contains(trimmedExt))
-            throw new DomainException($"La extensión '{extension}' no es una extensión de departamento válida en Bolivia.");
+            throw new DomainException(
+                $"La extensión '{extension}' no es una extensión de departamento válida en Bolivia."
+            );
 
         Number = trimmedNumber;
         Extension = trimmedExt;

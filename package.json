@@ -1,0 +1,20 @@
+{
+  "name": "dsc-backend",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Distrito Scout Cochabamba - Backend Solution",
+  "scripts": {
+    "prepare": "husky",
+    "format": "dotnet csharpier format .",
+    "format:check": "dotnet csharpier check ."
+  },
+  "lint-staged": {
+    "*.cs": [
+      "dotnet csharpier format"
+    ]
+  },
+  "devDependencies": {
+    "husky": "^9.1.7",
+    "lint-staged": "^17.3.0"
+  }
+}
