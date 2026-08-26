@@ -18,5 +18,5 @@ public enum GenderType
     /// <summary>
     /// Otro o no especificado.
     /// </summary>
-    OTHER = 3
+    OTHER = 3,
 }

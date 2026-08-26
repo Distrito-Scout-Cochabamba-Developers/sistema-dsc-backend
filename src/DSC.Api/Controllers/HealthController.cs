@@ -38,8 +38,8 @@ public class HealthController(ScoutDbContext dbContext) : ControllerBase
             {
                 Provider = dbProvider,
                 CanConnect = isDbConnected,
-                Error = errorMessage
-            }
+                Error = errorMessage,
+            },
         };
 
         if (!isDbConnected)
@@ -61,11 +61,10 @@ public class HealthController(ScoutDbContext dbContext) : ControllerBase
             var canConnect = await dbContext.Database.CanConnectAsync(cancellationToken);
             if (!canConnect)
             {
-                return StatusCode(StatusCodes.Status503ServiceUnavailable, new
-                {
-                    Status = "Error",
-                    Message = "No se puede conectar a la base de datos."
-                });
+                return StatusCode(
+                    StatusCodes.Status503ServiceUnavailable,
+                    new { Status = "Error", Message = "No se puede conectar a la base de datos." }
+                );
             }
 
             var moduleTypesCount = await dbContext.ModuleTypes.CountAsync(cancellationToken);
@@ -74,27 +73,28 @@ public class HealthController(ScoutDbContext dbContext) : ControllerBase
             var scoutGroupsCount = await dbContext.ScoutGroups.CountAsync(cancellationToken);
             var personsCount = await dbContext.Persons.CountAsync(cancellationToken);
 
-            return Ok(new
-            {
-                Status = "Connected",
-                Provider = dbContext.Database.ProviderName,
-                CatalogSummary = new
+            return Ok(
+                new
                 {
-                    ModuleTypes = moduleTypesCount,
-                    Branches = branchesCount,
-                    Roles = rolesCount,
-                    ScoutGroups = scoutGroupsCount,
-                    Persons = personsCount
+                    Status = "Connected",
+                    Provider = dbContext.Database.ProviderName,
+                    CatalogSummary = new
+                    {
+                        ModuleTypes = moduleTypesCount,
+                        Branches = branchesCount,
+                        Roles = rolesCount,
+                        ScoutGroups = scoutGroupsCount,
+                        Persons = personsCount,
+                    },
                 }
-            });
+            );
         }
         catch (Exception ex)
         {
-            return StatusCode(StatusCodes.Status503ServiceUnavailable, new
-            {
-                Status = "Exception",
-                Error = ex.Message
-            });
+            return StatusCode(
+                StatusCodes.Status503ServiceUnavailable,
+                new { Status = "Exception", Error = ex.Message }
+            );
         }
     }
 }

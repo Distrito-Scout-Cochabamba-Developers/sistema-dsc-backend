@@ -27,7 +27,7 @@ public class ModuleAttendance
             Id = Guid.NewGuid(),
             TrainingModuleId = trainingModuleId,
             ScoutLeaderId = scoutLeaderId,
-            RegisteredAt = DateTime.UtcNow
+            RegisteredAt = DateTime.UtcNow,
         };
     }
 }

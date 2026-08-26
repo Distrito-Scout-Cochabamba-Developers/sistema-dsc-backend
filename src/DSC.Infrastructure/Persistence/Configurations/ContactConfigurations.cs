@@ -13,19 +13,11 @@ public class ContactMechanismTypeConfiguration : IEntityTypeConfiguration<Contac
         builder.HasKey(x => x.Id);
         builder.Property(x => x.Id).HasColumnName("id");
 
-        builder.Property(x => x.Code)
-            .HasColumnName("code")
-            .HasMaxLength(30)
-            .IsRequired();
+        builder.Property(x => x.Code).HasColumnName("code").HasMaxLength(30).IsRequired();
 
-        builder.Property(x => x.Name)
-            .HasColumnName("name")
-            .HasMaxLength(60)
-            .IsRequired();
+        builder.Property(x => x.Name).HasColumnName("name").HasMaxLength(60).IsRequired();
 
-        builder.Property(x => x.Description)
-            .HasColumnName("description")
-            .HasMaxLength(255);
+        builder.Property(x => x.Description).HasColumnName("description").HasMaxLength(255);
 
         builder.HasIndex(x => x.Code).IsUnique();
     }
@@ -40,19 +32,11 @@ public class ContactPurposeTypeConfiguration : IEntityTypeConfiguration<ContactP
         builder.HasKey(x => x.Id);
         builder.Property(x => x.Id).HasColumnName("id");
 
-        builder.Property(x => x.Code)
-            .HasColumnName("code")
-            .HasMaxLength(30)
-            .IsRequired();
+        builder.Property(x => x.Code).HasColumnName("code").HasMaxLength(30).IsRequired();
 
-        builder.Property(x => x.Name)
-            .HasColumnName("name")
-            .HasMaxLength(60)
-            .IsRequired();
+        builder.Property(x => x.Name).HasColumnName("name").HasMaxLength(60).IsRequired();
 
-        builder.Property(x => x.Description)
-            .HasColumnName("description")
-            .HasMaxLength(255);
+        builder.Property(x => x.Description).HasColumnName("description").HasMaxLength(255);
 
         builder.HasIndex(x => x.Code).IsUnique();
     }

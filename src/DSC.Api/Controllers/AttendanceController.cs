@@ -9,7 +9,8 @@ namespace DSC.Api.Controllers;
 [Route("api/attendance")]
 public class AttendanceController(
     LookupLeaderByCiQueryHandler lookupHandler,
-    RegisterDigitalAttendanceCommandHandler registerHandler) : ControllerBase
+    RegisterDigitalAttendanceCommandHandler registerHandler
+) : ControllerBase
 {
     /// <summary>
     /// Busca un dirigente scout por número de CI para autocompletar el formulario de asistencia.
@@ -21,17 +22,23 @@ public class AttendanceController(
     public async Task<IActionResult> LookupByCi(
         [FromRoute] string ci,
         [FromQuery] string extension = "",
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default
+    )
     {
-        var result = await lookupHandler.HandleAsync(new LookupLeaderByCiQuery(ci, extension), cancellationToken);
+        var result = await lookupHandler.HandleAsync(
+            new LookupLeaderByCiQuery(ci, extension),
+            cancellationToken
+        );
 
         if (result == null)
-            return NotFound(new ProblemDetails
-            {
-                Status = StatusCodes.Status404NotFound,
-                Title = "Dirigente No Encontrado",
-                Detail = $"No se encontró ningún dirigente registrado con el CI '{ci}'."
-            });
+            return NotFound(
+                new ProblemDetails
+                {
+                    Status = StatusCodes.Status404NotFound,
+                    Title = "Dirigente No Encontrado",
+                    Detail = $"No se encontró ningún dirigente registrado con el CI '{ci}'.",
+                }
+            );
 
         return Ok(result);
     }
@@ -46,7 +53,8 @@ public class AttendanceController(
     [ProducesResponseType(StatusCodes.Status409Conflict)]
     public async Task<IActionResult> RegisterAttendance(
         [FromBody] RegisterDigitalAttendanceDto request,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default
+    )
     {
         var result = await registerHandler.HandleAsync(request, cancellationToken);
         return CreatedAtAction(nameof(LookupByCi), new { ci = request.CiNumber }, result);

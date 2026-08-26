@@ -6,18 +6,21 @@ namespace DSC.Infrastructure.Persistence.Repositories;
 
 public class TrainingModuleRepository(ScoutDbContext dbContext) : ITrainingModuleRepository
 {
-    public async Task<TrainingModule?> GetByCodeAsync(string code, CancellationToken cancellationToken)
+    public async Task<TrainingModule?> GetByCodeAsync(
+        string code,
+        CancellationToken cancellationToken
+    )
     {
         var trimmed = code.Trim();
-        return await dbContext.TrainingModules
-            .AsNoTracking()
+        return await dbContext
+            .TrainingModules.AsNoTracking()
             .FirstOrDefaultAsync(x => x.Code == trimmed, cancellationToken);
     }
 
     public async Task<TrainingModule?> GetByIdAsync(long id, CancellationToken cancellationToken)
     {
-        return await dbContext.TrainingModules
-            .AsNoTracking()
+        return await dbContext
+            .TrainingModules.AsNoTracking()
             .FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
     }
 

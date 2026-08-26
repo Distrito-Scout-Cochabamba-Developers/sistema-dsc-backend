@@ -23,9 +23,13 @@ public class Person
     /// <summary>
     /// Nombre completo computado.
     /// </summary>
-    public string FullName => string.Join(" ",
-        new[] { FirstName, MiddleName, FirstLastName, SecondLastName }
-        .Where(s => !string.IsNullOrWhiteSpace(s)));
+    public string FullName =>
+        string.Join(
+            " ",
+            new[] { FirstName, MiddleName, FirstLastName, SecondLastName }.Where(s =>
+                !string.IsNullOrWhiteSpace(s)
+            )
+        );
 
     // Navegación
     public FileAsset? PhotoFile { get; set; }

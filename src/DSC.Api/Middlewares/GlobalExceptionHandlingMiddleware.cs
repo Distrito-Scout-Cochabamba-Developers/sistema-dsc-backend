@@ -4,7 +4,10 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace DSC.Api.Middlewares;
 
-public class GlobalExceptionHandlingMiddleware(RequestDelegate next, ILogger<GlobalExceptionHandlingMiddleware> logger)
+public class GlobalExceptionHandlingMiddleware(
+    RequestDelegate next,
+    ILogger<GlobalExceptionHandlingMiddleware> logger
+)
 {
     public async Task InvokeAsync(HttpContext context)
     {
@@ -28,22 +31,26 @@ public class GlobalExceptionHandlingMiddleware(RequestDelegate next, ILogger<Glo
             DomainException domainEx => (
                 HttpStatusCode.BadRequest,
                 "Error de Validación de Dominio",
-                domainEx.Message),
+                domainEx.Message
+            ),
 
             KeyNotFoundException notFoundEx => (
                 HttpStatusCode.NotFound,
                 "Recurso No Encontrado",
-                notFoundEx.Message),
+                notFoundEx.Message
+            ),
 
             InvalidOperationException conflictEx => (
                 HttpStatusCode.Conflict,
                 "Conflicto en la Operación",
-                conflictEx.Message),
+                conflictEx.Message
+            ),
 
             _ => (
                 HttpStatusCode.InternalServerError,
                 "Error Interno del Servidor",
-                "Ocurrió un error inesperado al procesar la solicitud.")
+                "Ocurrió un error inesperado al procesar la solicitud."
+            ),
         };
 
         context.Response.StatusCode = (int)statusCode;
@@ -53,7 +60,7 @@ public class GlobalExceptionHandlingMiddleware(RequestDelegate next, ILogger<Glo
             Status = (int)statusCode,
             Title = title,
             Detail = detail,
-            Instance = context.Request.Path
+            Instance = context.Request.Path,
         };
 
         return context.Response.WriteAsJsonAsync(problemDetails);

@@ -6,10 +6,16 @@ namespace DSC.Infrastructure.Persistence.Repositories;
 
 public class ModuleAttendanceRepository(ScoutDbContext dbContext) : IModuleAttendanceRepository
 {
-    public async Task<bool> ExistsAsync(long trainingModuleId, long scoutLeaderId, CancellationToken cancellationToken)
+    public async Task<bool> ExistsAsync(
+        long trainingModuleId,
+        long scoutLeaderId,
+        CancellationToken cancellationToken
+    )
     {
-        return await dbContext.ModuleAttendances
-            .AnyAsync(x => x.TrainingModuleId == trainingModuleId && x.ScoutLeaderId == scoutLeaderId, cancellationToken);
+        return await dbContext.ModuleAttendances.AnyAsync(
+            x => x.TrainingModuleId == trainingModuleId && x.ScoutLeaderId == scoutLeaderId,
+            cancellationToken
+        );
     }
 
     public async Task AddAsync(ModuleAttendance attendance, CancellationToken cancellationToken)

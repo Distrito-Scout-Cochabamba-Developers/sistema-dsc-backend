@@ -8,7 +8,10 @@ public record class LookupLeaderByCiQuery(string CiNumber, string Extension = ""
 
 public class LookupLeaderByCiQueryHandler(IScoutLeaderRepository leaderRepository)
 {
-    public async Task<ScoutLeaderDto?> HandleAsync(LookupLeaderByCiQuery query, CancellationToken cancellationToken)
+    public async Task<ScoutLeaderDto?> HandleAsync(
+        LookupLeaderByCiQuery query,
+        CancellationToken cancellationToken
+    )
     {
         var ci = new CiNumber(query.CiNumber, query.Extension);
         var person = await leaderRepository.GetByCiNumberAsync(ci.Number, cancellationToken);
@@ -16,8 +19,12 @@ public class LookupLeaderByCiQueryHandler(IScoutLeaderRepository leaderRepositor
         if (person == null)
             return null;
 
-        var phone = person.ContactMechanisms
-            .FirstOrDefault(cm => cm.ContactMechanismTypeId == 2 || cm.IsPrimary)?.ContactValue
+        var phone =
+            person
+                .ContactMechanisms.FirstOrDefault(cm =>
+                    cm.ContactMechanismTypeId == 2 || cm.IsPrimary
+                )
+                ?.ContactValue
             ?? string.Empty;
 
         return new ScoutLeaderDto(

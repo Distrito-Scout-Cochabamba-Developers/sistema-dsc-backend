@@ -9,19 +9,22 @@ namespace DSC.Infrastructure.Persistence.Repositories;
 /// </summary>
 public class ScoutLeaderRepository(ScoutDbContext dbContext) : IScoutLeaderRepository
 {
-    public async Task<Person?> GetByCiNumberAsync(string ciNumber, CancellationToken cancellationToken)
+    public async Task<Person?> GetByCiNumberAsync(
+        string ciNumber,
+        CancellationToken cancellationToken
+    )
     {
         var trimmed = ciNumber.Trim();
-        return await dbContext.Persons
-            .Include(p => p.ContactMechanisms)
+        return await dbContext
+            .Persons.Include(p => p.ContactMechanisms)
             .Include(p => p.ScoutLeader)
             .FirstOrDefaultAsync(x => x.IdCard == trimmed, cancellationToken);
     }
 
     public async Task<Person?> GetByIdAsync(long id, CancellationToken cancellationToken)
     {
-        return await dbContext.Persons
-            .Include(p => p.ContactMechanisms)
+        return await dbContext
+            .Persons.Include(p => p.ContactMechanisms)
             .Include(p => p.ScoutLeader)
             .FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
     }

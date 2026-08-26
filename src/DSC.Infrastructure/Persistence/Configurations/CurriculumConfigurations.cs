@@ -13,19 +13,11 @@ public class ModuleTypeConfiguration : IEntityTypeConfiguration<ModuleType>
         builder.HasKey(x => x.Id);
         builder.Property(x => x.Id).HasColumnName("id");
 
-        builder.Property(x => x.Code)
-            .HasColumnName("code")
-            .HasMaxLength(20)
-            .IsRequired();
+        builder.Property(x => x.Code).HasColumnName("code").HasMaxLength(20).IsRequired();
 
-        builder.Property(x => x.Name)
-            .HasColumnName("name")
-            .HasMaxLength(100)
-            .IsRequired();
+        builder.Property(x => x.Name).HasColumnName("name").HasMaxLength(100).IsRequired();
 
-        builder.Property(x => x.Description)
-            .HasColumnName("description")
-            .HasMaxLength(255);
+        builder.Property(x => x.Description).HasColumnName("description").HasMaxLength(255);
 
         builder.HasIndex(x => x.Code).IsUnique();
     }
@@ -40,19 +32,11 @@ public class TrainingStageConfiguration : IEntityTypeConfiguration<TrainingStage
         builder.HasKey(x => x.Id);
         builder.Property(x => x.Id).HasColumnName("id");
 
-        builder.Property(x => x.Code)
-            .HasColumnName("code")
-            .HasMaxLength(30)
-            .IsRequired();
+        builder.Property(x => x.Code).HasColumnName("code").HasMaxLength(30).IsRequired();
 
-        builder.Property(x => x.Name)
-            .HasColumnName("name")
-            .HasMaxLength(80)
-            .IsRequired();
+        builder.Property(x => x.Name).HasColumnName("name").HasMaxLength(80).IsRequired();
 
-        builder.Property(x => x.Description)
-            .HasColumnName("description")
-            .HasMaxLength(255);
+        builder.Property(x => x.Description).HasColumnName("description").HasMaxLength(255);
 
         builder.HasIndex(x => x.Code).IsUnique();
     }
@@ -67,35 +51,30 @@ public class TrainingLevelConfiguration : IEntityTypeConfiguration<TrainingLevel
         builder.HasKey(x => x.Id);
         builder.Property(x => x.Id).HasColumnName("id");
 
-        builder.Property(x => x.Code)
-            .HasColumnName("code")
-            .HasMaxLength(30)
-            .IsRequired();
+        builder.Property(x => x.Code).HasColumnName("code").HasMaxLength(30).IsRequired();
 
-        builder.Property(x => x.Name)
-            .HasColumnName("name")
-            .HasMaxLength(100)
-            .IsRequired();
+        builder.Property(x => x.Name).HasColumnName("name").HasMaxLength(100).IsRequired();
 
-        builder.Property(x => x.ModuleTypeId)
-            .HasColumnName("module_type_id");
+        builder.Property(x => x.ModuleTypeId).HasColumnName("module_type_id");
 
-        builder.Property(x => x.TrainingStageId)
-            .HasColumnName("training_stage_id");
+        builder.Property(x => x.TrainingStageId).HasColumnName("training_stage_id");
 
-        builder.Property(x => x.IsActive)
+        builder
+            .Property(x => x.IsActive)
             .HasColumnName("is_active")
             .HasDefaultValue(true)
             .IsRequired();
 
         builder.HasIndex(x => x.Code).IsUnique();
 
-        builder.HasOne(x => x.ModuleType)
+        builder
+            .HasOne(x => x.ModuleType)
             .WithMany(mt => mt.TrainingLevels)
             .HasForeignKey(x => x.ModuleTypeId)
             .OnDelete(DeleteBehavior.Restrict);
 
-        builder.HasOne(x => x.TrainingStage)
+        builder
+            .HasOne(x => x.TrainingStage)
             .WithMany(ts => ts.TrainingLevels)
             .HasForeignKey(x => x.TrainingStageId)
             .OnDelete(DeleteBehavior.Restrict);
@@ -111,33 +90,26 @@ public class TrainingModuleConfiguration : IEntityTypeConfiguration<TrainingModu
         builder.HasKey(x => x.Id);
         builder.Property(x => x.Id).HasColumnName("id");
 
-        builder.Property(x => x.Code)
-            .HasColumnName("code")
-            .HasMaxLength(30)
-            .IsRequired();
+        builder.Property(x => x.Code).HasColumnName("code").HasMaxLength(30).IsRequired();
 
-        builder.Property(x => x.Name)
-            .HasColumnName("name")
-            .HasMaxLength(150)
-            .IsRequired();
+        builder.Property(x => x.Name).HasColumnName("name").HasMaxLength(150).IsRequired();
 
-        builder.Property(x => x.Description)
-            .HasColumnName("description");
+        builder.Property(x => x.Description).HasColumnName("description");
 
-        builder.Property(x => x.ModuleTypeId)
-            .HasColumnName("module_type_id")
-            .IsRequired();
+        builder.Property(x => x.ModuleTypeId).HasColumnName("module_type_id").IsRequired();
 
         builder.HasIndex(x => x.Code).IsUnique();
 
-        builder.HasOne(x => x.ModuleType)
+        builder
+            .HasOne(x => x.ModuleType)
             .WithMany(mt => mt.TrainingModules)
             .HasForeignKey(x => x.ModuleTypeId)
             .OnDelete(DeleteBehavior.Restrict);
     }
 }
 
-public class TrainingModuleLessonPlanTemplateConfiguration : IEntityTypeConfiguration<TrainingModuleLessonPlanTemplate>
+public class TrainingModuleLessonPlanTemplateConfiguration
+    : IEntityTypeConfiguration<TrainingModuleLessonPlanTemplate>
 {
     public void Configure(EntityTypeBuilder<TrainingModuleLessonPlanTemplate> builder)
     {
@@ -146,67 +118,67 @@ public class TrainingModuleLessonPlanTemplateConfiguration : IEntityTypeConfigur
         builder.HasKey(x => x.Id);
         builder.Property(x => x.Id).HasColumnName("id");
 
-        builder.Property(x => x.TrainingModuleId)
-            .HasColumnName("training_module_id")
-            .IsRequired();
+        builder.Property(x => x.TrainingModuleId).HasColumnName("training_module_id").IsRequired();
 
-        builder.Property(x => x.AuthorPersonId)
-            .HasColumnName("author_person_id");
+        builder.Property(x => x.AuthorPersonId).HasColumnName("author_person_id");
 
-        builder.Property(x => x.VersionCode)
+        builder
+            .Property(x => x.VersionCode)
             .HasColumnName("version_code")
             .HasMaxLength(20)
             .HasDefaultValue("1.0")
             .IsRequired();
 
-        builder.Property(x => x.GeneralObjective)
-            .HasColumnName("general_objective");
+        builder.Property(x => x.GeneralObjective).HasColumnName("general_objective");
 
-        builder.Property(x => x.SpecificObjectives)
-            .HasColumnName("specific_objectives");
+        builder.Property(x => x.SpecificObjectives).HasColumnName("specific_objectives");
 
-        builder.Property(x => x.BibliographyReferences)
-            .HasColumnName("bibliography_references");
+        builder.Property(x => x.BibliographyReferences).HasColumnName("bibliography_references");
 
-        builder.Property(x => x.SlideFileId)
-            .HasColumnName("slide_file_id");
+        builder.Property(x => x.SlideFileId).HasColumnName("slide_file_id");
 
-        builder.Property(x => x.DocumentFileId)
-            .HasColumnName("document_file_id");
+        builder.Property(x => x.DocumentFileId).HasColumnName("document_file_id");
 
-        builder.Property(x => x.IsActive)
+        builder
+            .Property(x => x.IsActive)
             .HasColumnName("is_active")
             .HasDefaultValue(true)
             .IsRequired();
 
-        builder.Property(x => x.CreatedAt)
+        builder
+            .Property(x => x.CreatedAt)
             .HasColumnName("created_at")
             .HasDefaultValueSql("now()")
             .IsRequired();
 
-        builder.HasOne(x => x.TrainingModule)
+        builder
+            .HasOne(x => x.TrainingModule)
             .WithMany(tm => tm.LessonPlanTemplates)
             .HasForeignKey(x => x.TrainingModuleId)
             .OnDelete(DeleteBehavior.Restrict);
 
-        builder.HasOne(x => x.AuthorPerson)
+        builder
+            .HasOne(x => x.AuthorPerson)
             .WithMany(p => p.LessonPlanTemplates)
             .HasForeignKey(x => x.AuthorPersonId)
             .OnDelete(DeleteBehavior.SetNull);
 
-        builder.HasOne(x => x.SlideFile)
+        builder
+            .HasOne(x => x.SlideFile)
             .WithMany()
             .HasForeignKey(x => x.SlideFileId)
             .OnDelete(DeleteBehavior.SetNull);
 
-        builder.HasOne(x => x.DocumentFile)
+        builder
+            .HasOne(x => x.DocumentFile)
             .WithMany()
             .HasForeignKey(x => x.DocumentFileId)
             .OnDelete(DeleteBehavior.SetNull);
     }
 }
 
-public class TrainingModuleLessonPlanTemplateActivityConfiguration : IEntityTypeConfiguration<TrainingModuleLessonPlanTemplateActivity>
+public class TrainingModuleLessonPlanTemplateActivityConfiguration
+    : IEntityTypeConfiguration<TrainingModuleLessonPlanTemplateActivity>
 {
     public void Configure(EntityTypeBuilder<TrainingModuleLessonPlanTemplateActivity> builder)
     {
@@ -215,28 +187,26 @@ public class TrainingModuleLessonPlanTemplateActivityConfiguration : IEntityType
         builder.HasKey(x => x.Id);
         builder.Property(x => x.Id).HasColumnName("id");
 
-        builder.Property(x => x.TemplateId)
-            .HasColumnName("template_id")
-            .IsRequired();
+        builder.Property(x => x.TemplateId).HasColumnName("template_id").IsRequired();
 
-        builder.Property(x => x.StepNumber)
+        builder
+            .Property(x => x.StepNumber)
             .HasColumnName("step_number")
             .HasDefaultValue((short)1)
             .IsRequired();
 
-        builder.Property(x => x.DurationMinutes)
-            .HasColumnName("duration_minutes")
-            .IsRequired();
+        builder.Property(x => x.DurationMinutes).HasColumnName("duration_minutes").IsRequired();
 
-        builder.Property(x => x.ActivityName)
+        builder
+            .Property(x => x.ActivityName)
             .HasColumnName("activity_name")
             .HasMaxLength(255)
             .IsRequired();
 
-        builder.Property(x => x.RecommendedMaterials)
-            .HasColumnName("recommended_materials");
+        builder.Property(x => x.RecommendedMaterials).HasColumnName("recommended_materials");
 
-        builder.HasOne(x => x.Template)
+        builder
+            .HasOne(x => x.Template)
             .WithMany(t => t.Activities)
             .HasForeignKey(x => x.TemplateId)
             .OnDelete(DeleteBehavior.Restrict);
