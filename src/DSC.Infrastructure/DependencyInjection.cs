@@ -1,3 +1,4 @@
+using DSC.Application.Interfaces;
 using DSC.Domain.Repositories;
 using DSC.Infrastructure.Persistence;
 using DSC.Infrastructure.Persistence.Repositories;
@@ -8,7 +9,10 @@ namespace DSC.Infrastructure;
 
 public static class DependencyInjection
 {
-    public static IServiceCollection AddInfrastructure(this IServiceCollection services, string connectionString = "")
+    public static IServiceCollection AddInfrastructure(
+        this IServiceCollection services,
+        string connectionString = ""
+    )
     {
         services.AddDbContext<ScoutDbContext>(options =>
         {
@@ -18,20 +22,27 @@ public static class DependencyInjection
             }
             else
             {
-                options.UseNpgsql(connectionString, npgsqlOptions =>
-                {
-                    npgsqlOptions.MigrationsAssembly(typeof(ScoutDbContext).Assembly.FullName);
-                    npgsqlOptions.EnableRetryOnFailure(
-                        maxRetryCount: 3,
-                        maxRetryDelay: TimeSpan.FromSeconds(5),
-                        errorCodesToAdd: null);
-                });
+                options.UseNpgsql(
+                    connectionString,
+                    npgsqlOptions =>
+                    {
+                        npgsqlOptions.MigrationsAssembly(typeof(ScoutDbContext).Assembly.FullName);
+                        npgsqlOptions.EnableRetryOnFailure(
+                            maxRetryCount: 3,
+                            maxRetryDelay: TimeSpan.FromSeconds(5),
+                            errorCodesToAdd: null
+                        );
+                    }
+                );
             }
         });
 
         services.AddScoped<IScoutLeaderRepository, ScoutLeaderRepository>();
         services.AddScoped<ITrainingModuleRepository, TrainingModuleRepository>();
         services.AddScoped<IModuleAttendanceRepository, ModuleAttendanceRepository>();
+        services.AddScoped<IUserRepository, UserRepository>();
+        services.AddScoped<IPasswordHasher, NormalPasswordValidation>();
+        services.AddScoped<IJwtTokenGenerator, JwtTokenGenerator>();
 
         return services;
     }
