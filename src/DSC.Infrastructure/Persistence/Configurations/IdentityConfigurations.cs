@@ -34,6 +34,8 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
 
         builder.Property(x => x.PersonId).HasColumnName("person_id").IsRequired();
 
+        builder.Property(x => x.Username).HasColumnName("username").HasMaxLength(50).IsRequired();
+
         builder.Property(x => x.Email).HasColumnName("email").HasMaxLength(150).IsRequired();
 
         builder.Property(x => x.Password).HasColumnName("password").HasMaxLength(255).IsRequired();
@@ -59,6 +61,7 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
             .IsRequired();
 
         builder.HasIndex(x => x.PersonId).IsUnique();
+        builder.HasIndex(x => x.Username).IsUnique();
         builder.HasIndex(x => x.Email).IsUnique();
 
         builder

@@ -37,4 +37,21 @@ public class UserRepository(ScoutDbContext dbContext) : IUserRepository
                 cancellationToken
             );
     }
+
+    public async Task<User?> GetByUsernameWithRolesAsync(
+        string username,
+        CancellationToken cancellationToken
+    )
+    {
+        var normalizedUsername = username.Trim().ToLowerInvariant();
+
+        return await dbContext
+            .Users.Include(user => user.UserStatus)
+            .Include(user => user.UserRoles)
+                .ThenInclude(userRole => userRole.Role)
+            .FirstOrDefaultAsync(
+                user => user.Username.ToLower() == normalizedUsername,
+                cancellationToken
+            );
+    }
 }

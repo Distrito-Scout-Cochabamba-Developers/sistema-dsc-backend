@@ -14,6 +14,9 @@ public class CurrentUser(IHttpContextAccessor _httpContextAccessor) : ICurrentUs
             ? id
             : null;
 
+    public string? Username =>
+        _httpContextAccessor?.HttpContext?.User?.FindFirstValue(ClaimTypes.Name);
+
     public string? Email =>
         _httpContextAccessor?.HttpContext?.User?.FindFirstValue(ClaimTypes.Email);
 

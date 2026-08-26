@@ -31,7 +31,7 @@ public class LoginCommandHandler(
             .Select(userRole => userRole.Role.Code)
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .ToArray();
-        var profile = new UserProfileDto(user.Id, user.Email, roles);
+        var profile = new UserProfileDto(user.Id, user.Username, user.Email, roles);
 
         return new AuthResultDto(_jwtTokenGenerator.GenerateToken(user), profile);
     }

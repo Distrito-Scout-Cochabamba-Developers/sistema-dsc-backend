@@ -8,4 +8,5 @@ namespace DSC.Domain.Repositories;
 public interface IUserRepository
 {
     Task<User?> GetByEmailWithRolesAsync(string email, CancellationToken cancellationToken);
+    Task<User?> GetByUsernameWithRolesAsync(string username, CancellationToken cancellationToken);
 }

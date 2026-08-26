@@ -12,6 +12,7 @@ public static class DependencyInjection
         services.AddScoped<LookupLeaderByCiQueryHandler>();
         services.AddScoped<RegisterDigitalAttendanceCommandHandler>();
         services.AddScoped<LoginCommandHandler>();
+        services.AddScoped<LoginWithUsernameCommandHandler>();
 
         return services;
     }

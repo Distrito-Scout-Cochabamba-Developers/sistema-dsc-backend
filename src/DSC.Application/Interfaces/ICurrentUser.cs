@@ -3,6 +3,7 @@ namespace DSC.Application.Interfaces;
 public interface ICurrentUser
 {
     long? Id { get; }
+    string? Username { get; }
     string? Email { get; }
     IEnumerable<string> Roles { get; }
     bool IsAuthenticated { get; }
