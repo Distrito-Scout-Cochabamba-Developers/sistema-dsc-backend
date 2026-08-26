@@ -1,0 +1,10 @@
+namespace DSC.Application.Interfaces;
+
+public interface ICurrentUser
+{
+    long? Id { get; }
+    string? Email { get; }
+    IEnumerable<string> Roles { get; }
+    bool IsAuthenticated { get; }
+    bool IsInRole(string role);
+}

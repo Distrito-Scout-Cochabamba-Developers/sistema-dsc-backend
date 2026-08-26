@@ -1,5 +1,7 @@
 namespace DSC.Domain.Entities;
 
+using DSC.Domain.Exceptions;
+
 /// <summary>
 /// Representa una cuenta de usuario con credenciales de acceso (relación 1:1 estricta con Person).
 /// </summary>
@@ -7,6 +9,7 @@ public class User
 {
     public long Id { get; set; }
     public long PersonId { get; set; }
+    public string Username { get; set; } = string.Empty;
     public string Email { get; set; } = string.Empty;
     public string Password { get; set; } = string.Empty;
     public short UserStatusId { get; set; }
@@ -21,4 +24,12 @@ public class User
     public ICollection<FileAsset> UploadedFiles { get; set; } = [];
     public ICollection<TrainingModuleEnrollment> RegisteredEnrollments { get; set; } = [];
     public ICollection<TrainingModuleSessionStatusHistory> StatusChanges { get; set; } = [];
+
+    public void EnsureCanAuthenticate()
+    {
+        if (!string.Equals(UserStatus?.Code, "ACTIVE", StringComparison.OrdinalIgnoreCase))
+            throw new DomainException(
+                "La cuenta de usuario está suspendida o pendiente de verificación."
+            );
+    }
 }
