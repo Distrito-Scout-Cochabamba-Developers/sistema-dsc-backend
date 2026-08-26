@@ -9,11 +9,12 @@ namespace DSC.Api.Controllers;
 
 [ApiController]
 [Route("api/auth")]
-public class AuthController(LoginCommandHandler loginHandler, ICurrentUser _currentUser)
-    : ControllerBase
+public class AuthController(
+    LoginCommandHandler loginHandler,
+    ICurrentUser currentUser,
+    IConfiguration configuration
+) : ControllerBase
 {
-    private readonly ICurrentUser _user = _currentUser;
-
     [HttpPost("login")]
     [AllowAnonymous]
     public async Task<IActionResult> Login(
@@ -23,10 +24,7 @@ public class AuthController(LoginCommandHandler loginHandler, ICurrentUser _curr
     {
         var result = await loginHandler.HandleAsync(loginRequest, cancellationToken);
         var secureCookie =
-            HttpContext.Request.IsHttps
-            || HttpContext
-                .RequestServices.GetRequiredService<IConfiguration>()
-                .GetValue("Jwt:SecureCookie", true);
+            HttpContext.Request.IsHttps || configuration.GetValue("Jwt:SecureCookie", true);
 
         Response.Cookies.Append(
             "access_token",
@@ -46,5 +44,11 @@ public class AuthController(LoginCommandHandler loginHandler, ICurrentUser _curr
     [HttpGet("me")]
     [Authorize]
     public IActionResult Me() =>
-        Ok(new UserProfileDto(_user.Id!.Value, _user.Email!, _user.Roles.ToArray()));
+        Ok(
+            new UserProfileDto(
+                currentUser.Id!.Value,
+                currentUser.Email!,
+                currentUser.Roles.ToArray()
+            )
+        );
 }
