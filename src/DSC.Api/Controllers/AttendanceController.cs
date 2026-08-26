@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace DSC.Api.Controllers;
 
 [ApiController]
-[Route("api/attendance")]
+[Route("attendance")]
 public class AttendanceController(
     LookupLeaderByCiQueryHandler lookupHandler,
     RegisterDigitalAttendanceCommandHandler registerHandler

@@ -1,14 +1,13 @@
 using DSC.Application.Commands;
 using DSC.Application.DTOs;
 using DSC.Application.Interfaces;
-using DSC.Application.Queries;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace DSC.Api.Controllers;
 
 [ApiController]
-[Route("api/auth")]
+[Route("auth")]
 public class AuthController(
     LoginCommandHandler loginHandler,
     ICurrentUser currentUser,

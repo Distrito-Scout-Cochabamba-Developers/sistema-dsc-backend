@@ -1,10 +1,12 @@
 using System.Text;
 using DotNetEnv;
 using DSC.Api;
+using DSC.Api.Conventions;
 using DSC.Api.Middlewares;
 using DSC.Application;
 using DSC.Infrastructure;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
 
 // 0. Load environment variables from .env file if present
@@ -16,7 +18,10 @@ var builder = WebApplication.CreateBuilder(args);
 var connectionString = ResolveConnectionString(builder.Configuration);
 
 // 2. Register Layer Services
-builder.Services.AddControllers();
+builder.Services.AddControllers(options =>
+{
+    options.Conventions.Add(new GlobalRoutePrefixConvention(new RouteAttribute("api")));
+});
 builder.Services.AddOpenApi();
 
 builder.Services.AddApplication();
@@ -58,12 +63,11 @@ var app = builder.Build();
 app.UseMiddleware<GlobalExceptionHandlingMiddleware>();
 
 if (app.Environment.IsDevelopment())
-{
     app.MapOpenApi();
-}
+else
+    app.UseHttpsRedirection();
 
 app.UseAuthentication();
-app.UseHttpsRedirection();
 app.UseAuthorization();
 app.MapControllers();
 
