@@ -10,7 +10,11 @@ public class CiNumberTests
     [InlineData("7654321", "CB", "7654321-CB")]
     [InlineData("12345678", "LP", "12345678-LP")]
     [InlineData("555444", "", "555444")]
-    public void CiNumber_WithValidInputs_ShouldCreateSuccessfully(string number, string extension, string expectedFullValue)
+    public void CiNumber_WithValidInputs_ShouldCreateSuccessfully(
+        string number,
+        string extension,
+        string expectedFullValue
+    )
     {
         // Act
         var ci = new CiNumber(number, extension);

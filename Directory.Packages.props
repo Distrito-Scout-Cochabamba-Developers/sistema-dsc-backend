@@ -1,31 +1,34 @@
 <Project>
-  <PropertyGroup>
-    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
-  </PropertyGroup>
+    <PropertyGroup>
+        <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+    </PropertyGroup>
 
-  <ItemGroup>
-    <!-- Web API & Open API -->
-    <PackageVersion Include="Microsoft.AspNetCore.OpenApi" Version="9.0.2" />
-    <PackageVersion Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="9.0.2" />
-    <PackageVersion Include="System.IdentityModel.Tokens.Jwt" Version="8.12.1" />
+    <ItemGroup>
+        <!-- Web API & Open API -->
+        <PackageVersion Include="Microsoft.AspNetCore.OpenApi" Version="9.0.2" />
+        <PackageVersion Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="9.0.2" />
+        <PackageVersion Include="System.IdentityModel.Tokens.Jwt" Version="8.12.1" />
 
-    <!-- Dependency Injection -->
-    <PackageVersion Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="9.0.2" />
+        <!-- Dependency Injection -->
+        <PackageVersion
+            Include="Microsoft.Extensions.DependencyInjection.Abstractions"
+            Version="9.0.2"
+        />
 
-    <!-- Persistence (EF Core & PostgreSQL) -->
-    <PackageVersion Include="Microsoft.EntityFrameworkCore" Version="9.0.2" />
-    <PackageVersion Include="Microsoft.EntityFrameworkCore.Relational" Version="9.0.2" />
-    <PackageVersion Include="Microsoft.EntityFrameworkCore.InMemory" Version="9.0.2" />
-    <PackageVersion Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="9.0.3" />
+        <!-- Persistence (EF Core & PostgreSQL) -->
+        <PackageVersion Include="Microsoft.EntityFrameworkCore" Version="9.0.2" />
+        <PackageVersion Include="Microsoft.EntityFrameworkCore.Relational" Version="9.0.2" />
+        <PackageVersion Include="Microsoft.EntityFrameworkCore.InMemory" Version="9.0.2" />
+        <PackageVersion Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="9.0.3" />
 
-    <!-- Environment & Configuration -->
-    <PackageVersion Include="DotNetEnv" Version="3.1.1" />
-    <PackageVersion Include="BCrypt.Net-Next" Version="4.0.3" />
+        <!-- Environment & Configuration -->
+        <PackageVersion Include="DotNetEnv" Version="3.1.1" />
+        <PackageVersion Include="BCrypt.Net-Next" Version="4.0.3" />
 
-    <!-- Unit Testing -->
-    <PackageVersion Include="coverlet.collector" Version="6.0.4" />
-    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
-    <PackageVersion Include="xunit" Version="2.9.3" />
-    <PackageVersion Include="xunit.runner.visualstudio" Version="3.1.4" />
-  </ItemGroup>
+        <!-- Unit Testing -->
+        <PackageVersion Include="coverlet.collector" Version="6.0.4" />
+        <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
+        <PackageVersion Include="xunit" Version="2.9.3" />
+        <PackageVersion Include="xunit.runner.visualstudio" Version="3.1.4" />
+    </ItemGroup>
 </Project>

@@ -28,14 +28,23 @@ public class RegisterDigitalAttendanceHandlerTests
     {
         // Arrange
         using var db = CreateInMemoryDbContext();
-        var sampleModule = new TrainingModule { Code = "TOKEN-123", Name = "Módulo de Prueba", ModuleTypeId = 1 };
+        var sampleModule = new TrainingModule
+        {
+            Code = "TOKEN-123",
+            Name = "Módulo de Prueba",
+            ModuleTypeId = 1,
+        };
         db.TrainingModules.Add(sampleModule);
         await db.SaveChangesAsync();
 
         var moduleRepo = new TrainingModuleRepository(db);
         var leaderRepo = new ScoutLeaderRepository(db);
         var attendanceRepo = new ModuleAttendanceRepository(db);
-        var handler = new RegisterDigitalAttendanceCommandHandler(moduleRepo, leaderRepo, attendanceRepo);
+        var handler = new RegisterDigitalAttendanceCommandHandler(
+            moduleRepo,
+            leaderRepo,
+            attendanceRepo
+        );
 
         var request = new RegisterDigitalAttendanceDto(
             SessionToken: "TOKEN-123",
@@ -55,12 +64,16 @@ public class RegisterDigitalAttendanceHandlerTests
         Assert.Equal("7654321-CB", result.CiNumber);
         Assert.True(result.IsPartialRegistration);
 
-        var savedPerson = await db.Persons.Include(p => p.ContactMechanisms).FirstOrDefaultAsync(a => a.IdCard == "7654321");
+        var savedPerson = await db
+            .Persons.Include(p => p.ContactMechanisms)
+            .FirstOrDefaultAsync(a => a.IdCard == "7654321");
         Assert.NotNull(savedPerson);
         Assert.False(savedPerson.IsProfileComplete);
         Assert.Contains(savedPerson.ContactMechanisms, cm => cm.ContactValue == "77712345");
 
-        var savedAttendance = await db.ModuleAttendances.FirstOrDefaultAsync(a => a.TrainingModuleId == sampleModule.Id);
+        var savedAttendance = await db.ModuleAttendances.FirstOrDefaultAsync(a =>
+            a.TrainingModuleId == sampleModule.Id
+        );
         Assert.NotNull(savedAttendance);
     }
 
@@ -69,14 +82,23 @@ public class RegisterDigitalAttendanceHandlerTests
     {
         // Arrange
         using var db = CreateInMemoryDbContext();
-        var sampleModule = new TrainingModule { Code = "TOKEN-DUPLICATE", Name = "Módulo de Prueba", ModuleTypeId = 1 };
+        var sampleModule = new TrainingModule
+        {
+            Code = "TOKEN-DUPLICATE",
+            Name = "Módulo de Prueba",
+            ModuleTypeId = 1,
+        };
         db.TrainingModules.Add(sampleModule);
         await db.SaveChangesAsync();
 
         var moduleRepo = new TrainingModuleRepository(db);
         var leaderRepo = new ScoutLeaderRepository(db);
         var attendanceRepo = new ModuleAttendanceRepository(db);
-        var handler = new RegisterDigitalAttendanceCommandHandler(moduleRepo, leaderRepo, attendanceRepo);
+        var handler = new RegisterDigitalAttendanceCommandHandler(
+            moduleRepo,
+            leaderRepo,
+            attendanceRepo
+        );
 
         var request = new RegisterDigitalAttendanceDto(
             SessionToken: "TOKEN-DUPLICATE",
@@ -92,7 +114,8 @@ public class RegisterDigitalAttendanceHandlerTests
 
         // Act 2 & Assert: Second registration throws InvalidOperationException (409 Conflict)
         var exception = await Assert.ThrowsAsync<InvalidOperationException>(() =>
-            handler.HandleAsync(request, CancellationToken.None));
+            handler.HandleAsync(request, CancellationToken.None)
+        );
 
         Assert.Contains("ya registró su asistencia", exception.Message);
     }
@@ -105,7 +128,11 @@ public class RegisterDigitalAttendanceHandlerTests
         var moduleRepo = new TrainingModuleRepository(db);
         var leaderRepo = new ScoutLeaderRepository(db);
         var attendanceRepo = new ModuleAttendanceRepository(db);
-        var handler = new RegisterDigitalAttendanceCommandHandler(moduleRepo, leaderRepo, attendanceRepo);
+        var handler = new RegisterDigitalAttendanceCommandHandler(
+            moduleRepo,
+            leaderRepo,
+            attendanceRepo
+        );
 
         var request = new RegisterDigitalAttendanceDto(
             SessionToken: "TOKEN-INVALID",
@@ -118,7 +145,8 @@ public class RegisterDigitalAttendanceHandlerTests
 
         // Act & Assert
         await Assert.ThrowsAsync<KeyNotFoundException>(() =>
-            handler.HandleAsync(request, CancellationToken.None));
+            handler.HandleAsync(request, CancellationToken.None)
+        );
     }
 
     [Fact]
@@ -126,14 +154,23 @@ public class RegisterDigitalAttendanceHandlerTests
     {
         // Arrange
         using var db = CreateInMemoryDbContext();
-        var sampleModule = new TrainingModule { Code = "TOKEN-INVALID-CI", Name = "Módulo de Prueba", ModuleTypeId = 1 };
+        var sampleModule = new TrainingModule
+        {
+            Code = "TOKEN-INVALID-CI",
+            Name = "Módulo de Prueba",
+            ModuleTypeId = 1,
+        };
         db.TrainingModules.Add(sampleModule);
         await db.SaveChangesAsync();
 
         var moduleRepo = new TrainingModuleRepository(db);
         var leaderRepo = new ScoutLeaderRepository(db);
         var attendanceRepo = new ModuleAttendanceRepository(db);
-        var handler = new RegisterDigitalAttendanceCommandHandler(moduleRepo, leaderRepo, attendanceRepo);
+        var handler = new RegisterDigitalAttendanceCommandHandler(
+            moduleRepo,
+            leaderRepo,
+            attendanceRepo
+        );
 
         var request = new RegisterDigitalAttendanceDto(
             SessionToken: "TOKEN-INVALID-CI",
@@ -146,7 +183,8 @@ public class RegisterDigitalAttendanceHandlerTests
 
         // Act & Assert
         var exception = await Assert.ThrowsAsync<DomainException>(() =>
-            handler.HandleAsync(request, CancellationToken.None));
+            handler.HandleAsync(request, CancellationToken.None)
+        );
 
         Assert.Contains("exclusivamente numérico", exception.Message);
     }
@@ -163,16 +201,18 @@ public class RegisterDigitalAttendanceHandlerTests
             FirstName = "Carlos",
             FirstLastName = "Montaño",
             PersonStatusId = 1,
-            IsProfileComplete = true
+            IsProfileComplete = true,
         };
-        person.ContactMechanisms.Add(new PersonContactMechanism
-        {
-            ContactMechanismTypeId = 2,
-            ContactPurposeTypeId = 1,
-            ContactValue = "71234567",
-            IsPrimary = true,
-            ValidFrom = DateOnly.FromDateTime(DateTime.UtcNow)
-        });
+        person.ContactMechanisms.Add(
+            new PersonContactMechanism
+            {
+                ContactMechanismTypeId = 2,
+                ContactPurposeTypeId = 1,
+                ContactValue = "71234567",
+                IsPrimary = true,
+                ValidFrom = DateOnly.FromDateTime(DateTime.UtcNow),
+            }
+        );
         db.Persons.Add(person);
         await db.SaveChangesAsync();
 
@@ -180,7 +220,10 @@ public class RegisterDigitalAttendanceHandlerTests
         var handler = new LookupLeaderByCiQueryHandler(leaderRepo);
 
         // Act
-        var result = await handler.HandleAsync(new LookupLeaderByCiQuery("5556667", "CB"), CancellationToken.None);
+        var result = await handler.HandleAsync(
+            new LookupLeaderByCiQuery("5556667", "CB"),
+            CancellationToken.None
+        );
 
         // Assert
         Assert.NotNull(result);

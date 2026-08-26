@@ -19,18 +19,15 @@ public class LoginCommandHandler(
         if (string.IsNullOrWhiteSpace(request.Email) || string.IsNullOrEmpty(request.Password))
             throw new DomainException("Las credenciales son inválidas.");
 
-        var user = await _userRepository.GetByEmailWithRolesAsync(
-            request.Email,
-            cancellationToken
-        );
+        var user = await _userRepository.GetByEmailWithRolesAsync(request.Email, cancellationToken);
 
         if (user is null || !_passwordHasher.Verify(request.Password, user.Password))
             throw new DomainException("Las credenciales son inválidas.");
 
         user.EnsureCanAuthenticate();
 
-        var roles = user.UserRoles
-            .Where(userRole => userRole.Role.IsActive)
+        var roles = user
+            .UserRoles.Where(userRole => userRole.Role.IsActive)
             .Select(userRole => userRole.Role.Code)
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .ToArray();
