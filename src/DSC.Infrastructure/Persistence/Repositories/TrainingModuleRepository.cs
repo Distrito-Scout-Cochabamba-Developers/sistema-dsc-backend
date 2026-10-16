@@ -14,6 +14,7 @@ public class TrainingModuleRepository(ScoutDbContext dbContext) : ITrainingModul
         var trimmed = code.Trim();
         return await dbContext
             .TrainingModules.AsNoTracking()
+            .Include(x => x.ModuleType)
             .FirstOrDefaultAsync(x => x.Code == trimmed, cancellationToken);
     }
 
@@ -22,6 +23,15 @@ public class TrainingModuleRepository(ScoutDbContext dbContext) : ITrainingModul
         return await dbContext
             .TrainingModules.AsNoTracking()
             .FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+    }
+
+    public async Task<IReadOnlyList<TrainingModule>> ListAsync(CancellationToken cancellationToken)
+    {
+        return await dbContext
+            .TrainingModules.AsNoTracking()
+            .Include(x => x.ModuleType)
+            .OrderBy(x => x.Name)
+            .ToListAsync(cancellationToken);
     }
 
     public async Task AddAsync(TrainingModule trainingModule, CancellationToken cancellationToken)

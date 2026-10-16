@@ -9,9 +9,50 @@ namespace DSC.Api.Controllers;
 [Route("attendance")]
 public class AttendanceController(
     LookupLeaderByCiQueryHandler lookupHandler,
+    ListTrainingModulesQueryHandler listModulesHandler,
+    GetTrainingModuleByCodeQueryHandler getModuleHandler,
     RegisterDigitalAttendanceCommandHandler registerHandler
 ) : ControllerBase
 {
+    /// <summary>
+    /// Lista el catálogo de módulos de formación para la pantalla de inscripción.
+    /// </summary>
+    [HttpGet("modules")]
+    [ProducesResponseType(typeof(IReadOnlyList<TrainingModuleDto>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> ListModules(CancellationToken cancellationToken)
+    {
+        var modules = await listModulesHandler.HandleAsync(cancellationToken);
+        return Ok(modules);
+    }
+
+    /// <summary>
+    /// Obtiene un módulo por código (el mismo token del deep link / QR de asistencia).
+    /// </summary>
+    [HttpGet("modules/{code}")]
+    [ProducesResponseType(typeof(TrainingModuleDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetModuleByCode(
+        [FromRoute] string code,
+        CancellationToken cancellationToken
+    )
+    {
+        var module = await getModuleHandler.HandleAsync(
+            new GetTrainingModuleByCodeQuery(code),
+            cancellationToken
+        );
+        if (module is null)
+            return NotFound(
+                new ProblemDetails
+                {
+                    Status = StatusCodes.Status404NotFound,
+                    Title = "Módulo No Encontrado",
+                    Detail = $"No se encontró ningún módulo de capacitación con el código '{code}'.",
+                }
+            );
+
+        return Ok(module);
+    }
+
     /// <summary>
     /// Busca un dirigente scout por número de CI para autocompletar el formulario de asistencia.
     /// </summary>
