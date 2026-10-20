@@ -21,7 +21,10 @@ public class AttendanceController(
     [ProducesResponseType(typeof(IReadOnlyList<TrainingModuleDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> ListModules(CancellationToken cancellationToken)
     {
-        var modules = await listModulesHandler.HandleAsync(cancellationToken);
+        var modules = await listModulesHandler.HandleAsync(
+            new ListTrainingModulesQuery(),
+            cancellationToken
+        );
         return Ok(modules);
     }
 

@@ -979,6 +979,12 @@ namespace DSC.Infrastructure.Persistence.Migrations
                         .HasColumnType("text")
                         .HasColumnName("description");
 
+                    b.Property<bool>("IsActive")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true)
+                        .HasColumnName("is_active");
+
                     b.Property<short>("ModuleTypeId")
                         .HasColumnType("smallint")
                         .HasColumnName("module_type_id");

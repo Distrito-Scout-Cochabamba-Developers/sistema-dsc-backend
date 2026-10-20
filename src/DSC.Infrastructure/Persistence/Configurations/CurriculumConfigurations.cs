@@ -90,13 +90,29 @@ public class TrainingModuleConfiguration : IEntityTypeConfiguration<TrainingModu
         builder.HasKey(x => x.Id);
         builder.Property(x => x.Id).HasColumnName("id");
 
-        builder.Property(x => x.Code).HasColumnName("code").HasMaxLength(30).IsRequired();
+        builder
+            .Property(x => x.Code)
+            .HasColumnName("code")
+            .HasMaxLength(TrainingModule.CodeMaxLength)
+            .IsRequired();
 
-        builder.Property(x => x.Name).HasColumnName("name").HasMaxLength(150).IsRequired();
+        builder
+            .Property(x => x.Name)
+            .HasColumnName("name")
+            .HasMaxLength(TrainingModule.NameMaxLength)
+            .IsRequired();
 
         builder.Property(x => x.Description).HasColumnName("description");
 
         builder.Property(x => x.ModuleTypeId).HasColumnName("module_type_id").IsRequired();
+
+        builder
+            .Property(x => x.IsActive)
+            .HasColumnName("is_active")
+            .IsRequired()
+            .HasDefaultValue(true)
+            // Sin sentinel EF omitiría `false` en el INSERT y la BD guardaría `true`.
+            .HasSentinel(true);
 
         builder.HasIndex(x => x.Code).IsUnique();
 

@@ -1,3 +1,5 @@
+using DSC.Domain.Entities;
+
 namespace DSC.Application.DTOs;
 
 /// <summary>
@@ -9,5 +11,18 @@ public record class TrainingModuleDto(
     string Name,
     string? Description,
     string ModuleTypeCode,
-    string ModuleTypeName
-);
+    string ModuleTypeName,
+    bool IsActive
+)
+{
+    public static TrainingModuleDto FromEntity(TrainingModule module) =>
+        new(
+            module.Id,
+            module.Code,
+            module.Name,
+            module.Description,
+            module.ModuleType?.Code ?? string.Empty,
+            module.ModuleType?.Name ?? string.Empty,
+            module.IsActive
+        );
+}
