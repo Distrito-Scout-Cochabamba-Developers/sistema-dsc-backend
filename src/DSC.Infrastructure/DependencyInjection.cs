@@ -43,7 +43,7 @@ public static class DependencyInjection
         services.AddScoped<ITrainingModuleRepository, TrainingModuleRepository>();
         services.AddScoped<IModuleAttendanceRepository, ModuleAttendanceRepository>();
         services.AddScoped<IUserRepository, UserRepository>();
-        services.AddScoped<IPasswordHasher, NormalPasswordValidation>();
+        services.AddScoped<IPasswordHasher, BCryptPasswordHasher>();
         services.AddScoped<IJwtTokenGenerator, JwtTokenGenerator>();
 
         return services;

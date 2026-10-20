@@ -1,3 +1,6 @@
 namespace DSC.Application.DTOs;
 
-public record class LoginRequestDto(string Email, string Password);
+/// <summary>
+/// Credenciales de acceso. El identificador acepta email o nombre de usuario.
+/// </summary>
+public record LoginRequestDto(string Identifier = "", string Password = "");

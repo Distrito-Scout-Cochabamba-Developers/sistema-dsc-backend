@@ -19,6 +19,7 @@
     </ItemGroup>
 
     <ItemGroup>
+        <ProjectReference Include="..\..\src\DSC.Api\DSC.Api.csproj" />
         <ProjectReference Include="..\..\src\DSC.Infrastructure\DSC.Infrastructure.csproj" />
         <ProjectReference Include="..\..\src\DSC.Application\DSC.Application.csproj" />
         <ProjectReference Include="..\..\src\DSC.Domain\DSC.Domain.csproj" />

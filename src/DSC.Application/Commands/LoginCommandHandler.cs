@@ -16,23 +16,26 @@ public class LoginCommandHandler(
         CancellationToken cancellationToken = default
     )
     {
-        if (string.IsNullOrWhiteSpace(request.Email) || string.IsNullOrEmpty(request.Password))
-            throw new DomainException("Las credenciales son inválidas.");
+        if (string.IsNullOrWhiteSpace(request.Identifier) || string.IsNullOrEmpty(request.Password))
+            throw new RequestValidationException(
+                "El identificador y la contraseña son obligatorios."
+            );
 
-        var user = await _userRepository.GetByEmailWithRolesAsync(request.Email, cancellationToken);
+        var user = await _userRepository.GetByIdentifierWithRolesAsync(
+            request.Identifier,
+            cancellationToken
+        );
 
+        // Mismo error para usuario inexistente, contraseña incorrecta o cuenta no habilitada.
         if (user is null || !_passwordHasher.Verify(request.Password, user.Password))
-            throw new DomainException("Las credenciales son inválidas.");
+            throw new InvalidCredentialsException();
 
         user.EnsureCanAuthenticate();
 
-        var roles = user
-            .UserRoles.Where(userRole => userRole.Role.IsActive)
-            .Select(userRole => userRole.Role.Code)
-            .Distinct(StringComparer.OrdinalIgnoreCase)
-            .ToArray();
-        var profile = new UserProfileDto(user.Id, user.Username, user.Email, roles);
+        var roles = user.GetActiveRoleCodes(DateOnly.FromDateTime(DateTime.UtcNow));
+        var profile = new UserProfileDto(user.Id, user.PersonId, user.Username, user.Email, roles);
+        var token = _jwtTokenGenerator.GenerateToken(user);
 
-        return new AuthResultDto(_jwtTokenGenerator.GenerateToken(user), profile);
+        return new AuthResultDto(token.Token, token.ExpiresAt, profile);
     }
 }

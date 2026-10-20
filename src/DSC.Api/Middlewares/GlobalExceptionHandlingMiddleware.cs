@@ -15,6 +15,32 @@ public class GlobalExceptionHandlingMiddleware(
         {
             await next(context);
         }
+        catch (InvalidCredentialsException ex)
+        {
+            logger.LogInformation(
+                "Intento de autenticación fallido en {Path}.",
+                context.Request.Path
+            );
+            await HandleExceptionAsync(context, ex);
+        }
+        catch (RequestValidationException ex)
+        {
+            logger.LogWarning(
+                "Solicitud inválida en {Path}: {Message}",
+                context.Request.Path,
+                ex.Message
+            );
+            await HandleExceptionAsync(context, ex);
+        }
+        catch (DomainException ex)
+        {
+            logger.LogWarning(
+                "Error de validación de dominio en {Path}: {Message}",
+                context.Request.Path,
+                ex.Message
+            );
+            await HandleExceptionAsync(context, ex);
+        }
         catch (Exception ex)
         {
             logger.LogError(ex, "Ha ocurrido una excepción no controlada: {Message}", ex.Message);
@@ -28,6 +54,18 @@ public class GlobalExceptionHandlingMiddleware(
 
         var (statusCode, title, detail) = exception switch
         {
+            InvalidCredentialsException => (
+                HttpStatusCode.Unauthorized,
+                "Credenciales Inválidas",
+                "Las credenciales son inválidas."
+            ),
+
+            RequestValidationException validationEx => (
+                HttpStatusCode.BadRequest,
+                "Solicitud Inválida",
+                validationEx.Message
+            ),
+
             DomainException domainEx => (
                 HttpStatusCode.BadRequest,
                 "Error de Validación de Dominio",

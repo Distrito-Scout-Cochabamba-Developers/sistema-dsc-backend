@@ -7,9 +7,12 @@ using DSC.Application;
 using DSC.Infrastructure;
 using DSC.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
+using Scalar.AspNetCore;
 
 public partial class Program
 {
@@ -28,7 +31,68 @@ public partial class Program
         {
             options.Conventions.Add(new GlobalRoutePrefixConvention(new RouteAttribute("api")));
         });
-        builder.Services.AddOpenApi();
+        builder.Services.AddOpenApi(options =>
+        {
+            options.AddDocumentTransformer(
+                (document, context, cancellationToken) =>
+                {
+                    document.Info = new()
+                    {
+                        Title = "DSC System API",
+                        Version = "v1",
+                        Description =
+                            "API de backend para DSC System: autenticación, usuarios y roles.",
+                    };
+
+                    var securityScheme = new OpenApiSecurityScheme
+                    {
+                        Name = "Authorization",
+                        Description =
+                            "Introduce el token JWT en formato Bearer (ej: Bearer {token})",
+                        In = ParameterLocation.Header,
+                        Type = SecuritySchemeType.Http,
+                        Scheme = "bearer",
+                        BearerFormat = "JWT",
+                    };
+
+                    document.Components ??= new OpenApiComponents();
+                    document.Components.SecuritySchemes["Bearer"] = securityScheme;
+
+                    return Task.CompletedTask;
+                }
+            );
+
+            options.AddOperationTransformer(
+                (operation, context, cancellationToken) =>
+                {
+                    var hasAuthorize = context.Description.ActionDescriptor.EndpointMetadata.Any(
+                        metadata => metadata is AuthorizeAttribute
+                    );
+
+                    if (hasAuthorize)
+                    {
+                        operation.Security =
+                        [
+                            new OpenApiSecurityRequirement
+                            {
+                                [
+                                    new OpenApiSecurityScheme
+                                    {
+                                        Reference = new OpenApiReference
+                                        {
+                                            Type = ReferenceType.SecurityScheme,
+                                            Id = "Bearer",
+                                        },
+                                    }
+                                ] = [],
+                            },
+                        ];
+                    }
+
+                    return Task.CompletedTask;
+                }
+            );
+        });
 
         builder.Services.AddApplication();
         builder.Services.AddInfrastructure(connectionString);
@@ -38,6 +102,7 @@ public partial class Program
             .Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             .AddJwtBearer(options =>
             {
+                options.MapInboundClaims = false;
                 options.TokenValidationParameters = new TokenValidationParameters
                 {
                     ValidateIssuerSigningKey = true,
@@ -50,15 +115,8 @@ public partial class Program
                     ValidAudience = builder.Configuration["Jwt:Audience"],
                     ValidateLifetime = true,
                     ClockSkew = TimeSpan.Zero,
-                };
-                options.Events = new JwtBearerEvents
-                {
-                    OnMessageReceived = context =>
-                    {
-                        if (string.IsNullOrEmpty(context.Token))
-                            context.Token = context.Request.Cookies["access_token"];
-                        return Task.CompletedTask;
-                    },
+                    NameClaimType = "username",
+                    RoleClaimType = "roles",
                 };
             });
         builder.Services.AddAuthorization();
@@ -69,7 +127,15 @@ public partial class Program
         app.UseMiddleware<GlobalExceptionHandlingMiddleware>();
 
         if (app.Environment.IsDevelopment())
+        {
             app.MapOpenApi();
+            app.MapScalarApiReference(options =>
+            {
+                options.WithTitle("DSC System API");
+                options.DisableAgent();
+                options.DisableMcp();
+            });
+        }
         else
             app.UseHttpsRedirection();
 

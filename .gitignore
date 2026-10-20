@@ -489,4 +489,7 @@ $RECYCLE.BIN/
 # BMad Personal Overrides (optional local overrides)
 _bmad/custom/*.user.toml
 
+# BMad local session logs
+_bmad-output/planning-artifacts/.memlog.md
+
 
