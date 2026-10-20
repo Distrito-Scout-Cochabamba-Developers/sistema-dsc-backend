@@ -76,3 +76,15 @@ _Este archivo contiene las reglas críticas y patrones de arquitectura que los a
   - Pruebas de repositorios y mapeos de EF Core contra base de datos en memoria / contenedores de prueba.
 - **Pruebas End-to-End (E2E)**:
   - Se incorporarán de manera progresiva únicamente cuando un módulo funcional esté completo y estabilizado.
+
+---
+
+## 6. Coordinación de producto y artefactos compartidos
+
+- La carpeta padre `DSC System` es un workspace local del usuario que no se subirá a Git. Este repositorio debe conservar el contexto y los artefactos necesarios para el equipo sin depender de esa carpeta.
+- Aunque la sesión comience en el workspace padre, resolver BMAD con este repositorio como `project-root` al crear o actualizar sus artefactos.
+- Guardar la contribución del backend al release, sus specs, reglas de negocio, criterios de aceptación y dependencias en los artefactos BMAD y la documentación de este repositorio.
+- `_bmad-output/planning-artifacts/prd.md` es un antecedente en borrador. Consultarlo y conciliarlo al comenzar el nuevo spec y PRD; registrar qué fuente versionada queda vigente antes de sustituirlo o moverlo.
+- El diseño UX se mantiene en los artefactos de planificación del repositorio `sistema-dsc-frontend`: `DESIGN.md` y `EXPERIENCE.md` cuando se desarrollen. Referenciar esas fuentes para coordinar los flujos y sus reglas, sin duplicar el diseño en backend.
+- Para requisitos compartidos, registrar la fuente principal versionada y los IDs reales de Azure Boards. Cuando cambie un requisito, actualizar los artefactos afectados del backend y revisar el impacto en frontend y Azure Boards.
+- El alcance inicial indicado para planificar el primer release comprende inscripción/consulta de módulos de formación y cuadernillos redactados en el sistema con asignación/seguimiento de revisores, apoyados en un catálogo común de módulos. Los cuadernillos usan plantillas por nivel: incluye IM II y III; Paxtú Grupo/Distrito y otros niveles quedan para futuros releases. El proceso de aprobación documentado en PDF (entregas, plazos, comisión y documento consolidado) es evidencia recibida y debe validarse antes de convertirlo en requisitos. La contribución detallada del backend está en el Product Brief y addendum bajo `planning-artifacts/briefs/brief-Distrito Scout Cochabamba DSC-2026-10-14/`. No inferir alcance adicional del tablero ni iniciar el spec o PRD hasta que el usuario lo indique.
