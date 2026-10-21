@@ -1,0 +1,92 @@
+{
+  "users": [
+    {
+      "firstName": "Pablo",
+      "firstLastName": "Rocha",
+      "idCard": "9000001",
+      "username": "pablo.rocha",
+      "email": "pablo.rocha@example.test",
+      "roles": ["ADMIN", "DISTRICT_DIRECTOR"]
+    },
+    {
+      "firstName": "Teresa",
+      "firstLastName": "Aillon",
+      "idCard": "9000002",
+      "username": "teresa.aillon",
+      "email": "teresa.aillon@example.test",
+      "roles": ["COMMUNICATIONS_OFFICER"]
+    },
+    {
+      "firstName": "Maricel",
+      "firstLastName": "Rocha",
+      "idCard": "9000003",
+      "username": "maricel.rocha",
+      "email": "maricel.rocha@example.test",
+      "roles": ["DISTRICT_SECRETARY", "FINANCE_COMMISSIONER"]
+    },
+    {
+      "firstName": "German",
+      "firstLastName": "Rocha",
+      "idCard": "9000004",
+      "username": "german.rocha",
+      "email": "german.rocha@example.test",
+      "roles": ["YOUTH_PROGRAM_COORDINATOR"]
+    },
+    {
+      "firstName": "Daniel",
+      "firstLastName": "Vargas",
+      "idCard": "9000005",
+      "username": "daniel.vargas",
+      "email": "daniel.vargas@example.test",
+      "roles": ["ADULT_RESOURCES_COORDINATOR"]
+    },
+    {
+      "firstName": "Jorge",
+      "firstLastName": "Revollo",
+      "idCard": "9000006",
+      "username": "jorge.revollo",
+      "email": "jorge.revollo@example.test",
+      "roles": ["QUARTERMASTER"]
+    },
+    {
+      "firstName": "Apu",
+      "firstLastName": "Prueba",
+      "idCard": "9000007",
+      "username": "apu",
+      "email": "apu@example.test",
+      "roles": ["OPERATIONS_OFFICER"]
+    },
+    {
+      "firstName": "Ana Laura",
+      "firstLastName": "Prueba",
+      "idCard": "9000008",
+      "username": "ana.laura",
+      "email": "ana.laura@example.test",
+      "roles": ["BRANCH_COMMISSIONER"]
+    },
+    {
+      "firstName": "Fabiola",
+      "firstLastName": "Prueba",
+      "idCard": "9000009",
+      "username": "fabiola",
+      "email": "fabiola@example.test",
+      "roles": ["BRANCH_COMMISSIONER"]
+    },
+    {
+      "firstName": "Erick",
+      "firstLastName": "Prueba",
+      "idCard": "9000010",
+      "username": "erick",
+      "email": "erick@example.test",
+      "roles": ["BRANCH_COMMISSIONER"]
+    },
+    {
+      "firstName": "Mariel",
+      "firstLastName": "Prueba",
+      "idCard": "9000011",
+      "username": "mariel",
+      "email": "mariel@example.test",
+      "roles": ["BRANCH_COMMISSIONER"]
+    }
+  ]
+}

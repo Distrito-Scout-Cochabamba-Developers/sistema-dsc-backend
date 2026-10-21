@@ -1,3 +1,4 @@
+using System.IdentityModel.Tokens.Jwt;
 using DSC.Application.Commands;
 using DSC.Application.DTOs;
 using DSC.Domain.Entities;
@@ -9,13 +10,15 @@ using DSC.Infrastructure.Persistence.Repositories;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Primitives;
-using Xunit;
 
 namespace DSC.UnitTests.Application;
 
 public class LoginHandlerTests
 {
-    private ScoutDbContext CreateInMemoryDbContext()
+    private const string RawPassword = "SecurePassword123!";
+    private static readonly DateOnly Today = DateOnly.FromDateTime(DateTime.UtcNow);
+
+    private static ScoutDbContext CreateInMemoryDbContext()
     {
         var options = new DbContextOptionsBuilder<ScoutDbContext>()
             .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
@@ -26,7 +29,7 @@ public class LoginHandlerTests
         return dbContext;
     }
 
-    private class SimpleTestConfiguration(Dictionary<string, string?> data) : IConfiguration
+    private sealed class SimpleTestConfiguration(Dictionary<string, string?> data) : IConfiguration
     {
         public string? this[string key]
         {
@@ -42,24 +45,24 @@ public class LoginHandlerTests
         public IConfigurationSection GetSection(string key) => throw new NotImplementedException();
     }
 
-    private IConfiguration CreateTestConfiguration()
-    {
-        return new SimpleTestConfiguration(
+    private static IConfiguration CreateTestConfiguration(int expiresMinutes = 60) =>
+        new SimpleTestConfiguration(
             new Dictionary<string, string?>
             {
                 { "Jwt:Key", "this-is-a-valid-test-secret-key-32bytes-long" },
                 { "Jwt:Issuer", "DSC.Api" },
                 { "Jwt:Audience", "DSC.Client" },
-                { "Jwt:ExpiresMinutes", "60" },
+                { "Jwt:ExpiresMinutes", expiresMinutes.ToString() },
             }
         );
-    }
 
-    private async Task<User> SeedActiveUserAsync(
+    private static async Task<User> SeedUserAsync(
         ScoutDbContext db,
-        string username = "scoutmaster",
-        string email = "master@scout.org",
-        string rawPassword = "SecurePassword123!"
+        string username = "badenpowell",
+        string email = "bp@scout.org",
+        string? storedPassword = null,
+        string statusCode = "ACTIVE",
+        params RoleSeed[] roles
     )
     {
         var activeStatus = new UserStatus
@@ -68,7 +71,21 @@ public class LoginHandlerTests
             Code = "ACTIVE",
             Name = "Activo",
         };
-        db.UserStatuses.Add(activeStatus);
+        var blockedStatus = new UserStatus
+        {
+            Id = 2,
+            Code = "BLOCKED",
+            Name = "Bloqueado",
+        };
+        db.UserStatuses.AddRange(activeStatus, blockedStatus);
+
+        var personStatus = new PersonStatus
+        {
+            Id = 1,
+            Code = "ACTIVE",
+            Name = "Activo",
+        };
+        db.PersonStatuses.Add(personStatus);
 
         var person = new Person
         {
@@ -77,19 +94,47 @@ public class LoginHandlerTests
             FirstLastName = "Powell",
             IdCard = "1234567",
             Gender = GenderType.MALE,
+            PersonStatusId = personStatus.Id,
         };
         db.Persons.Add(person);
 
-        var passwordHasher = new NormalPasswordValidation();
+        var roleEntities = roles
+            .Select(
+                (seed, index) =>
+                    new Role
+                    {
+                        Id = (short)(index + 1),
+                        Code = seed.Code,
+                        Name = seed.Code,
+                        IsActive = seed.IsActive,
+                    }
+            )
+            .ToList();
+        db.Roles.AddRange(roleEntities);
+
+        var hasher = new BCryptPasswordHasher();
         var user = new User
         {
             Id = 1,
-            PersonId = 1,
+            Person = person,
             Username = username,
             Email = email,
-            Password = passwordHasher.Hash(rawPassword),
-            UserStatusId = 1,
-            UserStatus = activeStatus,
+            Password = storedPassword ?? hasher.Hash(RawPassword),
+            UserStatusId = statusCode == "ACTIVE" ? activeStatus.Id : blockedStatus.Id,
+            UserStatus = statusCode == "ACTIVE" ? activeStatus : blockedStatus,
+            UserRoles = roleEntities
+                .Select(
+                    (role, index) =>
+                        new UserRole
+                        {
+                            UserId = 1,
+                            RoleId = role.Id,
+                            Role = role,
+                            ValidFrom = roles[index].ValidFromValue,
+                            ValidUntil = roles[index].ValidUntil,
+                        }
+                )
+                .ToList(),
         };
         db.Users.Add(user);
         await db.SaveChangesAsync();
@@ -97,102 +142,220 @@ public class LoginHandlerTests
         return user;
     }
 
-    [Fact]
-    public async Task LoginWithUsername_WithValidCredentials_ShouldReturnTokenAndProfile()
+    private sealed record RoleSeed(
+        string Code,
+        bool IsActive = true,
+        DateOnly? ValidFrom = null,
+        DateOnly? ValidUntil = null
+    )
     {
-        // Arrange
-        using var db = CreateInMemoryDbContext();
-        await SeedActiveUserAsync(db, username: "badenpowell", rawPassword: "MySecretPassword123");
+        public DateOnly ValidFromValue => ValidFrom ?? Today.AddDays(-30);
+    }
 
-        var userRepo = new UserRepository(db);
-        var passwordHasher = new NormalPasswordValidation();
-        var jwtGenerator = new JwtTokenGenerator(CreateTestConfiguration());
-        var handler = new LoginWithUsernameCommandHandler(userRepo, passwordHasher, jwtGenerator);
-
-        var request = new LoginWithUsernameRequestDto(
-            Username: "badenpowell",
-            Password: "MySecretPassword123"
+    private static LoginCommandHandler CreateHandler(
+        ScoutDbContext db,
+        IConfiguration? configuration = null
+    ) =>
+        new(
+            new UserRepository(db),
+            new BCryptPasswordHasher(),
+            new JwtTokenGenerator(configuration ?? CreateTestConfiguration())
         );
 
-        // Act
-        var result = await handler.HandleAsync(request, CancellationToken.None);
+    [Fact]
+    public async Task Login_WithUsername_ShouldReturnTokenAndProfile()
+    {
+        using var db = CreateInMemoryDbContext();
+        await SeedUserAsync(db);
+        var handler = CreateHandler(db);
 
-        // Assert
-        Assert.NotNull(result);
+        var result = await handler.HandleAsync(
+            new LoginRequestDto("badenpowell", RawPassword),
+            CancellationToken.None
+        );
+
         Assert.NotEmpty(result.Token);
         Assert.Equal("badenpowell", result.User.Username);
         Assert.Equal(1, result.User.Id);
+        Assert.Equal(1, result.User.PersonId);
     }
 
     [Fact]
-    public async Task LoginWithUsername_WithWrongPassword_ShouldThrowDomainException()
+    public async Task Login_WithEmail_ShouldReturnTokenAndProfile()
     {
-        // Arrange
         using var db = CreateInMemoryDbContext();
-        await SeedActiveUserAsync(db, username: "badenpowell", rawPassword: "MySecretPassword123");
+        await SeedUserAsync(db);
+        var handler = CreateHandler(db);
 
-        var userRepo = new UserRepository(db);
-        var passwordHasher = new NormalPasswordValidation();
-        var jwtGenerator = new JwtTokenGenerator(CreateTestConfiguration());
-        var handler = new LoginWithUsernameCommandHandler(userRepo, passwordHasher, jwtGenerator);
-
-        var request = new LoginWithUsernameRequestDto(
-            Username: "badenpowell",
-            Password: "WrongPassword"
+        var result = await handler.HandleAsync(
+            new LoginRequestDto("BP@SCOUT.ORG", RawPassword),
+            CancellationToken.None
         );
 
-        // Act & Assert
-        var exception = await Assert.ThrowsAsync<DomainException>(() =>
-            handler.HandleAsync(request, CancellationToken.None)
-        );
-
-        Assert.Contains("inválidas", exception.Message);
-    }
-
-    [Fact]
-    public async Task LoginWithUsername_WithEmptyCredentials_ShouldThrowDomainException()
-    {
-        // Arrange
-        using var db = CreateInMemoryDbContext();
-        var userRepo = new UserRepository(db);
-        var passwordHasher = new NormalPasswordValidation();
-        var jwtGenerator = new JwtTokenGenerator(CreateTestConfiguration());
-        var handler = new LoginWithUsernameCommandHandler(userRepo, passwordHasher, jwtGenerator);
-
-        var request = new LoginWithUsernameRequestDto(Username: "", Password: "");
-
-        // Act & Assert
-        await Assert.ThrowsAsync<DomainException>(() =>
-            handler.HandleAsync(request, CancellationToken.None)
-        );
-    }
-
-    [Fact]
-    public async Task LoginWithEmail_WithValidCredentials_ShouldReturnTokenAndProfileWithUsername()
-    {
-        // Arrange
-        using var db = CreateInMemoryDbContext();
-        await SeedActiveUserAsync(
-            db,
-            username: "bp_leader",
-            email: "bp@scout.org",
-            rawPassword: "Password123!"
-        );
-
-        var userRepo = new UserRepository(db);
-        var passwordHasher = new NormalPasswordValidation();
-        var jwtGenerator = new JwtTokenGenerator(CreateTestConfiguration());
-        var handler = new LoginCommandHandler(userRepo, passwordHasher, jwtGenerator);
-
-        var request = new LoginRequestDto(Email: "bp@scout.org", Password: "Password123!");
-
-        // Act
-        var result = await handler.HandleAsync(request, CancellationToken.None);
-
-        // Assert
-        Assert.NotNull(result);
         Assert.NotEmpty(result.Token);
-        Assert.Equal("bp_leader", result.User.Username);
+        Assert.Equal("badenpowell", result.User.Username);
         Assert.Equal("bp@scout.org", result.User.Email);
+    }
+
+    [Fact]
+    public async Task Login_WithWrongPassword_ShouldThrowInvalidCredentials()
+    {
+        using var db = CreateInMemoryDbContext();
+        await SeedUserAsync(db);
+        var handler = CreateHandler(db);
+
+        await Assert.ThrowsAsync<InvalidCredentialsException>(() =>
+            handler.HandleAsync(
+                new LoginRequestDto("badenpowell", "WrongPassword"),
+                CancellationToken.None
+            )
+        );
+    }
+
+    [Fact]
+    public async Task Login_WithUnknownIdentifier_ShouldThrowInvalidCredentials()
+    {
+        using var db = CreateInMemoryDbContext();
+        await SeedUserAsync(db);
+        var handler = CreateHandler(db);
+
+        await Assert.ThrowsAsync<InvalidCredentialsException>(() =>
+            handler.HandleAsync(new LoginRequestDto("nobody", RawPassword), CancellationToken.None)
+        );
+    }
+
+    [Fact]
+    public async Task Login_WithEmptyCredentials_ShouldThrowValidationError()
+    {
+        using var db = CreateInMemoryDbContext();
+        var handler = CreateHandler(db);
+
+        await Assert.ThrowsAsync<RequestValidationException>(() =>
+            handler.HandleAsync(new LoginRequestDto("", ""), CancellationToken.None)
+        );
+    }
+
+    [Fact]
+    public async Task Login_WithBlockedUser_ShouldThrowInvalidCredentials()
+    {
+        using var db = CreateInMemoryDbContext();
+        await SeedUserAsync(db, statusCode: "BLOCKED");
+        var handler = CreateHandler(db);
+
+        await Assert.ThrowsAsync<InvalidCredentialsException>(() =>
+            handler.HandleAsync(
+                new LoginRequestDto("badenpowell", RawPassword),
+                CancellationToken.None
+            )
+        );
+    }
+
+    [Fact]
+    public async Task Login_WithLegacyPlaintextPassword_ShouldFail()
+    {
+        using var db = CreateInMemoryDbContext();
+        await SeedUserAsync(db, storedPassword: RawPassword);
+        var handler = CreateHandler(db);
+
+        await Assert.ThrowsAsync<InvalidCredentialsException>(() =>
+            handler.HandleAsync(
+                new LoginRequestDto("badenpowell", RawPassword),
+                CancellationToken.None
+            )
+        );
+    }
+
+    [Fact]
+    public async Task Login_ShouldEmitIdentityClaimsAndRoles()
+    {
+        using var db = CreateInMemoryDbContext();
+        await SeedUserAsync(db, roles: [new RoleSeed("ADMIN"), new RoleSeed("DISTRICT_DIRECTOR")]);
+        var handler = CreateHandler(db);
+
+        var result = await handler.HandleAsync(
+            new LoginRequestDto("badenpowell", RawPassword),
+            CancellationToken.None
+        );
+
+        var jwt = new JwtSecurityTokenHandler().ReadJwtToken(result.Token);
+
+        Assert.Equal("1", jwt.Claims.Single(c => c.Type == "sub").Value);
+        Assert.Equal("bp@scout.org", jwt.Claims.Single(c => c.Type == "email").Value);
+        Assert.Equal("1", jwt.Claims.Single(c => c.Type == "personId").Value);
+        Assert.Equal("badenpowell", jwt.Claims.Single(c => c.Type == "username").Value);
+
+        var roles = jwt
+            .Claims.Where(c => c.Type == "roles")
+            .Select(c => c.Value)
+            .OrderBy(value => value)
+            .ToArray();
+        Assert.Equal(new[] { "ADMIN", "DISTRICT_DIRECTOR" }, roles);
+    }
+
+    [Fact]
+    public async Task Login_ShouldIncludeOnlyActiveAndCurrentlyValidRoles()
+    {
+        using var db = CreateInMemoryDbContext();
+        await SeedUserAsync(
+            db,
+            roles:
+            [
+                new RoleSeed("ADMIN"),
+                new RoleSeed("DISTRICT_DIRECTOR", ValidFrom: Today.AddDays(5)),
+                new RoleSeed("DISTRICT_SECRETARY", ValidUntil: Today.AddDays(-1)),
+                new RoleSeed("FINANCE_COMMISSIONER", IsActive: false),
+                new RoleSeed("QUARTERMASTER", ValidUntil: Today),
+            ]
+        );
+        var handler = CreateHandler(db);
+
+        var result = await handler.HandleAsync(
+            new LoginRequestDto("badenpowell", RawPassword),
+            CancellationToken.None
+        );
+
+        var roles = new JwtSecurityTokenHandler()
+            .ReadJwtToken(result.Token)
+            .Claims.Where(c => c.Type == "roles")
+            .Select(c => c.Value)
+            .OrderBy(value => value)
+            .ToArray();
+
+        Assert.Equal(new[] { "ADMIN", "QUARTERMASTER" }, roles);
+        Assert.Equal(roles, result.User.Roles.OrderBy(value => value).ToArray());
+    }
+
+    [Fact]
+    public async Task Login_ShouldReturnExpirationMatchingConfiguration()
+    {
+        using var db = CreateInMemoryDbContext();
+        await SeedUserAsync(db);
+        var handler = CreateHandler(db, CreateTestConfiguration(expiresMinutes: 30));
+
+        var before = DateTimeOffset.UtcNow.AddMinutes(29);
+        var result = await handler.HandleAsync(
+            new LoginRequestDto("badenpowell", RawPassword),
+            CancellationToken.None
+        );
+        var after = DateTimeOffset.UtcNow.AddMinutes(31);
+
+        Assert.InRange(result.ExpiresAt, before, after);
+
+        var jwt = new JwtSecurityTokenHandler().ReadJwtToken(result.Token);
+        Assert.InRange(jwt.ValidTo, before.UtcDateTime, after.UtcDateTime);
+    }
+
+    [Fact]
+    public void Hasher_ShouldNotStorePlaintextAndShouldRejectWrongPassword()
+    {
+        var hasher = new BCryptPasswordHasher();
+
+        var hash = hasher.Hash(RawPassword);
+
+        Assert.NotEqual(RawPassword, hash);
+        Assert.StartsWith("$2", hash);
+        Assert.True(hasher.Verify(RawPassword, hash));
+        Assert.False(hasher.Verify("WrongPassword", hash));
+        Assert.False(hasher.Verify(RawPassword, RawPassword));
     }
 }

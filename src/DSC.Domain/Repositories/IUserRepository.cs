@@ -7,6 +7,11 @@ namespace DSC.Domain.Repositories;
 /// </summary>
 public interface IUserRepository
 {
-    Task<User?> GetByEmailWithRolesAsync(string email, CancellationToken cancellationToken);
-    Task<User?> GetByUsernameWithRolesAsync(string username, CancellationToken cancellationToken);
+    /// <summary>
+    /// Busca un usuario por email o nombre de usuario, incluyendo estado y roles.
+    /// </summary>
+    Task<User?> GetByIdentifierWithRolesAsync(
+        string identifier,
+        CancellationToken cancellationToken
+    );
 }

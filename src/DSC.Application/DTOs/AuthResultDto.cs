@@ -1,3 +1,3 @@
 namespace DSC.Application.DTOs;
 
-public record AuthResultDto(string Token, UserProfileDto User);
+public record AuthResultDto(string Token, DateTimeOffset ExpiresAt, UserProfileDto User);
