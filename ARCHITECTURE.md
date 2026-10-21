@@ -287,6 +287,12 @@ public class ScoutMembersController(RegisterScoutMemberHandler handler) : Contro
 
 ---
 
+## 📚 Documentación de features
+
+Contratos y cambios recientes (catálogo de módulos, catálogos que exige el POST de asistencia) viven en [`docs/`](./docs/README.md). Este archivo sigue siendo la guía de capas y dependencias.
+
+---
+
 ## 🧪 Estrategia de Testing (xUnit)
 
 1. **Pruebas Unitarias (`tests/DSC.UnitTests`)**:
