@@ -16,13 +16,6 @@ public class GetTrainingModuleByCodeQueryHandler(ITrainingModuleRepository modul
         if (module is null)
             return null;
 
-        return new TrainingModuleDto(
-            module.Id,
-            module.Code,
-            module.Name,
-            module.Description,
-            module.ModuleType?.Code ?? string.Empty,
-            module.ModuleType?.Name ?? string.Empty
-        );
+        return TrainingModuleMapping.ToDto(module);
     }
 }

@@ -3,7 +3,7 @@
 - **Estado:** Entregado (2026-10-16)
 - **Motivo:** El frontend lista módulos desde PostgreSQL y solo abre el formulario de asistencia al elegir uno.
 
-Los endpoints son anónimos, igual que lookup y register.
+Los endpoints son anónimos, igual que lookup y register. En Scalar (http://localhost:5090/scalar/v1) viven en el grupo **Attendance**. El CRUD admin está en **Módulos**.
 
 ## Contrato HTTP
 
@@ -57,5 +57,6 @@ Sin filas en `training_module` el GET devuelve `[]` y el POST de asistencia resp
 
 ## Fuera de alcance
 
-- Autorización por rol (admin/secretaría vs. autoinscripción).
 - Convocatoria (`TrainingModuleSession`: fecha, horario, QR admin). El `code` del módulo curricular hace de token de sesión.
+
+Administración (POST/PUT, tipos, roles): [admin-catalogo-modulos.md](./admin-catalogo-modulos.md).
