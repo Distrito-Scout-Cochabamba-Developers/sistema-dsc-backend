@@ -41,6 +41,7 @@ public static class DependencyInjection
 
         services.AddScoped<IScoutLeaderRepository, ScoutLeaderRepository>();
         services.AddScoped<ITrainingModuleRepository, TrainingModuleRepository>();
+        services.AddScoped<IModuleTypeRepository, ModuleTypeRepository>();
         services.AddScoped<IModuleAttendanceRepository, ModuleAttendanceRepository>();
         services.AddScoped<IUserRepository, UserRepository>();
         services.AddScoped<IPasswordHasher, BCryptPasswordHasher>();

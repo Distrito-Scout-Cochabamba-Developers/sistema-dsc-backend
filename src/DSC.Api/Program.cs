@@ -41,7 +41,7 @@ public partial class Program
                         Title = "DSC System API",
                         Version = "v1",
                         Description =
-                            "API de backend para DSC System: autenticación, usuarios y roles.",
+                            "API de backend para DSC System: autenticación JWT, catálogo de módulos (asistencia anónima y administración con roles) y registro de asistencia.",
                     };
 
                     var securityScheme = new OpenApiSecurityScheme
@@ -57,6 +57,44 @@ public partial class Program
 
                     document.Components ??= new OpenApiComponents();
                     document.Components.SecuritySchemes["Bearer"] = securityScheme;
+
+                    var configuration =
+                        context.ApplicationServices.GetRequiredService<IConfiguration>();
+                    var publicApiUrl = configuration["Api:PublicUrl"];
+                    if (!string.IsNullOrWhiteSpace(publicApiUrl))
+                    {
+                        document.Servers =
+                        [
+                            new OpenApiServer
+                            {
+                                Url = publicApiUrl.TrimEnd('/'),
+                                Description = "API publicada en el host (Docker :5090 → :8080)",
+                            },
+                        ];
+                    }
+
+                    document.Tags ??= [];
+                    EnsureTag(
+                        document,
+                        OpenApiTags.Attendance,
+                        "Asistencia digital a módulos: listado y detalle anónimos, lookup por CI y registro."
+                    );
+                    EnsureTag(
+                        document,
+                        OpenApiTags.Modules,
+                        "CRUD del catálogo curricular (`training_module`). Requiere JWT con rol ADMIN o DISTRICT_SECRETARY."
+                    );
+
+                    foreach (
+                        var leftover in document
+                            .Tags.Where(tag =>
+                                tag.Name is "AdminCatalog" or "Administración de módulos"
+                            )
+                            .ToList()
+                    )
+                    {
+                        document.Tags.Remove(leftover);
+                    }
 
                     return Task.CompletedTask;
                 }
@@ -202,6 +240,22 @@ public partial class Program
         }
 
         app.Run();
+
+        static void EnsureTag(OpenApiDocument document, string name, string description)
+        {
+            document.Tags ??= [];
+            var existing = document.Tags.FirstOrDefault(tag =>
+                string.Equals(tag.Name, name, StringComparison.Ordinal)
+            );
+            if (existing is null)
+            {
+                document.Tags.Add(new OpenApiTag { Name = name, Description = description });
+                return;
+            }
+
+            if (string.IsNullOrWhiteSpace(existing.Description))
+                existing.Description = description;
+        }
 
         static string ResolveConnectionString(IConfiguration configuration)
         {

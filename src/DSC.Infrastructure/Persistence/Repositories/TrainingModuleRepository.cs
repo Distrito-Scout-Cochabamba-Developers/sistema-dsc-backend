@@ -39,4 +39,56 @@ public class TrainingModuleRepository(ScoutDbContext dbContext) : ITrainingModul
         await dbContext.TrainingModules.AddAsync(trainingModule, cancellationToken);
         await dbContext.SaveChangesAsync(cancellationToken);
     }
+
+    public async Task<TrainingModule?> GetTrackedByCodeAsync(
+        string code,
+        CancellationToken cancellationToken
+    )
+    {
+        var trimmed = code.Trim();
+        return await dbContext.TrainingModules.FirstOrDefaultAsync(
+            x => x.Code == trimmed,
+            cancellationToken
+        );
+    }
+
+    public Task SaveChangesAsync(CancellationToken cancellationToken) =>
+        dbContext.SaveChangesAsync(cancellationToken);
+
+    public async Task<bool> HasDependenciesAsync(long id, CancellationToken cancellationToken)
+    {
+        var hasAttendance = await dbContext.ModuleAttendances.AnyAsync(
+            attendance => attendance.TrainingModuleId == id,
+            cancellationToken
+        );
+        if (hasAttendance)
+            return true;
+
+        var hasSessions = await dbContext.TrainingModuleSessions.AnyAsync(
+            session => session.TrainingModuleId == id,
+            cancellationToken
+        );
+        if (hasSessions)
+            return true;
+
+        return await dbContext.TrainingModuleLessonPlanTemplates.AnyAsync(
+            template => template.TrainingModuleId == id,
+            cancellationToken
+        );
+    }
+
+    public async Task RemoveAsync(TrainingModule trainingModule, CancellationToken cancellationToken)
+    {
+        dbContext.TrainingModules.Remove(trainingModule);
+        try
+        {
+            await dbContext.SaveChangesAsync(cancellationToken);
+        }
+        catch (DbUpdateException)
+        {
+            throw new InvalidOperationException(
+                $"No se puede eliminar el módulo '{trainingModule.Code}' porque tiene asistencia, sesiones o plantillas asociadas."
+            );
+        }
+    }
 }

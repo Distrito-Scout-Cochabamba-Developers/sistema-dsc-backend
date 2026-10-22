@@ -10,6 +10,12 @@ public static class DependencyInjection
     public static IServiceCollection AddApplication(this IServiceCollection services)
     {
         services.AddScoped<LookupLeaderByCiQueryHandler>();
+        services.AddScoped<ListTrainingModulesQueryHandler>();
+        services.AddScoped<GetTrainingModuleByCodeQueryHandler>();
+        services.AddScoped<ListModuleTypesQueryHandler>();
+        services.AddScoped<CreateTrainingModuleCommandHandler>();
+        services.AddScoped<UpdateTrainingModuleCommandHandler>();
+        services.AddScoped<DeleteTrainingModuleCommandHandler>();
         services.AddScoped<RegisterDigitalAttendanceCommandHandler>();
         services.AddScoped<LoginCommandHandler>();
 
