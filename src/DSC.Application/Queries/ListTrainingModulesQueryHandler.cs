@@ -10,15 +10,6 @@ public class ListTrainingModulesQueryHandler(ITrainingModuleRepository moduleRep
     )
     {
         var modules = await moduleRepository.ListAsync(cancellationToken);
-        return modules
-            .Select(module => new TrainingModuleDto(
-                module.Id,
-                module.Code,
-                module.Name,
-                module.Description,
-                module.ModuleType?.Code ?? string.Empty,
-                module.ModuleType?.Name ?? string.Empty
-            ))
-            .ToArray();
+        return modules.Select(TrainingModuleMapping.ToDto).ToArray();
     }
 }

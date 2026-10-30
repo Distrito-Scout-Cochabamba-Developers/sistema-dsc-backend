@@ -5,6 +5,7 @@
 | Documento | Contenido |
 | --------- | --------- |
 | [features/catalogo-modulos.md](./features/catalogo-modulos.md) | `GET /api/attendance/modules` y `GET /api/attendance/modules/{code}` |
+| [features/admin-catalogo-modulos.md](./features/admin-catalogo-modulos.md) | CRUD admin `/api/v1/admin/modules` (Scalar) |
 | [features/catalogos-asistencia.md](./features/catalogos-asistencia.md) | Filas de catálogo que exige `POST /api/attendance/register` |
 
 Semillas locales del workspace (no viven en este repo): `../docker/seed-dev-modules.sql` y `../docker/seed-dev-user.sql`.

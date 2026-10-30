@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace DSC.Api.Controllers;
 
 [ApiController]
+[Tags(OpenApiTags.Attendance)]
 [Route("attendance")]
 public class AttendanceController(
     LookupLeaderByCiQueryHandler lookupHandler,
@@ -18,6 +19,10 @@ public class AttendanceController(
     /// Lista el catálogo de módulos de formación para la pantalla de inscripción.
     /// </summary>
     [HttpGet("modules")]
+    [EndpointSummary("Lista módulos de formación (asistencia, anónimo)")]
+    [EndpointDescription(
+        "Público. Devuelve training_module ordenado por nombre, con tipo incluido. El CRUD admin vive en /api/v1/admin/modules."
+    )]
     [ProducesResponseType(typeof(IReadOnlyList<TrainingModuleDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> ListModules(CancellationToken cancellationToken)
     {
@@ -29,6 +34,10 @@ public class AttendanceController(
     /// Obtiene un módulo por código (el mismo token del deep link / QR de asistencia).
     /// </summary>
     [HttpGet("modules/{code}")]
+    [EndpointSummary("Obtiene un módulo por código (asistencia, anónimo)")]
+    [EndpointDescription(
+        "Público. El código es TrainingModule.Code y coincide con el token del deep link / QR de asistencia."
+    )]
     [ProducesResponseType(typeof(TrainingModuleDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetModuleByCode(
@@ -57,6 +66,10 @@ public class AttendanceController(
     /// Busca un dirigente scout por número de CI para autocompletar el formulario de asistencia.
     /// </summary>
     [HttpGet("lookup-ci/{ci}")]
+    [EndpointSummary("Busca un dirigente por CI (asistencia, anónimo)")]
+    [EndpointDescription(
+        "Público. Autocompleta el formulario de asistencia a un módulo. Query opcional: extension."
+    )]
     [ProducesResponseType(typeof(ScoutLeaderDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -88,6 +101,10 @@ public class AttendanceController(
     /// Registra la asistencia digital de un dirigente scout a una sesión de módulo mediante QR.
     /// </summary>
     [HttpPost("register")]
+    [EndpointSummary("Registra asistencia digital a un módulo (anónimo)")]
+    [EndpointDescription(
+        "Público. sessionToken es el código del módulo. Rechaza duplicados (409) y módulos inexistentes (404)."
+    )]
     [ProducesResponseType(typeof(ModuleAttendanceResultDto), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
