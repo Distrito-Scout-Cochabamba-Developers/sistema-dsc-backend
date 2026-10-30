@@ -20,6 +20,18 @@ public class RegisterDigitalAttendanceHandlerTests
 
         var dbContext = new ScoutDbContext(options);
         dbContext.Database.EnsureCreated();
+
+        // GetByCodeAsync includes the required ModuleType relationship.
+        dbContext.ModuleTypes.Add(
+            new ModuleType
+            {
+                Id = 1,
+                Code = "AE",
+                Name = "Adultos en el Escultismo",
+            }
+        );
+        dbContext.SaveChanges();
+
         return dbContext;
     }
 
