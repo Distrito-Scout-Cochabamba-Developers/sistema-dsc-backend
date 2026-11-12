@@ -441,40 +441,6 @@ namespace DSC.Infrastructure.Persistence.Migrations
                     b.ToTable("ModuleAttendances", (string)null);
                 });
 
-            modelBuilder.Entity("DSC.Domain.Entities.ModuleType", b =>
-                {
-                    b.Property<short>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("smallint")
-                        .HasColumnName("id");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<short>("Id"));
-
-                    b.Property<string>("Code")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("character varying(20)")
-                        .HasColumnName("code");
-
-                    b.Property<string>("Description")
-                        .HasMaxLength(255)
-                        .HasColumnType("character varying(255)")
-                        .HasColumnName("description");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)")
-                        .HasColumnName("name");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("Code")
-                        .IsUnique();
-
-                    b.ToTable("module_type", (string)null);
-                });
-
             modelBuilder.Entity("DSC.Domain.Entities.Person", b =>
                 {
                     b.Property<long>("Id")
@@ -934,15 +900,15 @@ namespace DSC.Infrastructure.Persistence.Migrations
                         .HasDefaultValue(true)
                         .HasColumnName("is_active");
 
-                    b.Property<short?>("ModuleTypeId")
-                        .HasColumnType("smallint")
-                        .HasColumnName("module_type_id");
-
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)")
                         .HasColumnName("name");
+
+                    b.Property<short>("TrainingLineId")
+                        .HasColumnType("smallint")
+                        .HasColumnName("training_line_id");
 
                     b.Property<short?>("TrainingStageId")
                         .HasColumnType("smallint")
@@ -953,11 +919,45 @@ namespace DSC.Infrastructure.Persistence.Migrations
                     b.HasIndex("Code")
                         .IsUnique();
 
-                    b.HasIndex("ModuleTypeId");
+                    b.HasIndex("TrainingLineId");
 
                     b.HasIndex("TrainingStageId");
 
                     b.ToTable("training_level", (string)null);
+                });
+
+            modelBuilder.Entity("DSC.Domain.Entities.TrainingLine", b =>
+                {
+                    b.Property<short>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("smallint")
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<short>("Id"));
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("code");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)")
+                        .HasColumnName("description");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("name");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Code")
+                        .IsUnique();
+
+                    b.ToTable("training_line", (string)null);
                 });
 
             modelBuilder.Entity("DSC.Domain.Entities.TrainingModule", b =>
@@ -979,10 +979,6 @@ namespace DSC.Infrastructure.Persistence.Migrations
                         .HasColumnType("text")
                         .HasColumnName("description");
 
-                    b.Property<short>("ModuleTypeId")
-                        .HasColumnType("smallint")
-                        .HasColumnName("module_type_id");
-
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(150)
@@ -993,8 +989,6 @@ namespace DSC.Infrastructure.Persistence.Migrations
 
                     b.HasIndex("Code")
                         .IsUnique();
-
-                    b.HasIndex("ModuleTypeId");
 
                     b.ToTable("training_module", (string)null);
                 });
@@ -1403,6 +1397,23 @@ namespace DSC.Infrastructure.Persistence.Migrations
                     b.HasIndex("TemplateId");
 
                     b.ToTable("training_module_lesson_plan_template_activity", (string)null);
+                });
+
+            modelBuilder.Entity("DSC.Domain.Entities.TrainingModuleLine", b =>
+                {
+                    b.Property<long>("TrainingModuleId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("training_module_id");
+
+                    b.Property<short>("TrainingLineId")
+                        .HasColumnType("smallint")
+                        .HasColumnName("training_line_id");
+
+                    b.HasKey("TrainingModuleId", "TrainingLineId");
+
+                    b.HasIndex("TrainingLineId");
+
+                    b.ToTable("training_module_line", (string)null);
                 });
 
             modelBuilder.Entity("DSC.Domain.Entities.TrainingModuleSchedule", b =>
@@ -1958,30 +1969,20 @@ namespace DSC.Infrastructure.Persistence.Migrations
 
             modelBuilder.Entity("DSC.Domain.Entities.TrainingLevel", b =>
                 {
-                    b.HasOne("DSC.Domain.Entities.ModuleType", "ModuleType")
+                    b.HasOne("DSC.Domain.Entities.TrainingLine", "TrainingLine")
                         .WithMany("TrainingLevels")
-                        .HasForeignKey("ModuleTypeId")
-                        .OnDelete(DeleteBehavior.Restrict);
+                        .HasForeignKey("TrainingLineId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
 
                     b.HasOne("DSC.Domain.Entities.TrainingStage", "TrainingStage")
                         .WithMany("TrainingLevels")
                         .HasForeignKey("TrainingStageId")
                         .OnDelete(DeleteBehavior.Restrict);
 
-                    b.Navigation("ModuleType");
+                    b.Navigation("TrainingLine");
 
                     b.Navigation("TrainingStage");
-                });
-
-            modelBuilder.Entity("DSC.Domain.Entities.TrainingModule", b =>
-                {
-                    b.HasOne("DSC.Domain.Entities.ModuleType", "ModuleType")
-                        .WithMany("TrainingModules")
-                        .HasForeignKey("ModuleTypeId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("ModuleType");
                 });
 
             modelBuilder.Entity("DSC.Domain.Entities.TrainingModuleEnrollment", b =>
@@ -2182,6 +2183,25 @@ namespace DSC.Infrastructure.Persistence.Migrations
                     b.Navigation("Template");
                 });
 
+            modelBuilder.Entity("DSC.Domain.Entities.TrainingModuleLine", b =>
+                {
+                    b.HasOne("DSC.Domain.Entities.TrainingLine", "TrainingLine")
+                        .WithMany("ModuleLines")
+                        .HasForeignKey("TrainingLineId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("DSC.Domain.Entities.TrainingModule", "TrainingModule")
+                        .WithMany("ModuleLines")
+                        .HasForeignKey("TrainingModuleId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("TrainingLine");
+
+                    b.Navigation("TrainingModule");
+                });
+
             modelBuilder.Entity("DSC.Domain.Entities.TrainingModuleSchedule", b =>
                 {
                     b.HasOne("DSC.Domain.Entities.Facility", "Facility")
@@ -2339,13 +2359,6 @@ namespace DSC.Infrastructure.Persistence.Migrations
                     b.Navigation("LeaderTrainingLevels");
                 });
 
-            modelBuilder.Entity("DSC.Domain.Entities.ModuleType", b =>
-                {
-                    b.Navigation("TrainingLevels");
-
-                    b.Navigation("TrainingModules");
-                });
-
             modelBuilder.Entity("DSC.Domain.Entities.Person", b =>
                 {
                     b.Navigation("Affiliations");
@@ -2399,9 +2412,18 @@ namespace DSC.Infrastructure.Persistence.Migrations
                     b.Navigation("LeaderLevels");
                 });
 
+            modelBuilder.Entity("DSC.Domain.Entities.TrainingLine", b =>
+                {
+                    b.Navigation("ModuleLines");
+
+                    b.Navigation("TrainingLevels");
+                });
+
             modelBuilder.Entity("DSC.Domain.Entities.TrainingModule", b =>
                 {
                     b.Navigation("LessonPlanTemplates");
+
+                    b.Navigation("ModuleLines");
 
                     b.Navigation("Sessions");
                 });

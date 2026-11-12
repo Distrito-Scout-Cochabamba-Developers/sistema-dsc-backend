@@ -67,7 +67,7 @@ public class HealthController(ScoutDbContext dbContext) : ControllerBase
                 );
             }
 
-            var moduleTypesCount = await dbContext.ModuleTypes.CountAsync(cancellationToken);
+            var trainingLinesCount = await dbContext.TrainingLines.CountAsync(cancellationToken);
             var branchesCount = await dbContext.Branches.CountAsync(cancellationToken);
             var rolesCount = await dbContext.Roles.CountAsync(cancellationToken);
             var scoutGroupsCount = await dbContext.ScoutGroups.CountAsync(cancellationToken);
@@ -80,7 +80,7 @@ public class HealthController(ScoutDbContext dbContext) : ControllerBase
                     Provider = dbContext.Database.ProviderName,
                     CatalogSummary = new
                     {
-                        ModuleTypes = moduleTypesCount,
+                        TrainingLines = trainingLinesCount,
                         Branches = branchesCount,
                         Roles = rolesCount,
                         ScoutGroups = scoutGroupsCount,

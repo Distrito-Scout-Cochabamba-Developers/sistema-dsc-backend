@@ -1,4 +1,5 @@
 using DSC.Application.DTOs;
+using DSC.Domain.Entities;
 using DSC.Domain.Exceptions;
 using DSC.Domain.Repositories;
 
@@ -8,7 +9,7 @@ public record class UpdateTrainingModuleCommand(string Code, WriteTrainingModule
 
 public class UpdateTrainingModuleCommandHandler(
     ITrainingModuleRepository moduleRepository,
-    IModuleTypeRepository moduleTypeRepository
+    ITrainingLineRepository trainingLineRepository
 )
 {
     public async Task<TrainingModuleDto> HandleAsync(
@@ -21,10 +22,6 @@ public class UpdateTrainingModuleCommandHandler(
             throw new RequestValidationException("El código de la ruta es obligatorio.");
 
         var name = NormalizeRequired(command.Body.Name, "El nombre es obligatorio.");
-        var moduleTypeCode = NormalizeRequired(
-            command.Body.ModuleTypeCode,
-            "El tipo de módulo es obligatorio."
-        );
 
         if (name.Length > 150)
             throw new RequestValidationException("El nombre no puede superar 150 caracteres.");
@@ -35,24 +32,35 @@ public class UpdateTrainingModuleCommandHandler(
                 $"No se encontró ningún módulo de capacitación con el código '{code}'."
             );
 
-        var moduleType = await moduleTypeRepository.GetByCodeAsync(
-            moduleTypeCode,
+        var lines = await CreateTrainingModuleCommandHandler.ResolveLinesAsync(
+            command.Body.TrainingLineCodes,
+            trainingLineRepository,
             cancellationToken
         );
-        if (moduleType is null)
-            throw new KeyNotFoundException(
-                $"No se encontró ningún tipo de módulo con el código '{moduleTypeCode}'."
-            );
 
         module.Name = name;
         module.Description = NormalizeOptional(command.Body.Description);
-        module.ModuleTypeId = moduleType.Id;
+        var lineIds = lines.Select(line => line.Id).ToHashSet();
+        foreach (
+            var link in module
+                .ModuleLines.Where(link => !lineIds.Contains(link.TrainingLineId))
+                .ToArray()
+        )
+            module.ModuleLines.Remove(link);
+        foreach (
+            var lineId in lineIds.Where(id =>
+                !module.ModuleLines.Any(link => link.TrainingLineId == id)
+            )
+        )
+            module.ModuleLines.Add(new TrainingModuleLine { TrainingLineId = lineId });
 
         await moduleRepository.SaveChangesAsync(cancellationToken);
 
         var updated =
             await moduleRepository.GetByCodeAsync(code, cancellationToken)
-            ?? throw new InvalidOperationException("El módulo se actualizó pero no se pudo recargar.");
+            ?? throw new InvalidOperationException(
+                "El módulo se actualizó pero no se pudo recargar."
+            );
 
         return TrainingModuleMapping.ToDto(updated);
     }

@@ -10,7 +10,15 @@ internal static class TrainingModuleMapping
             module.Code,
             module.Name,
             module.Description,
-            module.ModuleType?.Code ?? string.Empty,
-            module.ModuleType?.Name ?? string.Empty
+            module
+                .ModuleLines.Select(link => link.TrainingLine)
+                .OrderBy(line => line.Code)
+                .Select(line => new TrainingLineDto(
+                    line.Id,
+                    line.Code,
+                    line.Name,
+                    line.Description
+                ))
+                .ToArray()
         );
 }

@@ -8,6 +8,5 @@ public record class TrainingModuleDto(
     string Code,
     string Name,
     string? Description,
-    string ModuleTypeCode,
-    string ModuleTypeName
+    IReadOnlyList<TrainingLineDto> TrainingLines
 );

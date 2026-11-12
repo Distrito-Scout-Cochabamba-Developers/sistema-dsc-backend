@@ -41,6 +41,15 @@ public class AdminCatalogControllerRouteTests
     }
 
     [Fact]
+    public void ListLines_ShouldBeHttpGetTrainingLines()
+    {
+        var method = typeof(AdminCatalogController).GetMethod(
+            nameof(AdminCatalogController.ListTrainingLines)
+        );
+        Assert.Equal("training-lines", method?.GetCustomAttribute<HttpGetAttribute>()?.Template);
+    }
+
+    [Fact]
     public void Delete_ShouldBeHttpDeleteModulesByCode()
     {
         var method = typeof(AdminCatalogController).GetMethod(

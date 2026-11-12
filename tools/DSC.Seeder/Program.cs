@@ -47,12 +47,21 @@ var db = scope.ServiceProvider.GetRequiredService<ScoutDbContext>();
 var hasher = scope.ServiceProvider.GetRequiredService<IPasswordHasher>();
 
 var activePersonStatus = await db.PersonStatuses.SingleOrDefaultAsync(x => x.Code == "ACTIVE");
-var activeUserStatus = await db.UserStatuses.SingleOrDefaultAsync(x => x.Code == "ACTIVE");
-
-if (activePersonStatus is null || activeUserStatus is null)
+if (activePersonStatus is null)
 {
-    Console.Error.WriteLine("Faltan los catálogos ACTIVE de person_status o user_status.");
-    return 1;
+    activePersonStatus = new PersonStatus { Code = "ACTIVE", Name = "Activo", Description = "Persona activa" };
+    db.PersonStatuses.Add(activePersonStatus);
+    await db.SaveChangesAsync();
+    Console.WriteLine("Catálogo person_status 'ACTIVE' creado.");
+}
+
+var activeUserStatus = await db.UserStatuses.SingleOrDefaultAsync(x => x.Code == "ACTIVE");
+if (activeUserStatus is null)
+{
+    activeUserStatus = new UserStatus { Code = "ACTIVE", Name = "Activo", Description = "Usuario activo" };
+    db.UserStatuses.Add(activeUserStatus);
+    await db.SaveChangesAsync();
+    Console.WriteLine("Catálogo user_status 'ACTIVE' creado.");
 }
 
 var rolesByCode = await db.Roles.ToDictionaryAsync(
@@ -68,8 +77,14 @@ var missingRoles = manifest
 
 if (missingRoles.Length > 0)
 {
-    Console.Error.WriteLine($"Roles inexistentes en la BD: {string.Join(", ", missingRoles)}");
-    return 1;
+    foreach (var code in missingRoles)
+    {
+        var role = new Role { Code = code, Name = code, IsActive = true };
+        db.Roles.Add(role);
+        rolesByCode[code] = role;
+    }
+    await db.SaveChangesAsync();
+    Console.WriteLine($"Roles base creados: {string.Join(", ", missingRoles)}");
 }
 
 var createdPeople = 0;

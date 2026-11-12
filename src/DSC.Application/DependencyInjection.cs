@@ -12,7 +12,7 @@ public static class DependencyInjection
         services.AddScoped<LookupLeaderByCiQueryHandler>();
         services.AddScoped<ListTrainingModulesQueryHandler>();
         services.AddScoped<GetTrainingModuleByCodeQueryHandler>();
-        services.AddScoped<ListModuleTypesQueryHandler>();
+        services.AddScoped<ListTrainingLinesQueryHandler>();
         services.AddScoped<CreateTrainingModuleCommandHandler>();
         services.AddScoped<UpdateTrainingModuleCommandHandler>();
         services.AddScoped<DeleteTrainingModuleCommandHandler>();

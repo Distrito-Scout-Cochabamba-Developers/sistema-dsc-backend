@@ -11,7 +11,7 @@ Prefijo global `api` (`GlobalRoutePrefixConvention`). JSON camelCase.
 
 ### `GET /api/attendance/modules`
 
-Lista `training_module` ordenado por nombre, con `module_type` incluido.
+Lista `training_module` ordenado por nombre, con sus líneas de formación incluidas.
 
 | | |
 | - | - |
@@ -34,8 +34,7 @@ Lista `training_module` ordenado por nombre, con `module_type` incluido.
 | `code` | `training_module.code` (máx. 30) |
 | `name` | `training_module.name` |
 | `description` | `training_module.description` (nullable) |
-| `moduleTypeCode` | `module_type.code` |
-| `moduleTypeName` | `module_type.name` |
+| `trainingLines` | Lista de líneas (`id`, `code`, `name`, `description`), ordenada por código; unión `training_module_line` con `training_line` |
 
 ## Archivos tocados
 
@@ -47,9 +46,9 @@ Lista `training_module` ordenado por nombre, con `module_type` incluido.
 | Application | `src/DSC.Application/Queries/GetTrainingModuleByCodeQueryHandler.cs` | Detalle por código |
 | Application | `src/DSC.Application/DependencyInjection.cs` | Registro de ambos handlers |
 | Domain | `src/DSC.Domain/Repositories/ITrainingModuleRepository.cs` | `ListAsync` |
-| Infrastructure | `src/DSC.Infrastructure/Persistence/Repositories/TrainingModuleRepository.cs` | `ListAsync` + `Include(ModuleType)` en `GetByCodeAsync` |
+| Infrastructure | `src/DSC.Infrastructure/Persistence/Repositories/TrainingModuleRepository.cs` | Incluye `ModuleLines.TrainingLine` en listado y detalle |
 
-No hay migración: se reutilizan `training_module` y `module_type`.
+Migración `IntroduceTrainingLines`: renombra la línea existente y transforma pertenencia única en múltiple. Cambia el contrato JSON anterior; frontend pendiente de adaptación.
 
 ## Datos locales
 
@@ -59,4 +58,4 @@ Sin filas en `training_module` el GET devuelve `[]` y el POST de asistencia resp
 
 - Convocatoria (`TrainingModuleSession`: fecha, horario, QR admin). El `code` del módulo curricular hace de token de sesión.
 
-Administración (POST/PUT, tipos, roles): [admin-catalogo-modulos.md](./admin-catalogo-modulos.md).
+Administración (POST/PUT, líneas, roles): [admin-catalogo-modulos.md](./admin-catalogo-modulos.md).

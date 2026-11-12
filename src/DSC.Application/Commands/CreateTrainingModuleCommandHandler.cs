@@ -7,7 +7,7 @@ namespace DSC.Application.Commands;
 
 public class CreateTrainingModuleCommandHandler(
     ITrainingModuleRepository moduleRepository,
-    IModuleTypeRepository moduleTypeRepository
+    ITrainingLineRepository trainingLineRepository
 )
 {
     public async Task<TrainingModuleDto> HandleAsync(
@@ -17,10 +17,6 @@ public class CreateTrainingModuleCommandHandler(
     {
         var code = NormalizeRequired(request.Code, "El código es obligatorio.");
         var name = NormalizeRequired(request.Name, "El nombre es obligatorio.");
-        var moduleTypeCode = NormalizeRequired(
-            request.ModuleTypeCode,
-            "El tipo de módulo es obligatorio."
-        );
 
         if (code.Length > 30)
             throw new RequestValidationException("El código no puede superar 30 caracteres.");
@@ -32,21 +28,20 @@ public class CreateTrainingModuleCommandHandler(
         if (existing is not null)
             throw new InvalidOperationException($"Ya existe un módulo con el código '{code}'.");
 
-        var moduleType = await moduleTypeRepository.GetByCodeAsync(
-            moduleTypeCode,
+        var lines = await ResolveLinesAsync(
+            request.TrainingLineCodes,
+            trainingLineRepository,
             cancellationToken
         );
-        if (moduleType is null)
-            throw new KeyNotFoundException(
-                $"No se encontró ningún tipo de módulo con el código '{moduleTypeCode}'."
-            );
 
         var module = new TrainingModule
         {
             Code = code,
             Name = name,
             Description = NormalizeOptional(request.Description),
-            ModuleTypeId = moduleType.Id,
+            ModuleLines = lines
+                .Select(line => new TrainingModuleLine { TrainingLineId = line.Id })
+                .ToList(),
         };
 
         await moduleRepository.AddAsync(module, cancellationToken);
@@ -56,6 +51,40 @@ public class CreateTrainingModuleCommandHandler(
             ?? throw new InvalidOperationException("El módulo se creó pero no se pudo recargar.");
 
         return TrainingModuleMapping.ToDto(created);
+    }
+
+    internal static async Task<IReadOnlyList<TrainingLine>> ResolveLinesAsync(
+        IReadOnlyList<string>? codes,
+        ITrainingLineRepository repository,
+        CancellationToken cancellationToken
+    )
+    {
+        if (codes is null || codes.Count == 0)
+            throw new RequestValidationException(
+                "El módulo debe pertenecer al menos a una línea de formación."
+            );
+
+        var normalized = codes
+            .Select(code => NormalizeRequired(code, "El código de línea es obligatorio."))
+            .ToArray();
+        if (normalized.Any(code => code.Length > 20))
+            throw new RequestValidationException(
+                "El código de línea no puede superar 20 caracteres."
+            );
+        if (normalized.Distinct(StringComparer.Ordinal).Count() != normalized.Length)
+            throw new RequestValidationException("Las líneas de formación no pueden repetirse.");
+
+        var lines = new List<TrainingLine>();
+        foreach (var code in normalized)
+        {
+            var line =
+                await repository.GetByCodeAsync(code, cancellationToken)
+                ?? throw new KeyNotFoundException(
+                    $"No se encontró ninguna línea de formación con el código '{code}'."
+                );
+            lines.Add(line);
+        }
+        return lines;
     }
 
     private static string NormalizeRequired(string? value, string message)

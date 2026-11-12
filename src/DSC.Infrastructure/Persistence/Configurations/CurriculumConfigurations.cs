@@ -4,11 +4,11 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace DSC.Infrastructure.Persistence.Configurations;
 
-public class ModuleTypeConfiguration : IEntityTypeConfiguration<ModuleType>
+public class TrainingLineConfiguration : IEntityTypeConfiguration<TrainingLine>
 {
-    public void Configure(EntityTypeBuilder<ModuleType> builder)
+    public void Configure(EntityTypeBuilder<TrainingLine> builder)
     {
-        builder.ToTable("module_type");
+        builder.ToTable("training_line");
 
         builder.HasKey(x => x.Id);
         builder.Property(x => x.Id).HasColumnName("id");
@@ -55,7 +55,7 @@ public class TrainingLevelConfiguration : IEntityTypeConfiguration<TrainingLevel
 
         builder.Property(x => x.Name).HasColumnName("name").HasMaxLength(100).IsRequired();
 
-        builder.Property(x => x.ModuleTypeId).HasColumnName("module_type_id");
+        builder.Property(x => x.TrainingLineId).HasColumnName("training_line_id").IsRequired();
 
         builder.Property(x => x.TrainingStageId).HasColumnName("training_stage_id");
 
@@ -68,9 +68,9 @@ public class TrainingLevelConfiguration : IEntityTypeConfiguration<TrainingLevel
         builder.HasIndex(x => x.Code).IsUnique();
 
         builder
-            .HasOne(x => x.ModuleType)
+            .HasOne(x => x.TrainingLine)
             .WithMany(mt => mt.TrainingLevels)
-            .HasForeignKey(x => x.ModuleTypeId)
+            .HasForeignKey(x => x.TrainingLineId)
             .OnDelete(DeleteBehavior.Restrict);
 
         builder
@@ -96,14 +96,29 @@ public class TrainingModuleConfiguration : IEntityTypeConfiguration<TrainingModu
 
         builder.Property(x => x.Description).HasColumnName("description");
 
-        builder.Property(x => x.ModuleTypeId).HasColumnName("module_type_id").IsRequired();
-
         builder.HasIndex(x => x.Code).IsUnique();
+    }
+}
+
+public class TrainingModuleLineConfiguration : IEntityTypeConfiguration<TrainingModuleLine>
+{
+    public void Configure(EntityTypeBuilder<TrainingModuleLine> builder)
+    {
+        builder.ToTable("training_module_line");
+        builder.HasKey(x => new { x.TrainingModuleId, x.TrainingLineId });
+        builder.Property(x => x.TrainingModuleId).HasColumnName("training_module_id");
+        builder.Property(x => x.TrainingLineId).HasColumnName("training_line_id");
 
         builder
-            .HasOne(x => x.ModuleType)
-            .WithMany(mt => mt.TrainingModules)
-            .HasForeignKey(x => x.ModuleTypeId)
+            .HasOne(x => x.TrainingModule)
+            .WithMany(x => x.ModuleLines)
+            .HasForeignKey(x => x.TrainingModuleId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder
+            .HasOne(x => x.TrainingLine)
+            .WithMany(x => x.ModuleLines)
+            .HasForeignKey(x => x.TrainingLineId)
             .OnDelete(DeleteBehavior.Restrict);
     }
 }

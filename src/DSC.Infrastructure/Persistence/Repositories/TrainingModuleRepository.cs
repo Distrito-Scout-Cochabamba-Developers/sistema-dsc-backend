@@ -14,7 +14,8 @@ public class TrainingModuleRepository(ScoutDbContext dbContext) : ITrainingModul
         var trimmed = code.Trim();
         return await dbContext
             .TrainingModules.AsNoTracking()
-            .Include(x => x.ModuleType)
+            .Include(x => x.ModuleLines)
+                .ThenInclude(x => x.TrainingLine)
             .FirstOrDefaultAsync(x => x.Code == trimmed, cancellationToken);
     }
 
@@ -29,7 +30,8 @@ public class TrainingModuleRepository(ScoutDbContext dbContext) : ITrainingModul
     {
         return await dbContext
             .TrainingModules.AsNoTracking()
-            .Include(x => x.ModuleType)
+            .Include(x => x.ModuleLines)
+                .ThenInclude(x => x.TrainingLine)
             .OrderBy(x => x.Name)
             .ToListAsync(cancellationToken);
     }
@@ -46,10 +48,9 @@ public class TrainingModuleRepository(ScoutDbContext dbContext) : ITrainingModul
     )
     {
         var trimmed = code.Trim();
-        return await dbContext.TrainingModules.FirstOrDefaultAsync(
-            x => x.Code == trimmed,
-            cancellationToken
-        );
+        return await dbContext
+            .TrainingModules.Include(x => x.ModuleLines)
+            .FirstOrDefaultAsync(x => x.Code == trimmed, cancellationToken);
     }
 
     public Task SaveChangesAsync(CancellationToken cancellationToken) =>
@@ -77,7 +78,10 @@ public class TrainingModuleRepository(ScoutDbContext dbContext) : ITrainingModul
         );
     }
 
-    public async Task RemoveAsync(TrainingModule trainingModule, CancellationToken cancellationToken)
+    public async Task RemoveAsync(
+        TrainingModule trainingModule,
+        CancellationToken cancellationToken
+    )
     {
         dbContext.TrainingModules.Remove(trainingModule);
         try

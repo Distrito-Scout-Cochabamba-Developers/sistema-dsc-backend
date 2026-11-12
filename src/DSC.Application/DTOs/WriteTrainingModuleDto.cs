@@ -8,5 +8,5 @@ public record class WriteTrainingModuleDto(
     string Code = "",
     string Name = "",
     string? Description = null,
-    string ModuleTypeCode = ""
+    IReadOnlyList<string>? TrainingLineCodes = null
 );

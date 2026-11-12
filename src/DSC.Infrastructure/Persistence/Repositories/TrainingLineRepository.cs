@@ -4,21 +4,24 @@ using Microsoft.EntityFrameworkCore;
 
 namespace DSC.Infrastructure.Persistence.Repositories;
 
-public class ModuleTypeRepository(ScoutDbContext dbContext) : IModuleTypeRepository
+public class TrainingLineRepository(ScoutDbContext dbContext) : ITrainingLineRepository
 {
-    public async Task<IReadOnlyList<ModuleType>> ListAsync(CancellationToken cancellationToken)
+    public async Task<IReadOnlyList<TrainingLine>> ListAsync(CancellationToken cancellationToken)
     {
         return await dbContext
-            .ModuleTypes.AsNoTracking()
+            .TrainingLines.AsNoTracking()
             .OrderBy(x => x.Name)
             .ToListAsync(cancellationToken);
     }
 
-    public async Task<ModuleType?> GetByCodeAsync(string code, CancellationToken cancellationToken)
+    public async Task<TrainingLine?> GetByCodeAsync(
+        string code,
+        CancellationToken cancellationToken
+    )
     {
         var trimmed = code.Trim();
         return await dbContext
-            .ModuleTypes.AsNoTracking()
+            .TrainingLines.AsNoTracking()
             .FirstOrDefaultAsync(x => x.Code == trimmed, cancellationToken);
     }
 }

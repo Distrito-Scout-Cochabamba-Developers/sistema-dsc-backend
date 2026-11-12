@@ -14,7 +14,7 @@ namespace DSC.Api.Controllers;
 public class AdminCatalogController(
     ListTrainingModulesQueryHandler listModulesHandler,
     GetTrainingModuleByCodeQueryHandler getModuleHandler,
-    ListModuleTypesQueryHandler listModuleTypesHandler,
+    ListTrainingLinesQueryHandler listTrainingLinesHandler,
     CreateTrainingModuleCommandHandler createHandler,
     UpdateTrainingModuleCommandHandler updateHandler,
     DeleteTrainingModuleCommandHandler deleteHandler
@@ -26,7 +26,7 @@ public class AdminCatalogController(
     [HttpGet("modules")]
     [EndpointSummary("Lista módulos de formación (admin / secretaría)")]
     [EndpointDescription(
-        "Requiere JWT con rol ADMIN o DISTRICT_SECRETARY. Devuelve training_module ordenado por nombre, con tipo incluido. El GET anónimo de asistencia (/api/attendance/modules) no cambia."
+        "Requiere JWT con rol ADMIN o DISTRICT_SECRETARY. Devuelve training_module ordenado por nombre, con sus líneas de formación."
     )]
     [ProducesResponseType(typeof(IReadOnlyList<TrainingModuleDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
@@ -74,7 +74,7 @@ public class AdminCatalogController(
     [HttpPost("modules")]
     [EndpointSummary("Crea un módulo de formación")]
     [EndpointDescription(
-        "Requiere JWT con rol ADMIN o DISTRICT_SECRETARY. El código debe ser único (máx. 30). moduleTypeCode debe existir en module_type (p. ej. AE, PJ)."
+        "Requiere JWT con rol ADMIN o DISTRICT_SECRETARY. El código debe ser único (máx. 30). trainingLineCodes debe contener al menos un código existente en training_line, sin duplicados (p. ej. AE, PJ)."
     )]
     [ProducesResponseType(typeof(TrainingModuleDto), StatusCodes.Status201Created)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
@@ -92,12 +92,12 @@ public class AdminCatalogController(
     }
 
     /// <summary>
-    /// Actualiza nombre, descripción y tipo. El código de la ruta no cambia.
+    /// Actualiza nombre, descripción y líneas. El código de la ruta no cambia.
     /// </summary>
     [HttpPut("modules/{code}")]
     [EndpointSummary("Actualiza un módulo de formación")]
     [EndpointDescription(
-        "Requiere JWT con rol ADMIN o DISTRICT_SECRETARY. El código de la URL identifica el módulo y no se modifica. El body usa name, description y moduleTypeCode."
+        "Requiere JWT con rol ADMIN o DISTRICT_SECRETARY. El código de la URL identifica el módulo y no se modifica. El body usa name, description y trainingLineCodes; reemplaza las líneas actuales por al menos una línea existente, sin duplicados."
     )]
     [ProducesResponseType(typeof(TrainingModuleDto), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
@@ -141,21 +141,21 @@ public class AdminCatalogController(
     }
 
     /// <summary>
-    /// Lista tipos de módulo para el formulario de alta/edición.
+    /// Lista líneas de formación para el formulario de alta/edición.
     /// </summary>
-    [HttpGet("module-types")]
-    [EndpointSummary("Lista tipos de módulo (AE, PJ, …)")]
+    [HttpGet("training-lines")]
+    [EndpointSummary("Lista líneas de formación (AE, PJ, GI)")]
     [EndpointDescription(
-        "Requiere JWT con rol ADMIN o DISTRICT_SECRETARY. Devuelve module_type ordenado por nombre para el select del catálogo admin."
+        "Requiere JWT con rol ADMIN o DISTRICT_SECRETARY. Devuelve training_line ordenado por nombre para el catálogo admin."
     )]
-    [ProducesResponseType(typeof(IReadOnlyList<ModuleTypeDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(IReadOnlyList<TrainingLineDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
-    public async Task<ActionResult<IReadOnlyList<ModuleTypeDto>>> ListModuleTypes(
+    public async Task<ActionResult<IReadOnlyList<TrainingLineDto>>> ListTrainingLines(
         CancellationToken cancellationToken
     )
     {
-        var types = await listModuleTypesHandler.HandleAsync(cancellationToken);
-        return Ok(types);
+        var lines = await listTrainingLinesHandler.HandleAsync(cancellationToken);
+        return Ok(lines);
     }
 }

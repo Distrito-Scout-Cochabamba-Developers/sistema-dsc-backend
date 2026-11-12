@@ -21,13 +21,13 @@ public class RegisterDigitalAttendanceHandlerTests
         var dbContext = new ScoutDbContext(options);
         dbContext.Database.EnsureCreated();
 
-        // GetByCodeAsync includes the required ModuleType relationship.
-        dbContext.ModuleTypes.Add(
-            new ModuleType
+        // GetByCodeAsync includes the module's training lines.
+        dbContext.TrainingLines.Add(
+            new TrainingLine
             {
                 Id = 1,
                 Code = "AE",
-                Name = "Adultos en el Escultismo",
+                Name = "Adjuntos/Asesores de Formación",
             }
         );
         dbContext.SaveChanges();
@@ -44,7 +44,7 @@ public class RegisterDigitalAttendanceHandlerTests
         {
             Code = "TOKEN-123",
             Name = "Módulo de Prueba",
-            ModuleTypeId = 1,
+            ModuleLines = [new TrainingModuleLine { TrainingLineId = 1 }],
         };
         db.TrainingModules.Add(sampleModule);
         await db.SaveChangesAsync();
@@ -98,7 +98,7 @@ public class RegisterDigitalAttendanceHandlerTests
         {
             Code = "TOKEN-DUPLICATE",
             Name = "Módulo de Prueba",
-            ModuleTypeId = 1,
+            ModuleLines = [new TrainingModuleLine { TrainingLineId = 1 }],
         };
         db.TrainingModules.Add(sampleModule);
         await db.SaveChangesAsync();
@@ -170,7 +170,7 @@ public class RegisterDigitalAttendanceHandlerTests
         {
             Code = "TOKEN-INVALID-CI",
             Name = "Módulo de Prueba",
-            ModuleTypeId = 1,
+            ModuleLines = [new TrainingModuleLine { TrainingLineId = 1 }],
         };
         db.TrainingModules.Add(sampleModule);
         await db.SaveChangesAsync();
@@ -216,7 +216,7 @@ public class RegisterDigitalAttendanceHandlerTests
         {
             Code = "TOKEN-NO-NAME",
             Name = "Módulo de Prueba",
-            ModuleTypeId = 1,
+            ModuleLines = [new TrainingModuleLine { TrainingLineId = 1 }],
         };
         db.TrainingModules.Add(sampleModule);
         await db.SaveChangesAsync();

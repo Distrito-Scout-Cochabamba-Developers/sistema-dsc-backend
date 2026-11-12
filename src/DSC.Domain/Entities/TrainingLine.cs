@@ -1,9 +1,9 @@
 namespace DSC.Domain.Entities;
 
 /// <summary>
-/// Línea o tipo de formación scout (PJ: Programa de Jóvenes, GI: Gestión Institucional, AE: Adultos en el Escultismo).
+/// Línea de formación scout (PJ, GI, AE: Adjuntos/Asesores de Formación).
 /// </summary>
-public class ModuleType
+public class TrainingLine
 {
     public short Id { get; set; }
     public string Code { get; set; } = string.Empty;
@@ -12,5 +12,5 @@ public class ModuleType
 
     // Colecciones de navegación
     public ICollection<TrainingLevel> TrainingLevels { get; set; } = [];
-    public ICollection<TrainingModule> TrainingModules { get; set; } = [];
+    public ICollection<TrainingModuleLine> ModuleLines { get; set; } = [];
 }
