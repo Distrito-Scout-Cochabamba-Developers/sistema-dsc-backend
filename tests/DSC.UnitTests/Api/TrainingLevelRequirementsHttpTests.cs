@@ -104,7 +104,8 @@ public class TrainingLevelRequirementsHttpTests(RequirementsPostgres postgres) :
     }
 
     [Theory]
-    [InlineData("ADMIN")]
+    [InlineData("ADULT_RESOURCES_COORDINATOR")]
+    [InlineData("DISTRICT_DIRECTOR")]
     [InlineData("DISTRICT_SECRETARY")]
     public async Task AuthorizedWriter_ConfiguresInsigniaDeMaderaAndLeaderCanRead(string role)
     {
@@ -136,6 +137,7 @@ public class TrainingLevelRequirementsHttpTests(RequirementsPostgres postgres) :
     [Theory]
     [InlineData(null, HttpStatusCode.Unauthorized)]
     [InlineData("EXPIRED", HttpStatusCode.Unauthorized)]
+    [InlineData("ADMIN", HttpStatusCode.Forbidden)]
     [InlineData("SCOUT_LEADER", HttpStatusCode.Forbidden)]
     public async Task UnauthorizedWriter_CannotConfigureInsigniaDeMadera(
         string? role,
@@ -143,7 +145,7 @@ public class TrainingLevelRequirementsHttpTests(RequirementsPostgres postgres) :
     )
     {
         if (role is not null)
-            Authenticate(role == "EXPIRED" ? "ADMIN" : role, expired: role == "EXPIRED");
+            Authenticate(role == "EXPIRED" ? "ADULT_RESOURCES_COORDINATOR" : role, expired: role == "EXPIRED");
         using var response = await client.PutAsJsonAsync(Write, Valid);
         Assert.Equal(expected, response.StatusCode);
         if (expected == HttpStatusCode.Unauthorized)
@@ -187,7 +189,7 @@ public class TrainingLevelRequirementsHttpTests(RequirementsPostgres postgres) :
         string json
     )
     {
-        Authenticate("ADMIN");
+        Authenticate("ADULT_RESOURCES_COORDINATOR");
         Assert.Equal(HttpStatusCode.OK, (await client.PutAsJsonAsync(Write, Valid)).StatusCode);
         using var response = await client.PutAsync(
             Write,
@@ -214,7 +216,7 @@ public class TrainingLevelRequirementsHttpTests(RequirementsPostgres postgres) :
     [Fact]
     public async Task UnknownLevel_IsNotConfusedWithUnconfiguredInsigniaDeMadera()
     {
-        Authenticate("ADMIN");
+        Authenticate("DISTRICT_SECRETARY");
         Assert.Null((await client.GetFromJsonAsync<TrainingLevelRequirementsDto>(Read))!.Modules);
         var level = Assert.Single(
             (await client.GetFromJsonAsync<TrainingLevelDto[]>("/api/v1/training-levels"))!
@@ -242,7 +244,7 @@ public class TrainingLevelRequirementsHttpTests(RequirementsPostgres postgres) :
     [Fact]
     public async Task ReferencedFirstAidModule_CannotBeDeletedUntilRemovedFromRequirements()
     {
-        Authenticate("ADMIN");
+        Authenticate("DISTRICT_SECRETARY");
         Assert.Equal(HttpStatusCode.OK, (await client.PutAsJsonAsync(Write, Valid)).StatusCode);
         using var blocked = await client.DeleteAsync("/api/v1/admin/modules/3");
         Assert.Equal(HttpStatusCode.Conflict, blocked.StatusCode);

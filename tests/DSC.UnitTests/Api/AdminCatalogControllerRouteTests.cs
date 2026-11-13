@@ -31,6 +31,18 @@ public class AdminCatalogControllerRouteTests
     }
 
     [Fact]
+    public void AdminTrainingLevelsController_ShouldRequireTrainingLevelAdminRolesUnderV1AdminTrainingLevels()
+    {
+        var route = typeof(AdminTrainingLevelsController).GetCustomAttribute<RouteAttribute>();
+        var authorize = typeof(AdminTrainingLevelsController).GetCustomAttribute<AuthorizeAttribute>();
+
+        Assert.Equal("v1/admin/training-levels", route?.Template);
+        Assert.Equal(TrainingLevelAdminRoles.PolicyRoles, authorize?.Roles);
+        var tags = typeof(AdminTrainingLevelsController).GetCustomAttribute<TagsAttribute>();
+        Assert.Equal(OpenApiTags.TrainingLevels, tags?.Tags.Single());
+    }
+
+    [Fact]
     public void Create_ShouldBeHttpPostModules()
     {
         var method = typeof(AdminCatalogController).GetMethod(

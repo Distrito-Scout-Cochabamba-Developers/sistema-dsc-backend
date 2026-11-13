@@ -16,6 +16,10 @@
             Version="9.0.2"
         />
 
+        <!-- Security Patches (Transitive) -->
+        <PackageVersion Include="System.Security.Cryptography.Pkcs" Version="10.0.0" />
+        <PackageVersion Include="System.Security.Cryptography.Xml" Version="10.0.0" />
+
         <!-- Persistence (EF Core & PostgreSQL) -->
         <PackageVersion Include="Microsoft.EntityFrameworkCore" Version="10.0.0" />
         <PackageVersion Include="Microsoft.EntityFrameworkCore.Relational" Version="10.0.0" />
