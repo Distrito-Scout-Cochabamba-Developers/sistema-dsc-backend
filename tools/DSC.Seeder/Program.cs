@@ -264,6 +264,18 @@ try
             await transaction.RollbackAsync();
             throw;
         }
+
+        await using var catalogTransaction = await db.Database.BeginTransactionAsync();
+        try
+        {
+            await DSC.Seeder.TrainingCatalogSeeder.SeedAsync(db);
+            await catalogTransaction.CommitAsync();
+        }
+        catch
+        {
+            await catalogTransaction.RollbackAsync();
+            throw;
+        }
     });
 }
 catch (Exception ex)
