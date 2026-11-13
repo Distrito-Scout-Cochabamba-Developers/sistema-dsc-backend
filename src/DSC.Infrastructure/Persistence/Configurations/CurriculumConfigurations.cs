@@ -11,7 +11,7 @@ public class TrainingLineConfiguration : IEntityTypeConfiguration<TrainingLine>
         builder.ToTable("training_line");
 
         builder.HasKey(x => x.Id);
-        builder.Property(x => x.Id).HasColumnName("id");
+        builder.Property(x => x.Id).HasColumnName("id").ValueGeneratedOnAdd();
 
         builder.Property(x => x.Code).HasColumnName("code").HasMaxLength(20).IsRequired();
 
@@ -30,7 +30,7 @@ public class TrainingLevelConfiguration : IEntityTypeConfiguration<TrainingLevel
         builder.ToTable("training_level");
 
         builder.HasKey(x => x.Id);
-        builder.Property(x => x.Id).HasColumnName("id");
+        builder.Property(x => x.Id).HasColumnName("id").ValueGeneratedOnAdd();
 
         builder.Property(x => x.Code).HasColumnName("code").HasMaxLength(30).IsRequired();
 
@@ -61,7 +61,7 @@ public class TrainingModuleConfiguration : IEntityTypeConfiguration<TrainingModu
         builder.ToTable("training_module");
 
         builder.HasKey(x => x.Id);
-        builder.Property(x => x.Id).HasColumnName("id");
+        builder.Property(x => x.Id).HasColumnName("id").ValueGeneratedOnAdd();
 
         builder.Property(x => x.Name).HasColumnName("name").HasMaxLength(150).IsRequired();
 
@@ -102,7 +102,7 @@ public class TrainingModuleLessonPlanTemplateConfiguration
         builder.ToTable("training_module_lesson_plan_template");
 
         builder.HasKey(x => x.Id);
-        builder.Property(x => x.Id).HasColumnName("id");
+        builder.Property(x => x.Id).HasColumnName("id").ValueGeneratedOnAdd();
 
         builder.Property(x => x.TrainingModuleId).HasColumnName("training_module_id").IsRequired();
 
@@ -171,7 +171,7 @@ public class TrainingModuleLessonPlanTemplateActivityConfiguration
         builder.ToTable("training_module_lesson_plan_template_activity");
 
         builder.HasKey(x => x.Id);
-        builder.Property(x => x.Id).HasColumnName("id");
+        builder.Property(x => x.Id).HasColumnName("id").ValueGeneratedOnAdd();
 
         builder.Property(x => x.TemplateId).HasColumnName("template_id").IsRequired();
 

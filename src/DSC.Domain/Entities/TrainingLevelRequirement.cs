@@ -1,4 +1,5 @@
 using DSC.Domain.Exceptions;
+using DSC.Domain.ValueObjects;
 
 namespace DSC.Domain.Entities;
 
@@ -9,7 +10,7 @@ public class TrainingLevelRequirement
     private readonly List<TrainingLevelMandatoryModule> _mandatoryModules = [];
 
     public int Id { get; private set; }
-    public short TrainingLevelId { get; private set; }
+    public TrainingLevelId TrainingLevelId { get; private set; }
     public string RequirementType { get; private set; } = ModulesType;
     public int TotalModulesCount { get; private set; }
     public int MinMandatoryModulesCount { get; private set; }
@@ -21,13 +22,13 @@ public class TrainingLevelRequirement
     private TrainingLevelRequirement() { }
 
     public static TrainingLevelRequirement Create(
-        short trainingLevelId,
+        TrainingLevelId trainingLevelId,
         int totalModulesCount,
         int minMandatoryModulesCount,
         IReadOnlyCollection<TrainingModule> modules
     )
     {
-        if (trainingLevelId <= 0)
+        if (trainingLevelId.Value <= 0)
             throw new DomainException("El nivel de formación es obligatorio.");
 
         var requirement = new TrainingLevelRequirement { TrainingLevelId = trainingLevelId };

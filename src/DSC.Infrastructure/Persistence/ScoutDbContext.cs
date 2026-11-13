@@ -1,5 +1,7 @@
 using DSC.Domain.Entities;
 using DSC.Domain.Enums;
+using DSC.Domain.ValueObjects;
+using DSC.Infrastructure.Persistence.Converters;
 using Microsoft.EntityFrameworkCore;
 
 namespace DSC.Infrastructure.Persistence;
@@ -84,6 +86,19 @@ public class ScoutDbContext(DbContextOptions<ScoutDbContext> options) : DbContex
 
     // Legacy Support (si existen consultas previas)
     public DbSet<ModuleAttendance> ModuleAttendances => Set<ModuleAttendance>();
+
+    protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
+    {
+        base.ConfigureConventions(configurationBuilder);
+
+        configurationBuilder
+            .Properties<TrainingLineId>()
+            .HaveConversion<TrainingLineIdConverter>();
+
+        configurationBuilder
+            .Properties<TrainingLevelId>()
+            .HaveConversion<TrainingLevelIdConverter>();
+    }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

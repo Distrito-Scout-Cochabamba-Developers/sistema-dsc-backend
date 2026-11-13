@@ -292,20 +292,14 @@ public sealed class RequirementsPostgres : IDisposable
             """
         );
 
-        var line = new TrainingLine
-        {
-            Id = 1,
-            Code = "PJ",
-            Name = "Programa de Jóvenes",
-        };
+        var line = new TrainingLine(1, "PJ", "Programa de Jóvenes");
         db.TrainingLevels.Add(
-            new TrainingLevel
-            {
-                Id = 1,
-                Code = ScoutTrainingCatalog.LevelCode,
-                Name = "Insignia de Madera I-II",
-                TrainingLine = line,
-            }
+            new TrainingLevel(
+                1,
+                ScoutTrainingCatalog.LevelCode,
+                "Insignia de Madera I-II",
+                line
+            )
         );
         var modules = ScoutTrainingCatalog
             .Mandatory()

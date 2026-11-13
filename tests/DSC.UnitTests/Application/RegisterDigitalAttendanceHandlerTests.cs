@@ -23,12 +23,7 @@ public class RegisterDigitalAttendanceHandlerTests
 
         // GetByCodeAsync includes the module's training lines.
         dbContext.TrainingLines.Add(
-            new TrainingLine
-            {
-                Id = 1,
-                Code = "AE",
-                Name = "Adjuntos/Asesores de Formación",
-            }
+            new TrainingLine(1, "AE", "Adjuntos/Asesores de Formación")
         );
         dbContext.SaveChanges();
 

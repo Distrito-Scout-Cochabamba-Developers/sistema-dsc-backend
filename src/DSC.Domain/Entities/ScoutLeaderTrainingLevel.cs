@@ -1,3 +1,5 @@
+using DSC.Domain.ValueObjects;
+
 namespace DSC.Domain.Entities;
 
 /// <summary>
@@ -7,7 +9,7 @@ public class ScoutLeaderTrainingLevel
 {
     public long Id { get; set; }
     public long PersonId { get; set; }
-    public short TrainingLevelId { get; set; }
+    public TrainingLevelId TrainingLevelId { get; set; }
     public short StatusId { get; set; }
     public DateOnly StatusDate { get; set; } = DateOnly.FromDateTime(DateTime.UtcNow);
     public string? Notes { get; set; }

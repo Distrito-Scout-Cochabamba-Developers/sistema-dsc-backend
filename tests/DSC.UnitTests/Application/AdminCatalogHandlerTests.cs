@@ -25,12 +25,7 @@ public class AdminCatalogHandlerTests
     private static async Task SeedLineAsync(ScoutDbContext db, string code = "AE")
     {
         db.TrainingLines.Add(
-            new TrainingLine
-            {
-                Code = code,
-                Name = "Adjuntos/Asesores de Formación",
-                Description = "Formación de adultos",
-            }
+            new TrainingLine(code, "Adjuntos/Asesores de Formación", "Formación de adultos")
         );
         await db.SaveChangesAsync();
     }
@@ -117,7 +112,7 @@ public class AdminCatalogHandlerTests
     {
         using var db = CreateDb();
         await SeedLineAsync(db, "AE");
-        db.TrainingLines.Add(new TrainingLine { Code = "PJ", Name = "Programa de Jóvenes" });
+        db.TrainingLines.Add(new TrainingLine("PJ", "Programa de Jóvenes"));
         await db.SaveChangesAsync();
         var aeId = db.TrainingLines.Single(t => t.Code == "AE").Id;
         var module = new TrainingModule
@@ -237,7 +232,7 @@ public class AdminCatalogHandlerTests
     {
         using var db = CreateDb();
         await SeedLineAsync(db);
-        db.TrainingLines.Add(new TrainingLine { Code = "PJ", Name = "Programa de Jóvenes" });
+        db.TrainingLines.Add(new TrainingLine("PJ", "Programa de Jóvenes"));
         await db.SaveChangesAsync();
         var handler = new CreateTrainingModuleCommandHandler(
             new TrainingModuleRepository(db),

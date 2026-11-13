@@ -665,18 +665,12 @@ public static class TrainingCatalogSeeder
         {
             if (existingLines.TryGetValue(seed.Code, out var line))
             {
-                line.Name = seed.Name;
-                line.Description = seed.Description;
+                line.Update(seed.Name, seed.Description);
                 linesUpdated++;
             }
             else
             {
-                line = new TrainingLine
-                {
-                    Code = seed.Code,
-                    Name = seed.Name,
-                    Description = seed.Description,
-                };
+                line = new TrainingLine(seed.Code, seed.Name, seed.Description);
                 db.TrainingLines.Add(line);
                 existingLines[seed.Code] = line;
                 linesCreated++;
@@ -700,20 +694,12 @@ public static class TrainingCatalogSeeder
             var line = existingLines[seed.LineCode];
             if (existingLevels.TryGetValue(seed.Code, out var level))
             {
-                level.Name = seed.Name;
-                level.TrainingLineId = line.Id;
-                level.IsActive = true;
+                level.Update(seed.Name, line.Id, isActive: true);
                 levelsUpdated++;
             }
             else
             {
-                level = new TrainingLevel
-                {
-                    Code = seed.Code,
-                    Name = seed.Name,
-                    TrainingLineId = line.Id,
-                    IsActive = true,
-                };
+                level = new TrainingLevel(seed.Code, seed.Name, line.Id, isActive: true);
                 db.TrainingLevels.Add(level);
                 existingLevels[seed.Code] = level;
                 levelsCreated++;

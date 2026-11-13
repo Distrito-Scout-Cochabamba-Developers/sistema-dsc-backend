@@ -1,3 +1,5 @@
+using DSC.Domain.ValueObjects;
+
 namespace DSC.Domain.Entities;
 
 /// <summary>
@@ -6,7 +8,7 @@ namespace DSC.Domain.Entities;
 public class TrainingModuleLine
 {
     public long TrainingModuleId { get; set; }
-    public short TrainingLineId { get; set; }
+    public TrainingLineId TrainingLineId { get; set; }
 
     public TrainingModule TrainingModule { get; set; } = null!;
     public TrainingLine TrainingLine { get; set; } = null!;
