@@ -926,6 +926,66 @@ namespace DSC.Infrastructure.Persistence.Migrations
                     b.ToTable("training_level", (string)null);
                 });
 
+            modelBuilder.Entity("DSC.Domain.Entities.TrainingLevelMandatoryModule", b =>
+                {
+                    b.Property<int>("TrainingLevelRequirementId")
+                        .HasColumnType("integer")
+                        .HasColumnName("training_level_requirement_id");
+
+                    b.Property<long>("TrainingModuleId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("training_module_id");
+
+                    b.HasKey("TrainingLevelRequirementId", "TrainingModuleId");
+
+                    b.HasIndex("TrainingModuleId");
+
+                    b.ToTable("training_level_mandatory_module", (string)null);
+                });
+
+            modelBuilder.Entity("DSC.Domain.Entities.TrainingLevelRequirement", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("MinMandatoryModulesCount")
+                        .HasColumnType("integer")
+                        .HasColumnName("min_mandatory_modules_count");
+
+                    b.Property<string>("RequirementType")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)")
+                        .HasColumnName("requirement_type");
+
+                    b.Property<Guid>("Version")
+                        .IsConcurrencyToken()
+                        .HasColumnType("uuid")
+                        .HasColumnName("version");
+
+                    b.Property<int>("TotalModulesCount")
+                        .HasColumnType("integer")
+                        .HasColumnName("total_modules_count");
+
+                    b.Property<short>("TrainingLevelId")
+                        .HasColumnType("smallint")
+                        .HasColumnName("training_level_id");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TrainingLevelId", "RequirementType")
+                        .IsUnique();
+
+                    b.ToTable("training_level_requirement", null, t =>
+                        {
+                            t.HasCheckConstraint("ck_training_level_requirement_counts", "total_modules_count >= 0 AND min_mandatory_modules_count >= 0 AND min_mandatory_modules_count <= total_modules_count");
+                        });
+                });
+
             modelBuilder.Entity("DSC.Domain.Entities.TrainingLine", b =>
                 {
                     b.Property<short>("Id")
@@ -1985,6 +2045,36 @@ namespace DSC.Infrastructure.Persistence.Migrations
                     b.Navigation("TrainingStage");
                 });
 
+            modelBuilder.Entity("DSC.Domain.Entities.TrainingLevelMandatoryModule", b =>
+                {
+                    b.HasOne("DSC.Domain.Entities.TrainingLevelRequirement", "TrainingLevelRequirement")
+                        .WithMany("MandatoryModules")
+                        .HasForeignKey("TrainingLevelRequirementId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("DSC.Domain.Entities.TrainingModule", "TrainingModule")
+                        .WithMany("MandatoryForLevelRequirements")
+                        .HasForeignKey("TrainingModuleId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("TrainingLevelRequirement");
+
+                    b.Navigation("TrainingModule");
+                });
+
+            modelBuilder.Entity("DSC.Domain.Entities.TrainingLevelRequirement", b =>
+                {
+                    b.HasOne("DSC.Domain.Entities.TrainingLevel", "TrainingLevel")
+                        .WithMany("Requirements")
+                        .HasForeignKey("TrainingLevelId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("TrainingLevel");
+                });
+
             modelBuilder.Entity("DSC.Domain.Entities.TrainingModuleEnrollment", b =>
                 {
                     b.HasOne("DSC.Domain.Entities.EnrollmentSource", "EnrollmentSource")
@@ -2410,6 +2500,13 @@ namespace DSC.Infrastructure.Persistence.Migrations
             modelBuilder.Entity("DSC.Domain.Entities.TrainingLevel", b =>
                 {
                     b.Navigation("LeaderLevels");
+
+                    b.Navigation("Requirements");
+                });
+
+            modelBuilder.Entity("DSC.Domain.Entities.TrainingLevelRequirement", b =>
+                {
+                    b.Navigation("MandatoryModules");
                 });
 
             modelBuilder.Entity("DSC.Domain.Entities.TrainingLine", b =>
@@ -2422,6 +2519,8 @@ namespace DSC.Infrastructure.Persistence.Migrations
             modelBuilder.Entity("DSC.Domain.Entities.TrainingModule", b =>
                 {
                     b.Navigation("LessonPlanTemplates");
+
+                    b.Navigation("MandatoryForLevelRequirements");
 
                     b.Navigation("ModuleLines");
 

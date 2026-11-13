@@ -39,6 +39,10 @@ public class ScoutDbContext(DbContextOptions<ScoutDbContext> options) : DbContex
     public DbSet<TrainingLine> TrainingLines => Set<TrainingLine>();
     public DbSet<TrainingStage> TrainingStages => Set<TrainingStage>();
     public DbSet<TrainingLevel> TrainingLevels => Set<TrainingLevel>();
+    public DbSet<TrainingLevelRequirement> TrainingLevelRequirements =>
+        Set<TrainingLevelRequirement>();
+    public DbSet<TrainingLevelMandatoryModule> TrainingLevelMandatoryModules =>
+        Set<TrainingLevelMandatoryModule>();
     public DbSet<TrainingModule> TrainingModules => Set<TrainingModule>();
     public DbSet<TrainingModuleLine> TrainingModuleLines => Set<TrainingModuleLine>();
     public DbSet<TrainingModuleLessonPlanTemplate> TrainingModuleLessonPlanTemplates =>

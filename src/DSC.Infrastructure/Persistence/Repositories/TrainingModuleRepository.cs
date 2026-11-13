@@ -58,6 +58,14 @@ public class TrainingModuleRepository(ScoutDbContext dbContext) : ITrainingModul
 
     public async Task<bool> HasDependenciesAsync(long id, CancellationToken cancellationToken)
     {
+        if (
+            await dbContext.TrainingLevelMandatoryModules.AnyAsync(
+                link => link.TrainingModuleId == id,
+                cancellationToken
+            )
+        )
+            return true;
+
         var hasAttendance = await dbContext.ModuleAttendances.AnyAsync(
             attendance => attendance.TrainingModuleId == id,
             cancellationToken
@@ -91,7 +99,7 @@ public class TrainingModuleRepository(ScoutDbContext dbContext) : ITrainingModul
         catch (DbUpdateException)
         {
             throw new InvalidOperationException(
-                $"No se puede eliminar el módulo '{trainingModule.Code}' porque tiene asistencia, sesiones o plantillas asociadas."
+                $"No se puede eliminar el módulo '{trainingModule.Code}' porque tiene requisitos de nivel, asistencia, sesiones o plantillas asociadas."
             );
         }
     }
