@@ -21,19 +21,11 @@ public static class TrainingCatalogSeeder
         string[] MandatoryNames
     );
 
-    private sealed record ModuleSeed(
-        string Name,
-        string? Description,
-        string[] LineCodes
-    );
+    private sealed record ModuleSeed(string Name, string? Description, string[] LineCodes);
 
     private static readonly LineSeed[] Lines =
     [
-        new(
-            "PJ",
-            "Programa de Jóvenes",
-            "Está orientada a capacitar a los Dirigentes de Unidad"
-        ),
+        new("PJ", "Programa de Jóvenes", "Está orientada a capacitar a los Dirigentes de Unidad"),
         new(
             "GI",
             "Gestión Institucional",
@@ -112,103 +104,43 @@ public static class TrainingCatalogSeeder
     private static readonly ModuleSeed[] Modules =
     [
         // Módulos obligatorios para niveles IM I-II e IM III (PJ)
-        new(
-            "Responsabilidad legal del dirigente",
-            "Obligatorio para Insignia de Madera",
-            ["PJ"]
-        ),
+        new("Responsabilidad legal del dirigente", "Obligatorio para Insignia de Madera", ["PJ"]),
         new(
             "Impacto ambiental en las actividades scouts",
             "Obligatorio para Insignia de Madera",
             ["PJ"]
         ),
-        new(
-            "Primeros auxilios",
-            null,
-            ["PJ"]
-        ),
-        new(
-            "Seguimiento del Ciclo de Programa",
-            "Obligatorio para Insignia de Madera",
-            ["PJ"]
-        ),
-
+        new("Primeros auxilios", null, ["PJ"]),
+        new("Seguimiento del Ciclo de Programa", "Obligatorio para Insignia de Madera", ["PJ"]),
         // Módulos obligatorios para Nivel Grupo y Nivel Distrito (GI)
-        new(
-            "Liderazgo",
-            "Obligatorio para Dirigentes Institucionales",
-            ["GI", "PJ", "AE"]
-        ),
+        new("Liderazgo", "Obligatorio para Dirigentes Institucionales", ["GI", "PJ", "AE"]),
         new(
             "Resolución de Conflictos",
             "Obligatorio para Dirigentes Institucionales",
             ["GI", "PJ", "AE"]
         ),
-        new(
-            "Comunicaciones",
-            "Obligatorio para Dirigentes Institucionales",
-            ["GI", "PJ", "AE"]
-        ),
-        new(
-            "Trabajo en Equipo",
-            "Obligatorio para Dirigentes Institucionales",
-            ["GI", "PJ", "AE"]
-        ),
-
+        new("Comunicaciones", "Obligatorio para Dirigentes Institucionales", ["GI", "PJ", "AE"]),
+        new("Trabajo en Equipo", "Obligatorio para Dirigentes Institucionales", ["GI", "PJ", "AE"]),
         // Área: Valores
-        new(
-            "Los valores personales en el Movimiento Scout",
-            "Área: Valores",
-            ["PJ", "GI", "AE"]
-        ),
-        new(
-            "Educación en valores durante la infancia",
-            "Área: Valores",
-            ["PJ"]
-        ),
+        new("Los valores personales en el Movimiento Scout", "Área: Valores", ["PJ", "GI", "AE"]),
+        new("Educación en valores durante la infancia", "Área: Valores", ["PJ"]),
         new(
             "La Ley Scout y la formación de una escala personal de valores",
             "Área: Valores",
             ["PJ", "AE"]
         ),
-        new(
-            "Los valores sociales en el Movimiento Scout",
-            "Área: Valores",
-            ["PJ", "GI", "AE"]
-        ),
-        new(
-            "La educación para los derechos humanos en la adolescencia",
-            "Área: Valores",
-            ["PJ"]
-        ),
-        new(
-            "Respeto y comprensión intercultural",
-            "Área: Valores",
-            ["PJ", "GI", "AE"]
-        ),
-        new(
-            "Los derechos del niño", "Área: Valores", ["PJ", "GI"]),
-        new(
-            "Aprendizaje de la solidaridad en la juventud",
-            "Área: Valores",
-            ["PJ"]
-        ),
+        new("Los valores sociales en el Movimiento Scout", "Área: Valores", ["PJ", "GI", "AE"]),
+        new("La educación para los derechos humanos en la adolescencia", "Área: Valores", ["PJ"]),
+        new("Respeto y comprensión intercultural", "Área: Valores", ["PJ", "GI", "AE"]),
+        new("Los derechos del niño", "Área: Valores", ["PJ", "GI"]),
+        new("Aprendizaje de la solidaridad en la juventud", "Área: Valores", ["PJ"]),
         new(
             "Movimiento Scout y participación política de los jóvenes",
             "Área: Valores",
             ["PJ", "GI"]
         ),
-        new(
-            "Los valores espirituales en el Movimiento Scout",
-            "Área: Valores",
-            ["PJ", "AE"]
-        ),
-        new(
-            "La educación de la fe en los jóvenes",
-            "Área: Valores",
-            ["PJ"]
-        ),
-
+        new("Los valores espirituales en el Movimiento Scout", "Área: Valores", ["PJ", "AE"]),
+        new("La educación de la fe en los jóvenes", "Área: Valores", ["PJ"]),
         // Área: Conocimiento del joven
         new(
             "La autoestima de niños, jóvenes y adolescentes",
@@ -220,21 +152,13 @@ public static class TrainingCatalogSeeder
             "Área: Conocimiento del joven",
             ["PJ"]
         ),
-        new(
-            "Prevención del abuso infantil",
-            "Área: Conocimiento del joven",
-            ["PJ", "GI"]
-        ),
+        new("Prevención del abuso infantil", "Área: Conocimiento del joven", ["PJ", "GI"]),
         new(
             "Prevención del abuso sexual en niños, niñas y adolescentes",
             "Área: Conocimiento del joven",
             ["PJ", "GI"]
         ),
-        new(
-            "La sexualidad en la pubertad",
-            "Área: Conocimiento del joven",
-            ["PJ"]
-        ),
+        new("La sexualidad en la pubertad", "Área: Conocimiento del joven", ["PJ"]),
         new(
             "La influencia de la televisión en los jóvenes",
             "Área: Conocimiento del joven",
@@ -245,16 +169,8 @@ public static class TrainingCatalogSeeder
             "Área: Conocimiento del joven",
             ["PJ"]
         ),
-        new(
-            "La crisis de originalidad en la adolescencia",
-            null,
-            ["PJ"]
-        ),
-        new(
-            "La comunicación en la familia",
-            "Área: Conocimiento del joven",
-            ["PJ", "GI"]
-        ),
+        new("La crisis de originalidad en la adolescencia", null, ["PJ"]),
+        new("La comunicación en la familia", "Área: Conocimiento del joven", ["PJ", "GI"]),
         new(
             "Autoridad, libertad y participación en jóvenes de 17 a 20 años",
             "Área: Conocimiento del joven",
@@ -265,53 +181,16 @@ public static class TrainingCatalogSeeder
             "Área: Conocimiento del joven",
             ["PJ"]
         ),
-
         // Área: Programa de jóvenes
-        new(
-            "Presentación general de MACPRO",
-            "Área: Programa de jóvenes",
-            ["PJ"]
-        ),
-        new(
-            "Fichas de actividades REME",
-            "Área: Programa de jóvenes",
-            ["PJ"]
-        ),
-        new(
-            "Los nuevos paradigmas del programa scout",
-            "Área: Programa de jóvenes",
-            ["PJ", "AE"]
-        ),
-        new(
-            "Planificación de actividades",
-            "Área: Programa de jóvenes",
-            ["PJ"]
-        ),
-        new(
-            "Planificación de Reuniones",
-            "Área: Programa de jóvenes",
-            ["PJ"]
-        ),
-        new(
-            "Manejo de cartillas de progreso personal",
-            null,
-            ["PJ"]
-        ),
-        new(
-            "Escultismo para todos",
-            "Área: Programa de jóvenes",
-            ["PJ", "GI"]
-        ),
-        new(
-            "JOTA/JOTI, A Limpiar El Mundo",
-            "Área: Programa de jóvenes",
-            ["PJ"]
-        ),
-        new(
-            "Actividades de desarrollo de la comunidad local",
-            null,
-            ["PJ", "GI"]
-        ),
+        new("Presentación general de MACPRO", "Área: Programa de jóvenes", ["PJ"]),
+        new("Fichas de actividades REME", "Área: Programa de jóvenes", ["PJ"]),
+        new("Los nuevos paradigmas del programa scout", "Área: Programa de jóvenes", ["PJ", "AE"]),
+        new("Planificación de actividades", "Área: Programa de jóvenes", ["PJ"]),
+        new("Planificación de Reuniones", "Área: Programa de jóvenes", ["PJ"]),
+        new("Manejo de cartillas de progreso personal", null, ["PJ"]),
+        new("Escultismo para todos", "Área: Programa de jóvenes", ["PJ", "GI"]),
+        new("JOTA/JOTI, A Limpiar El Mundo", "Área: Programa de jóvenes", ["PJ"]),
+        new("Actividades de desarrollo de la comunidad local", null, ["PJ", "GI"]),
         new(
             "Actividades de educación para la paz y la comprensión intercultural",
             "Área: Programa de jóvenes",
@@ -332,270 +211,86 @@ public static class TrainingCatalogSeeder
             "Área: Programa de jóvenes",
             ["PJ"]
         ),
-        new(
-            "Proyectos de desarrollo comunitario",
-            "Área: Programa de jóvenes",
-            ["PJ", "GI"]
-        ),
-        new(
-            "Educación en el desarrollo",
-            "Área: Programa de jóvenes",
-            ["PJ"]
-        ),
+        new("Proyectos de desarrollo comunitario", "Área: Programa de jóvenes", ["PJ", "GI"]),
+        new("Educación en el desarrollo", "Área: Programa de jóvenes", ["PJ"]),
         new(
             "Proyectos prioritarios de la Asociación",
             "Área: Programa de jóvenes",
             ["PJ", "GI", "AE"]
         ),
-
         // Área: Método Scout
-        new(
-            "Juegos y canciones", null, ["PJ"]),
-        new(
-            "La cacería en la rama lobatos",
-            "Área: Método Scout",
-            ["PJ"]
-        ),
-        new(
-            "La aventura en la rama scout", "Área: Método Scout", ["PJ"]),
-        new(
-            "La empresa en la rama pioneros",
-            null,
-            ["PJ"]
-        ),
-        new(
-            "La sabiduría del libro de la selva",
-            "Área: Método Scout",
-            ["PJ"]
-        ),
-        new(
-            "Fiestas, celebraciones y ceremonias en la Unidad",
-            "Área: Método Scout",
-            ["PJ"]
-        ),
-        new(
-            "La coeducación", "Área: Método Scout", ["PJ"]),
-        new(
-            "Orden y disciplina en la Unidad",
-            "Área: Método Scout",
-            ["PJ"]
-        ),
-        new(
-            "Evaluación de participantes",
-            "Área: Método Scout",
-            ["PJ", "AE"]
-        ),
-
+        new("Juegos y canciones", null, ["PJ"]),
+        new("La cacería en la rama lobatos", "Área: Método Scout", ["PJ"]),
+        new("La aventura en la rama scout", "Área: Método Scout", ["PJ"]),
+        new("La empresa en la rama pioneros", null, ["PJ"]),
+        new("La sabiduría del libro de la selva", "Área: Método Scout", ["PJ"]),
+        new("Fiestas, celebraciones y ceremonias en la Unidad", "Área: Método Scout", ["PJ"]),
+        new("La coeducación", "Área: Método Scout", ["PJ"]),
+        new("Orden y disciplina en la Unidad", "Área: Método Scout", ["PJ"]),
+        new("Evaluación de participantes", "Área: Método Scout", ["PJ", "AE"]),
         // Área: Vida al Aire libre
-        new(
-            "Organización de campamentos",
-            "Área: Vida al Aire libre",
-            ["PJ"]
-        ),
-        new(
-            "Juegos de medio ambiente",
-            "Área: Vida al Aire libre",
-            ["PJ"]
-        ),
-        new(
-            "Primeros auxilios en las Ramas Intermedias",
-            null,
-            ["PJ"]
-        ),
-        new(
-            "Técnicas de orientación",
-            "Área: Vida al Aire libre",
-            ["PJ"]
-        ),
-        new(
-            "Amarres y ensambles",
-            null,
-            ["PJ"]
-        ),
-        new(
-            "Seguridad en las excursiones scouts",
-            "Área: Vida al Aire libre",
-            ["PJ"]
-        ),
-        new(
-            "Menú de un campamento de Tropa",
-            "Área: Vida al Aire libre",
-            ["PJ"]
-        ),
-        new(
-            "Vivencia de una excursión en las Ramas Mayores",
-            "Área: Vida al Aire libre",
-            ["PJ"]
-        ),
+        new("Organización de campamentos", "Área: Vida al Aire libre", ["PJ"]),
+        new("Juegos de medio ambiente", "Área: Vida al Aire libre", ["PJ"]),
+        new("Primeros auxilios en las Ramas Intermedias", null, ["PJ"]),
+        new("Técnicas de orientación", "Área: Vida al Aire libre", ["PJ"]),
+        new("Amarres y ensambles", null, ["PJ"]),
+        new("Seguridad en las excursiones scouts", "Área: Vida al Aire libre", ["PJ"]),
+        new("Menú de un campamento de Tropa", "Área: Vida al Aire libre", ["PJ"]),
+        new("Vivencia de una excursión en las Ramas Mayores", "Área: Vida al Aire libre", ["PJ"]),
         new(
             "Construcciones de cocina y comedor, etc. en campamentos",
             "Área: Vida al Aire libre",
             ["PJ"]
         ),
-
         // Área: Recursos educativos
-        new(
-            "Publicaciones de apoyo al programa",
-            "Área: Recursos educativos",
-            ["PJ", "AE"]
-        ),
-        new(
-            "Estudios de casos", null, ["AE"]),
-        new(
-            "Técnicas de dirección del Curso Informativo",
-            "Área: Recursos educativos",
-            ["AE"]
-        ),
-        new(
-            "Taller de aprendizaje de juegos",
-            "Área: Recursos educativos",
-            ["PJ", "AE"]
-        ),
-        new(
-            "Taller de expresión artística",
-            "Área: Recursos educativos",
-            ["PJ"]
-        ),
-        new(
-            "Promoción de la lectura",
-            "Área: Recursos educativos",
-            ["PJ"]
-        ),
-        new(
-            "Organización de cursos del sistema de formación",
-            "Área: Recursos educativos",
-            ["AE"]
-        ),
-        new(
-            "Conducción de un módulo de formación",
-            "Área: Recursos educativos",
-            ["AE"]
-        ),
-        new(
-            "Uso de recursos audiovisuales",
-            null,
-            ["AE", "GI"]
-        ),
-        new(
-            "Diseño de módulos de formación",
-            "Área: Recursos educativos",
-            ["AE"]
-        ),
-        new(
-            "Técnicas de dinámica de grupos",
-            "Área: Recursos educativos",
-            ["AE", "PJ"]
-        ),
-
+        new("Publicaciones de apoyo al programa", "Área: Recursos educativos", ["PJ", "AE"]),
+        new("Estudios de casos", null, ["AE"]),
+        new("Técnicas de dirección del Curso Informativo", "Área: Recursos educativos", ["AE"]),
+        new("Taller de aprendizaje de juegos", "Área: Recursos educativos", ["PJ", "AE"]),
+        new("Taller de expresión artística", "Área: Recursos educativos", ["PJ"]),
+        new("Promoción de la lectura", "Área: Recursos educativos", ["PJ"]),
+        new("Organización de cursos del sistema de formación", "Área: Recursos educativos", ["AE"]),
+        new("Conducción de un módulo de formación", "Área: Recursos educativos", ["AE"]),
+        new("Uso de recursos audiovisuales", null, ["AE", "GI"]),
+        new("Diseño de módulos de formación", "Área: Recursos educativos", ["AE"]),
+        new("Técnicas de dinámica de grupos", "Área: Recursos educativos", ["AE", "PJ"]),
         // Área: Gestión
-        new(
-            "El Grupo Scout", null, ["GI"]),
-        new(
-            "El comité y el consejo de grupo",
-            "Área: Gestión",
-            ["GI"]
-        ),
-        new(
-            "La obtención de recursos financieros en el Grupo",
-            "Área: Gestión",
-            ["GI"]
-        ),
-        new(
-            "Actividades de financiamiento",
-            "Área: Gestión",
-            ["GI"]
-        ),
-        new(
-            "Relaciones con la Institución Patrocinadora",
-            "Área: Gestión",
-            ["GI"]
-        ),
-        new(
-            "Relaciones con otras instituciones",
-            "Área: Gestión",
-            ["GI"]
-        ),
-        new(
-            "Relación con los padres de familia",
-            "Área: Gestión",
-            ["GI", "PJ"]
-        ),
-        new(
-            "Captación de adultos para el Grupo scout",
-            "Área: Gestión",
-            ["GI", "AE"]
-        ),
-
+        new("El Grupo Scout", null, ["GI"]),
+        new("El comité y el consejo de grupo", "Área: Gestión", ["GI"]),
+        new("La obtención de recursos financieros en el Grupo", "Área: Gestión", ["GI"]),
+        new("Actividades de financiamiento", "Área: Gestión", ["GI"]),
+        new("Relaciones con la Institución Patrocinadora", "Área: Gestión", ["GI"]),
+        new("Relaciones con otras instituciones", "Área: Gestión", ["GI"]),
+        new("Relación con los padres de familia", "Área: Gestión", ["GI", "PJ"]),
+        new("Captación de adultos para el Grupo scout", "Área: Gestión", ["GI", "AE"]),
         // Área: Desarrollo de proyectos
-        new(
-            "Estrategia regional",
-            "Área: Desarrollo de proyectos",
-            ["GI"]
-        ),
-        new(
-            "Marketing del Movimiento Scout",
-            null,
-            ["GI"]
-        ),
+        new("Estrategia regional", "Área: Desarrollo de proyectos", ["GI"]),
+        new("Marketing del Movimiento Scout", null, ["GI"]),
         new(
             "Escultismo para qué?, escultismo para quienes?",
             "Área: Desarrollo de proyectos",
             ["GI", "PJ", "AE"]
         ),
-        new(
-            "Administración de una unidad scout",
-            "Área: Desarrollo de proyectos",
-            ["PJ", "GI"]
-        ),
+        new("Administración de una unidad scout", "Área: Desarrollo de proyectos", ["PJ", "GI"]),
         new(
             "Técnicas de formación de Grupos y crecimiento",
             "Área: Desarrollo de proyectos",
             ["GI"]
         ),
-        new(
-            "Para llegar a ser 24",
-            "Área: Desarrollo de proyectos",
-            ["GI"]
-        ),
-
+        new("Para llegar a ser 24", "Área: Desarrollo de proyectos", ["GI"]),
         // Área: Desarrollo personal
         new(
             "Asertividad y comunicación interpersonal",
             "Área: Desarrollo personal",
             ["GI", "AE", "PJ"]
         ),
-        new(
-            "Técnicas de solución de conflictos",
-            "Área: Desarrollo personal",
-            ["GI", "AE", "PJ"]
-        ),
-        new(
-            "Estilos y habilidades de liderazgo",
-            "Área: Desarrollo personal",
-            ["GI", "AE", "PJ"]
-        ),
-        new(
-            "Principios de la comunicación",
-            "Área: Desarrollo personal",
-            ["GI", "AE", "PJ"]
-        ),
-        new(
-            "El abismo de las comunicaciones",
-            "Área: Desarrollo personal",
-            ["GI"]
-        ),
-        new(
-            "Las relaciones interpersonales",
-            null,
-            ["GI", "AE", "PJ"]
-        ),
-        new(
-            "Liderazgo situacional",
-            "Área: Desarrollo personal",
-            ["GI", "AE"]
-        ),
-        new(
-            "Calidad total", null, ["GI"]),
+        new("Técnicas de solución de conflictos", "Área: Desarrollo personal", ["GI", "AE", "PJ"]),
+        new("Estilos y habilidades de liderazgo", "Área: Desarrollo personal", ["GI", "AE", "PJ"]),
+        new("Principios de la comunicación", "Área: Desarrollo personal", ["GI", "AE", "PJ"]),
+        new("El abismo de las comunicaciones", "Área: Desarrollo personal", ["GI"]),
+        new("Las relaciones interpersonales", null, ["GI", "AE", "PJ"]),
+        new("Liderazgo situacional", "Área: Desarrollo personal", ["GI", "AE"]),
+        new("Calidad total", null, ["GI"]),
         new(
             "Relaciones humanas (descripción de comportamientos)",
             "Área: Desarrollo personal",
@@ -606,46 +301,24 @@ public static class TrainingCatalogSeeder
             "Área: Desarrollo personal",
             ["GI", "AE", "PJ"]
         ),
-        new(
-            "Motivación a los dirigentes",
-            "Área: Desarrollo personal",
-            ["GI", "AE"]
-        ),
-        new(
-            "Las nueve \"S\"", null, ["GI"]),
-        new(
-            "Técnicas de redacción",
-            "Área: Desarrollo personal",
-            ["GI", "AE"]
-        ),
+        new("Motivación a los dirigentes", "Área: Desarrollo personal", ["GI", "AE"]),
+        new("Las nueve \"S\"", null, ["GI"]),
+        new("Técnicas de redacción", "Área: Desarrollo personal", ["GI", "AE"]),
         new(
             "Primero lo primero y los 7 hábitos de la gente altamente eficiente",
             "Área: Desarrollo personal",
             ["GI", "AE", "PJ"]
         ),
-        new(
-            "Técnicas de conducción de sesiones",
-            "Área: Desarrollo personal",
-            ["GI", "AE"]
-        ),
-        new(
-            "El proceso grupal",
-            "Área: Desarrollo personal",
-            ["GI", "AE", "PJ"]
-        ),
-        new(
-            "El educador voluntario de tiempo libre",
-            "Área: Desarrollo personal",
-            ["AE", "PJ"]
-        ),
-        new(
-            "Desarrollo de la creatividad",
-            "Área: Desarrollo personal",
-            ["PJ", "AE"]
-        ),
+        new("Técnicas de conducción de sesiones", "Área: Desarrollo personal", ["GI", "AE"]),
+        new("El proceso grupal", "Área: Desarrollo personal", ["GI", "AE", "PJ"]),
+        new("El educador voluntario de tiempo libre", "Área: Desarrollo personal", ["AE", "PJ"]),
+        new("Desarrollo de la creatividad", "Área: Desarrollo personal", ["PJ", "AE"]),
     ];
 
-    public static async Task SeedAsync(ScoutDbContext db, CancellationToken cancellationToken = default)
+    public static async Task SeedAsync(
+        ScoutDbContext db,
+        CancellationToken cancellationToken = default
+    )
     {
         Console.WriteLine();
         Console.WriteLine("==================================================");
@@ -678,7 +351,9 @@ public static class TrainingCatalogSeeder
         }
 
         await db.SaveChangesAsync(cancellationToken);
-        Console.WriteLine($"Líneas de formación: {linesCreated} creadas, {linesUpdated} actualizadas.");
+        Console.WriteLine(
+            $"Líneas de formación: {linesCreated} creadas, {linesUpdated} actualizadas."
+        );
 
         var existingLevels = await db.TrainingLevels.ToDictionaryAsync(
             x => x.Code,
@@ -707,10 +382,12 @@ public static class TrainingCatalogSeeder
         }
 
         await db.SaveChangesAsync(cancellationToken);
-        Console.WriteLine($"Niveles de formación: {levelsCreated} creados, {levelsUpdated} actualizados.");
+        Console.WriteLine(
+            $"Niveles de formación: {levelsCreated} creados, {levelsUpdated} actualizados."
+        );
 
-        var existingModules = await db.TrainingModules
-            .Include(m => m.ModuleLines)
+        var existingModules = await db
+            .TrainingModules.Include(m => m.ModuleLines)
             .ToDictionaryAsync(
                 x => x.Name,
                 x => x,
@@ -730,11 +407,7 @@ public static class TrainingCatalogSeeder
             }
             else
             {
-                module = new TrainingModule
-                {
-                    Name = seed.Name,
-                    Description = seed.Description,
-                };
+                module = new TrainingModule { Name = seed.Name, Description = seed.Description };
                 db.TrainingModules.Add(module);
                 existingModules[seed.Name] = module;
                 modulesCreated++;
@@ -742,7 +415,9 @@ public static class TrainingCatalogSeeder
         }
 
         await db.SaveChangesAsync(cancellationToken);
-        Console.WriteLine($"Módulos de formación: {modulesCreated} creados, {modulesUpdated} actualizados.");
+        Console.WriteLine(
+            $"Módulos de formación: {modulesCreated} creados, {modulesUpdated} actualizados."
+        );
 
         var moduleLinesAdded = 0;
         foreach (var seed in Modules)
@@ -768,8 +443,8 @@ public static class TrainingCatalogSeeder
         await db.SaveChangesAsync(cancellationToken);
         Console.WriteLine($"Asignaciones módulo-línea agregadas: {moduleLinesAdded}.");
 
-        var trackedLevels = await db.TrainingLevels
-            .Include(l =>
+        var trackedLevels = await db
+            .TrainingLevels.Include(l =>
                 l.Requirements.Where(r => r.RequirementType == TrainingLevelRequirement.ModulesType)
             )
                 .ThenInclude(r => r.MandatoryModules)
@@ -784,8 +459,8 @@ public static class TrainingCatalogSeeder
         foreach (var seed in Requirements)
         {
             var level = trackedLevels[seed.LevelCode];
-            var mandatoryModules = seed.MandatoryNames
-                .Select(name => existingModules[name])
+            var mandatoryModules = seed
+                .MandatoryNames.Select(name => existingModules[name])
                 .ToList();
 
             var requirement = level.Requirements.SingleOrDefault(r =>
@@ -819,7 +494,9 @@ public static class TrainingCatalogSeeder
         Console.WriteLine($"Requisitos de nivel configurados: {requirementsConfigured}.");
 
         await AssertCatalogValidAsync(db, cancellationToken);
-        Console.WriteLine("Verificación del catálogo: OK (3 líneas, 7 niveles, 107 módulos, 4 requisitos válidos).");
+        Console.WriteLine(
+            "Verificación del catálogo: OK (3 líneas, 7 niveles, 107 módulos, 4 requisitos válidos)."
+        );
     }
 
     public static async Task AssertCatalogValidAsync(
@@ -845,8 +522,8 @@ public static class TrainingCatalogSeeder
                 $"Se esperaban 107 módulos de formación, se encontraron {modulesCount}."
             );
 
-        var reqs = await db.TrainingLevelRequirements
-            .Include(r => r.TrainingLevel)
+        var reqs = await db
+            .TrainingLevelRequirements.Include(r => r.TrainingLevel)
             .Include(r => r.MandatoryModules)
             .ToListAsync(cancellationToken);
 

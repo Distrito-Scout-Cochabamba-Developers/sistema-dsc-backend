@@ -60,20 +60,8 @@ public class TrainingLevelRequirementsTests(RequirementsPostgres postgres)
             [new WriteTrainingLevelRequirementsDto(12, 2, null)],
             [new WriteTrainingLevelRequirementsDto(12, 2, [-1L])],
             [new WriteTrainingLevelRequirementsDto(12, 2, [0L])],
-            [
-                new WriteTrainingLevelRequirementsDto(
-                    12,
-                    2,
-                    [1L, 1L]
-                ),
-            ],
-            [
-                new WriteTrainingLevelRequirementsDto(
-                    12,
-                    2,
-                    [1L, 9999L]
-                ),
-            ],
+            [new WriteTrainingLevelRequirementsDto(12, 2, [1L, 1L])],
+            [new WriteTrainingLevelRequirementsDto(12, 2, [1L, 9999L])],
         ];
 
     [Fact]
@@ -88,11 +76,7 @@ public class TrainingLevelRequirementsTests(RequirementsPostgres postgres)
             new(12, 2, ScoutTrainingCatalog.MandatoryIds)
         );
         // Cambio administrativo de configuración, no evaluación de aprobaciones individuales.
-        var replacement = new WriteTrainingLevelRequirementsDto(
-            12,
-            2,
-            [3L, 4L]
-        );
+        var replacement = new WriteTrainingLevelRequirementsDto(12, 2, [3L, 4L]);
         await handler.HandleAsync(ScoutTrainingCatalog.LevelCode, replacement);
         await handler.HandleAsync(ScoutTrainingCatalog.LevelCode, replacement);
 
@@ -159,10 +143,7 @@ public class TrainingLevelRequirementsTests(RequirementsPostgres postgres)
         ).Modules!;
         Assert.Equal(12, modules.TotalModulesCount);
         Assert.Equal(2, modules.MinMandatoryModulesCount);
-        Assert.Equal(
-            new long[] { 1, 2, 3, 4 },
-            modules.MandatoryModules.Select(m => m.Id).Order()
-        );
+        Assert.Equal(new long[] { 1, 2, 3, 4 }, modules.MandatoryModules.Select(m => m.Id).Order());
     }
 }
 
@@ -294,12 +275,7 @@ public sealed class RequirementsPostgres : IDisposable
 
         var line = new TrainingLine(1, "PJ", "Programa de Jóvenes");
         db.TrainingLevels.Add(
-            new TrainingLevel(
-                1,
-                ScoutTrainingCatalog.LevelCode,
-                "Insignia de Madera I-II",
-                line
-            )
+            new TrainingLevel(1, ScoutTrainingCatalog.LevelCode, "Insignia de Madera I-II", line)
         );
         var modules = ScoutTrainingCatalog
             .Mandatory()

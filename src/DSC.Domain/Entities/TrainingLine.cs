@@ -18,12 +18,7 @@ public class TrainingLine
 
     private TrainingLine() { }
 
-    public TrainingLine(
-        TrainingLineId id,
-        string code,
-        string name,
-        string? description = null
-    )
+    public TrainingLine(TrainingLineId id, string code, string name, string? description = null)
     {
         Id = id;
         Code = code;
@@ -31,11 +26,8 @@ public class TrainingLine
         Description = description;
     }
 
-    public TrainingLine(
-        string code,
-        string name,
-        string? description = null
-    ) : this(default, code, name, description) { }
+    public TrainingLine(string code, string name, string? description = null)
+        : this(default, code, name, description) { }
 
     public void Update(string name, string? description)
     {

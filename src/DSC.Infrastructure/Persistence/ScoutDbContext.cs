@@ -91,9 +91,7 @@ public class ScoutDbContext(DbContextOptions<ScoutDbContext> options) : DbContex
     {
         base.ConfigureConventions(configurationBuilder);
 
-        configurationBuilder
-            .Properties<TrainingLineId>()
-            .HaveConversion<TrainingLineIdConverter>();
+        configurationBuilder.Properties<TrainingLineId>().HaveConversion<TrainingLineIdConverter>();
 
         configurationBuilder
             .Properties<TrainingLevelId>()

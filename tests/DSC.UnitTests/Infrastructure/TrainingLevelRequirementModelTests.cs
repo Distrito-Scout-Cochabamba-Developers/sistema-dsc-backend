@@ -45,20 +45,14 @@ public class TrainingLevelRequirementModelTests(RequirementsPostgres postgres)
             .ConfigureCurricularModules(
                 12,
                 2,
-                await repository.GetTrackedModulesByIdsAsync(
-                    [3L, 4L],
-                    default
-                )
+                await repository.GetTrackedModulesByIdsAsync([3L, 4L], default)
             );
         stale
             .Requirements.Single()
             .ConfigureCurricularModules(
                 12,
                 2,
-                await other.GetTrackedModulesByIdsAsync(
-                    [1L, 2L],
-                    default
-                )
+                await other.GetTrackedModulesByIdsAsync([1L, 2L], default)
             );
         await repository.SaveChangesAsync(default);
         await Assert.ThrowsAsync<InvalidOperationException>(() => other.SaveChangesAsync(default));
@@ -221,10 +215,7 @@ public class TrainingLevelRequirementModelTests(RequirementsPostgres postgres)
             ScoutTrainingCatalog.LevelCode,
             new(12, 2, ScoutTrainingCatalog.MandatoryIds)
         );
-        await handler.HandleAsync(
-            ScoutTrainingCatalog.LevelCode,
-            new(12, 2, [3L, 4L])
-        );
+        await handler.HandleAsync(ScoutTrainingCatalog.LevelCode, new(12, 2, [3L, 4L]));
         await using var reader = postgres.Open(db.Database.GetConnectionString()!);
         Assert.Equal(before, await History(reader));
         Assert.True(await new ModuleAttendanceRepository(reader).ExistsAsync(3, 1, default));

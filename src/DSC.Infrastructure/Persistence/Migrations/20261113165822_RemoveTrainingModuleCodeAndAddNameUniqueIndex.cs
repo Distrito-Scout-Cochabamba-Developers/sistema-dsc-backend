@@ -10,27 +10,22 @@ namespace DSC.Infrastructure.Persistence.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropIndex(
-                name: "IX_training_module_code",
-                table: "training_module");
+            migrationBuilder.DropIndex(name: "IX_training_module_code", table: "training_module");
 
-            migrationBuilder.DropColumn(
-                name: "code",
-                table: "training_module");
+            migrationBuilder.DropColumn(name: "code", table: "training_module");
 
             migrationBuilder.CreateIndex(
                 name: "IX_training_module_name",
                 table: "training_module",
                 column: "name",
-                unique: true);
+                unique: true
+            );
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropIndex(
-                name: "IX_training_module_name",
-                table: "training_module");
+            migrationBuilder.DropIndex(name: "IX_training_module_name", table: "training_module");
 
             migrationBuilder.AddColumn<string>(
                 name: "code",
@@ -38,13 +33,15 @@ namespace DSC.Infrastructure.Persistence.Migrations
                 type: "character varying(30)",
                 maxLength: 30,
                 nullable: false,
-                defaultValue: "");
+                defaultValue: ""
+            );
 
             migrationBuilder.CreateIndex(
                 name: "IX_training_module_code",
                 table: "training_module",
                 column: "code",
-                unique: true);
+                unique: true
+            );
         }
     }
 }

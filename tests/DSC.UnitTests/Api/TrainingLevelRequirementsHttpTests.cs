@@ -198,10 +198,7 @@ public class TrainingLevelRequirementsHttpTests(RequirementsPostgres postgres) :
         var modules = (await client.GetFromJsonAsync<TrainingLevelRequirementsDto>(Read))!.Modules!;
         Assert.Equal(12, modules.TotalModulesCount);
         Assert.Equal(2, modules.MinMandatoryModulesCount);
-        Assert.Equal(
-            new long[] { 1, 2, 3, 4 },
-            modules.MandatoryModules.Select(m => m.Id).Order()
-        );
+        Assert.Equal(new long[] { 1, 2, 3, 4 }, modules.MandatoryModules.Select(m => m.Id).Order());
         Assert.Equal(
             new[]
             {
@@ -251,11 +248,7 @@ public class TrainingLevelRequirementsHttpTests(RequirementsPostgres postgres) :
         Assert.Equal(HttpStatusCode.Conflict, blocked.StatusCode);
         Assert.Equal(409, (await blocked.Content.ReadFromJsonAsync<ProblemDetails>())!.Status);
 
-        var replacement = new WriteTrainingLevelRequirementsDto(
-            12,
-            2,
-            [1L, 2L, 4L]
-        );
+        var replacement = new WriteTrainingLevelRequirementsDto(12, 2, [1L, 2L, 4L]);
         Assert.Equal(
             HttpStatusCode.OK,
             (await client.PutAsJsonAsync(Write, replacement)).StatusCode
@@ -267,9 +260,7 @@ public class TrainingLevelRequirementsHttpTests(RequirementsPostgres postgres) :
         Assert.Equal(
             new long[] { 1, 2, 4 },
             (await client.GetFromJsonAsync<TrainingLevelRequirementsDto>(Read))!
-                .Modules!
-                .MandatoryModules
-                .Select(m => m.Id)
+                .Modules!.MandatoryModules.Select(m => m.Id)
                 .Order()
         );
         Assert.Equal(

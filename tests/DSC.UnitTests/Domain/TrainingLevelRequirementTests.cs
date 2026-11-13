@@ -98,45 +98,17 @@ internal static class ScoutTrainingCatalog
 
     internal static TrainingModule[] Mandatory() =>
         [
-            new()
-            {
-                Id = 1,
-                Name = "Responsabilidad legal del dirigente",
-            },
-            new()
-            {
-                Id = 2,
-                Name = "Impacto ambiental en actividades Scouts",
-            },
-            new()
-            {
-                Id = 3,
-                Name = "Primeros auxilios",
-            },
-            new()
-            {
-                Id = 4,
-                Name = "Ciclo de programa",
-            },
+            new() { Id = 1, Name = "Responsabilidad legal del dirigente" },
+            new() { Id = 2, Name = "Impacto ambiental en actividades Scouts" },
+            new() { Id = 3, Name = "Primeros auxilios" },
+            new() { Id = 4, Name = "Ciclo de programa" },
         ];
 
     internal static TrainingModule[] Voluntary() =>
         [
-            new()
-            {
-                Id = 5,
-                Name = "Tribu Tierra",
-            },
-            new()
-            {
-                Id = 6,
-                Name = "Para llegar a ser 24",
-            },
-            new()
-            {
-                Id = 7,
-                Name = "El sistema de equipos",
-            },
+            new() { Id = 5, Name = "Tribu Tierra" },
+            new() { Id = 6, Name = "Para llegar a ser 24" },
+            new() { Id = 7, Name = "El sistema de equipos" },
         ];
 
     internal static long[] MandatoryIds => [1L, 2L, 3L, 4L];

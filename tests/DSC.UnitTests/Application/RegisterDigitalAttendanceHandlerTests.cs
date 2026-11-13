@@ -22,9 +22,7 @@ public class RegisterDigitalAttendanceHandlerTests
         dbContext.Database.EnsureCreated();
 
         // GetByCodeAsync includes the module's training lines.
-        dbContext.TrainingLines.Add(
-            new TrainingLine(1, "AE", "Adjuntos/Asesores de Formación")
-        );
+        dbContext.TrainingLines.Add(new TrainingLine(1, "AE", "Adjuntos/Asesores de Formación"));
         dbContext.SaveChanges();
 
         return dbContext;

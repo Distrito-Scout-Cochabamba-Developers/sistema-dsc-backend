@@ -6,7 +6,10 @@ namespace DSC.Infrastructure.Persistence.Repositories;
 
 public class TrainingModuleRepository(ScoutDbContext dbContext) : ITrainingModuleRepository
 {
-    public async Task<TrainingModule?> GetByIdAsync(long id, CancellationToken cancellationToken = default)
+    public async Task<TrainingModule?> GetByIdAsync(
+        long id,
+        CancellationToken cancellationToken = default
+    )
     {
         return await dbContext
             .TrainingModules.AsNoTracking()
@@ -15,7 +18,10 @@ public class TrainingModuleRepository(ScoutDbContext dbContext) : ITrainingModul
             .FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
     }
 
-    public async Task<TrainingModule?> GetTrackedByIdAsync(long id, CancellationToken cancellationToken = default)
+    public async Task<TrainingModule?> GetTrackedByIdAsync(
+        long id,
+        CancellationToken cancellationToken = default
+    )
     {
         return await dbContext
             .TrainingModules.Include(x => x.ModuleLines)
@@ -23,7 +29,10 @@ public class TrainingModuleRepository(ScoutDbContext dbContext) : ITrainingModul
             .FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
     }
 
-    public async Task<TrainingModule?> GetByNameAsync(string name, CancellationToken cancellationToken = default)
+    public async Task<TrainingModule?> GetByNameAsync(
+        string name,
+        CancellationToken cancellationToken = default
+    )
     {
         var trimmed = name.Trim();
         return await dbContext
@@ -40,11 +49,12 @@ public class TrainingModuleRepository(ScoutDbContext dbContext) : ITrainingModul
     )
     {
         var trimmed = name.Trim();
-        return await dbContext
-            .TrainingModules.AnyAsync(
-                x => x.Name.ToLower() == trimmed.ToLower() && (!excludeId.HasValue || x.Id != excludeId.Value),
-                cancellationToken
-            );
+        return await dbContext.TrainingModules.AnyAsync(
+            x =>
+                x.Name.ToLower() == trimmed.ToLower()
+                && (!excludeId.HasValue || x.Id != excludeId.Value),
+            cancellationToken
+        );
     }
 
     public async Task<IReadOnlyList<TrainingModule>> ListAsync(
@@ -61,15 +71,19 @@ public class TrainingModuleRepository(ScoutDbContext dbContext) : ITrainingModul
         if (!string.IsNullOrWhiteSpace(search))
         {
             var pattern = search.Trim();
-            query = dbContext.Database.ProviderName == "Microsoft.EntityFrameworkCore.InMemory"
-                ? query.Where(x => x.Name.Contains(pattern, StringComparison.OrdinalIgnoreCase))
-                : query.Where(x => EF.Functions.ILike(x.Name, $"%{pattern}%"));
+            query =
+                dbContext.Database.ProviderName == "Microsoft.EntityFrameworkCore.InMemory"
+                    ? query.Where(x => x.Name.Contains(pattern, StringComparison.OrdinalIgnoreCase))
+                    : query.Where(x => EF.Functions.ILike(x.Name, $"%{pattern}%"));
         }
 
         return await query.OrderBy(x => x.Name).ToListAsync(cancellationToken);
     }
 
-    public async Task AddAsync(TrainingModule trainingModule, CancellationToken cancellationToken = default)
+    public async Task AddAsync(
+        TrainingModule trainingModule,
+        CancellationToken cancellationToken = default
+    )
     {
         await dbContext.TrainingModules.AddAsync(trainingModule, cancellationToken);
         await dbContext.SaveChangesAsync(cancellationToken);
@@ -78,7 +92,10 @@ public class TrainingModuleRepository(ScoutDbContext dbContext) : ITrainingModul
     public Task SaveChangesAsync(CancellationToken cancellationToken = default) =>
         dbContext.SaveChangesAsync(cancellationToken);
 
-    public async Task<bool> HasDependenciesAsync(long id, CancellationToken cancellationToken = default)
+    public async Task<bool> HasDependenciesAsync(
+        long id,
+        CancellationToken cancellationToken = default
+    )
     {
         if (
             await dbContext.TrainingLevelMandatoryModules.AnyAsync(
