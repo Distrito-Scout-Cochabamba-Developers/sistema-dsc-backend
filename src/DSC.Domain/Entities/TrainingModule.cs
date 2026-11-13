@@ -14,4 +14,9 @@ public class TrainingModule
     public ICollection<TrainingModuleLine> ModuleLines { get; set; } = [];
     public ICollection<TrainingModuleSession> Sessions { get; set; } = [];
     public ICollection<TrainingModuleLessonPlanTemplate> LessonPlanTemplates { get; set; } = [];
+    public ICollection<TrainingLevelMandatoryModule> MandatoryForLevelRequirements
+    {
+        get;
+        private set;
+    } = [];
 }

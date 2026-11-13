@@ -16,4 +16,5 @@ public class TrainingLevel
     public TrainingLine TrainingLine { get; set; } = null!;
     public TrainingStage? TrainingStage { get; set; }
     public ICollection<ScoutLeaderTrainingLevel> LeaderLevels { get; set; } = [];
+    public ICollection<TrainingLevelRequirement> Requirements { get; private set; } = [];
 }
