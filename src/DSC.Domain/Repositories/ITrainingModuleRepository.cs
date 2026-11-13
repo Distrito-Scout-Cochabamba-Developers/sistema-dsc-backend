@@ -17,7 +17,7 @@ public interface ITrainingModuleRepository
     Task SaveChangesAsync(CancellationToken cancellationToken);
 
     /// <summary>
-    /// True si hay asistencia, sesiones o plantillas que impiden borrar el módulo.
+    /// True si hay requisitos de nivel, asistencia, sesiones o plantillas que impiden borrar el módulo.
     /// </summary>
     Task<bool> HasDependenciesAsync(long id, CancellationToken cancellationToken);
 

@@ -118,12 +118,12 @@ public class AdminCatalogController(
     }
 
     /// <summary>
-    /// Elimina un módulo si no tiene asistencia, sesiones ni plantillas.
+    /// Elimina un módulo si no tiene requisitos de nivel, asistencia, sesiones ni plantillas.
     /// </summary>
     [HttpDelete("modules/{code}")]
     [EndpointSummary("Elimina un módulo de formación")]
     [EndpointDescription(
-        "Requiere JWT con rol ADMIN o DISTRICT_SECRETARY. 204 si se elimina. 409 si el módulo tiene asistencia, sesiones o plantillas asociadas (FK Restrict)."
+        "Requiere JWT con rol ADMIN o DISTRICT_SECRETARY. 204 si se elimina. 409 si el módulo tiene requisitos de nivel, asistencia, sesiones o plantillas asociadas (FK Restrict)."
     )]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]

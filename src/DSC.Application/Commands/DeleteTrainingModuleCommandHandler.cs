@@ -24,7 +24,7 @@ public class DeleteTrainingModuleCommandHandler(ITrainingModuleRepository module
 
         if (await moduleRepository.HasDependenciesAsync(module.Id, cancellationToken))
             throw new InvalidOperationException(
-                $"No se puede eliminar el módulo '{code}' porque tiene asistencia, sesiones o plantillas asociadas."
+                $"No se puede eliminar el módulo '{code}' porque tiene requisitos de nivel, asistencia, sesiones o plantillas asociadas."
             );
 
         await moduleRepository.RemoveAsync(module, cancellationToken);

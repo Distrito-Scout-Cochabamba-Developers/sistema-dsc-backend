@@ -13,6 +13,9 @@ public static class DependencyInjection
         services.AddScoped<ListTrainingModulesQueryHandler>();
         services.AddScoped<GetTrainingModuleByCodeQueryHandler>();
         services.AddScoped<ListTrainingLinesQueryHandler>();
+        services.AddScoped<ListTrainingLevelsQueryHandler>();
+        services.AddScoped<GetTrainingLevelRequirementsQueryHandler>();
+        services.AddScoped<ConfigureTrainingLevelRequirementsCommandHandler>();
         services.AddScoped<CreateTrainingModuleCommandHandler>();
         services.AddScoped<UpdateTrainingModuleCommandHandler>();
         services.AddScoped<DeleteTrainingModuleCommandHandler>();
