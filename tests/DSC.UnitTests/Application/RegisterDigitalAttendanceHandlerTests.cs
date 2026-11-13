@@ -23,19 +23,28 @@ public class RegisterDigitalAttendanceHandlerTests
         return dbContext;
     }
 
+    private static async Task<TrainingModule> CreateTrainingModuleAsync(
+        ScoutDbContext db,
+        string code
+    )
+    {
+        var module = new TrainingModule
+        {
+            Code = code,
+            Name = "Módulo de Prueba",
+            ModuleType = new ModuleType { Code = "TEST", Name = "Tipo de Prueba" },
+        };
+        db.TrainingModules.Add(module);
+        await db.SaveChangesAsync();
+        return module;
+    }
+
     [Fact]
     public async Task RegisterAttendance_WithNewLeader_ShouldCreatePersonAndAttendance()
     {
         // Arrange
         using var db = CreateInMemoryDbContext();
-        var sampleModule = new TrainingModule
-        {
-            Code = "TOKEN-123",
-            Name = "Módulo de Prueba",
-            ModuleTypeId = 1,
-        };
-        db.TrainingModules.Add(sampleModule);
-        await db.SaveChangesAsync();
+        var sampleModule = await CreateTrainingModuleAsync(db, "TOKEN-123");
 
         var moduleRepo = new TrainingModuleRepository(db);
         var leaderRepo = new ScoutLeaderRepository(db);
@@ -82,14 +91,7 @@ public class RegisterDigitalAttendanceHandlerTests
     {
         // Arrange
         using var db = CreateInMemoryDbContext();
-        var sampleModule = new TrainingModule
-        {
-            Code = "TOKEN-DUPLICATE",
-            Name = "Módulo de Prueba",
-            ModuleTypeId = 1,
-        };
-        db.TrainingModules.Add(sampleModule);
-        await db.SaveChangesAsync();
+        await CreateTrainingModuleAsync(db, "TOKEN-DUPLICATE");
 
         var moduleRepo = new TrainingModuleRepository(db);
         var leaderRepo = new ScoutLeaderRepository(db);
@@ -154,14 +156,7 @@ public class RegisterDigitalAttendanceHandlerTests
     {
         // Arrange
         using var db = CreateInMemoryDbContext();
-        var sampleModule = new TrainingModule
-        {
-            Code = "TOKEN-INVALID-CI",
-            Name = "Módulo de Prueba",
-            ModuleTypeId = 1,
-        };
-        db.TrainingModules.Add(sampleModule);
-        await db.SaveChangesAsync();
+        await CreateTrainingModuleAsync(db, "TOKEN-INVALID-CI");
 
         var moduleRepo = new TrainingModuleRepository(db);
         var leaderRepo = new ScoutLeaderRepository(db);
@@ -200,14 +195,7 @@ public class RegisterDigitalAttendanceHandlerTests
     {
         // Arrange
         using var db = CreateInMemoryDbContext();
-        var sampleModule = new TrainingModule
-        {
-            Code = "TOKEN-NO-NAME",
-            Name = "Módulo de Prueba",
-            ModuleTypeId = 1,
-        };
-        db.TrainingModules.Add(sampleModule);
-        await db.SaveChangesAsync();
+        await CreateTrainingModuleAsync(db, "TOKEN-NO-NAME");
 
         var moduleRepo = new TrainingModuleRepository(db);
         var leaderRepo = new ScoutLeaderRepository(db);
