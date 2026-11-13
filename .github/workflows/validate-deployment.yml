@@ -1,0 +1,58 @@
+name: Validate deployment authentication
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  validate-runtime:
+    # Repository secrets are only consumed on an explicitly dispatched trusted branch.
+    if: github.ref_name == github.event.repository.default_branch
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9 # v4
+        with:
+          dotnet-version: 10.0.x
+      - name: Publish without runtime secrets
+        run: dotnet publish src/DSC.Api/DSC.Api.csproj --configuration Release --output "$RUNNER_TEMP/api-publish"
+      - name: Validate injected JWT settings and CORS
+        shell: bash
+        env:
+          Jwt__Secret: ${{ secrets.JWT_SECRET }}
+          Jwt__Issuer: ${{ secrets.JWT_ISSUER }}
+          Jwt__Audience: ${{ secrets.JWT_AUDIENCE }}
+          Cors__AllowedOrigins__0: ${{ vars.FRONTEND_ORIGIN }}
+          ASPNETCORE_ENVIRONMENT: Production
+          ASPNETCORE_URLS: http://127.0.0.1:5089
+        run: |
+          set -euo pipefail
+          for name in Jwt__Secret Jwt__Issuer Jwt__Audience Cors__AllowedOrigins__0; do
+            if [[ -z "${!name}" ]]; then
+              echo "::error::Missing required configuration: $name"
+              exit 1
+            fi
+          done
+          dotnet "$RUNNER_TEMP/api-publish/DSC.Api.dll" > "$RUNNER_TEMP/api-runtime.log" 2>&1 &
+          api_pid=$!
+          trap 'kill "$api_pid" 2>/dev/null || true' EXIT
+          ready=false
+          for attempt in {1..30}; do
+            status=$(curl --silent --output /dev/null --write-out '%{http_code}' http://127.0.0.1:5089/api/v1/auth/me || true)
+            if [[ "$status" == "401" ]]; then ready=true; break; fi
+            if ! kill -0 "$api_pid" 2>/dev/null; then break; fi
+            sleep 1
+          done
+          if [[ "$ready" != "true" ]]; then
+            echo "::error::API did not start with the injected configuration. Runtime logs are not published."
+            exit 1
+          fi
+          curl --fail --silent --show-error --dump-header "$RUNNER_TEMP/cors-headers.txt" --output /dev/null \
+            --request OPTIONS http://127.0.0.1:5089/api/v1/auth/login \
+            --header "Origin: $Cors__AllowedOrigins__0" \
+            --header 'Access-Control-Request-Method: POST' \
+            --header 'Access-Control-Request-Headers: content-type,authorization'
+          allowed=$(awk 'tolower($1) == "access-control-allow-origin:" { gsub("\\r", "", $2); print $2 }' "$RUNNER_TEMP/cors-headers.txt")
+          [[ "$allowed" == "$Cors__AllowedOrigins__0" ]] || { echo "::error::CORS origin was not allowed"; exit 1; }
+          echo "JWT startup validation and allowed-origin CORS preflight passed."

@@ -27,7 +27,7 @@ Content-Type: application/json
 **Respuesta (`200 OK`):**
 ```json
 {
-  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "token": "<JWT_FROM_LOGIN>",
   "tokenType": "Bearer",
   "expiresAt": "2026-10-21T03:00:00+00:00",
   "user": {
@@ -64,7 +64,7 @@ Content-Type: application/json
 **Respuesta (`200 OK`):**
 ```json
 {
-  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "token": "<JWT_FROM_LOGIN>",
   "tokenType": "Bearer",
   "expiresAt": "2026-10-21T03:00:00+00:00",
   "user": {

@@ -5,6 +5,9 @@
 
 # dotenv files
 .env
+.env.*
+!.env.example
+*.publishsettings
 
 # User-specific files
 *.rsuser
@@ -491,5 +494,9 @@ _bmad/custom/*.user.toml
 
 # BMad local session logs
 _bmad-output/planning-artifacts/.memlog.md
+
+# Especificación local de seguridad; no publicar en el repositorio.
+_bmad-output/implementation-artifacts/spec-proteger-diagnosticos-production.md
+_bmad-output/implementation-artifacts/deferred-work.md
 
 

@@ -1,6 +1,6 @@
-using System.Text;
 using DotNetEnv;
 using DSC.Api;
+using DSC.Api.Configuration;
 using DSC.Api.Conventions;
 using DSC.Api.Middlewares;
 using DSC.Application;
@@ -18,10 +18,13 @@ public partial class Program
 {
     private static void Main(string[] args)
     {
-        // 0. Load environment variables from .env file if present
-        Env.TraversePath().Load();
+        // Deployment environment values must take precedence over any local .env file.
+        Env.TraversePath().NoClobber().Load();
 
         var builder = WebApplication.CreateBuilder(args);
+        // Falla al arrancar si el despliegue omitió configuración de autenticación.
+        var jwtSettings = JwtSettings.Load(builder.Configuration);
+        builder.Services.AddAngularCors(builder.Configuration, builder.Environment.IsDevelopment());
 
         // 1. Resolve PostgreSQL Connection String securely from environment / .env / config
         var connectionString = ResolveConnectionString(builder.Configuration);
@@ -106,13 +109,11 @@ public partial class Program
                 options.TokenValidationParameters = new TokenValidationParameters
                 {
                     ValidateIssuerSigningKey = true,
-                    IssuerSigningKey = new SymmetricSecurityKey(
-                        Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"] ?? string.Empty)
-                    ),
+                    IssuerSigningKey = jwtSettings.CreateSigningKey(),
                     ValidateIssuer = true,
-                    ValidIssuer = builder.Configuration["Jwt:Issuer"],
+                    ValidIssuer = jwtSettings.Issuer,
                     ValidateAudience = true,
-                    ValidAudience = builder.Configuration["Jwt:Audience"],
+                    ValidAudience = jwtSettings.Audience,
                     ValidateLifetime = true,
                     ClockSkew = TimeSpan.Zero,
                     NameClaimType = "username",
@@ -139,6 +140,8 @@ public partial class Program
         else
             app.UseHttpsRedirection();
 
+        app.UseRouting();
+        app.UseCors(CorsConfiguration.AngularPolicy);
         app.UseAuthentication();
         app.UseAuthorization();
         app.MapControllers();

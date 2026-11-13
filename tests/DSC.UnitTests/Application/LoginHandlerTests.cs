@@ -49,7 +49,12 @@ public class LoginHandlerTests
         new SimpleTestConfiguration(
             new Dictionary<string, string?>
             {
-                { "Jwt:Key", "this-is-a-valid-test-secret-key-32bytes-long" },
+                {
+                    "Jwt:Secret",
+                    Convert.ToBase64String(
+                        System.Security.Cryptography.RandomNumberGenerator.GetBytes(48)
+                    )
+                },
                 { "Jwt:Issuer", "DSC.Api" },
                 { "Jwt:Audience", "DSC.Client" },
                 { "Jwt:ExpiresMinutes", expiresMinutes.ToString() },

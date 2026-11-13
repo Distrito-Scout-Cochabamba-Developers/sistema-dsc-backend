@@ -1,0 +1,69 @@
+name: Backend CI
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  secrets:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Install verified Gitleaks OSS
+        shell: bash
+        run: |
+          set -euo pipefail
+          version=8.30.1
+          archive="gitleaks_${version}_linux_x64.tar.gz"
+          release="https://github.com/gitleaks/gitleaks/releases/download/v${version}"
+          cd "$RUNNER_TEMP"
+          curl --fail --silent --show-error --location "$release/$archive" -o "$archive"
+          curl --fail --silent --show-error --location "$release/gitleaks_${version}_checksums.txt" -o checksums.txt
+          grep -E "[[:space:]]${archive}$" checksums.txt | sha256sum --check --strict
+          tar -xzf "$archive" gitleaks
+      - name: Scan complete Git history (redacted)
+        run: '"$RUNNER_TEMP/gitleaks" git . --redact=100 --no-banner'
+  build-test:
+    needs: secrets
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9 # v4
+        with:
+          dotnet-version: 10.0.x
+      - name: Restore .NET tools
+        run: dotnet tool restore
+      - name: Check C# format
+        run: dotnet csharpier check src tests tools
+      - name: Restore solution
+        run: dotnet restore DSC.slnx
+      - name: Build solution
+        run: dotnet build DSC.slnx --configuration Release --no-restore
+      - name: Run xUnit tests
+        id: tests
+        run: >-
+          dotnet test DSC.slnx
+          --configuration Release --no-build --logger trx
+          --results-directory "${{ runner.temp }}/test-results"
+      - name: Upload xUnit test results
+        if: ${{ !cancelled() && (steps.tests.outcome == 'success' || steps.tests.outcome == 'failure') }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: xunit-test-results
+          path: ${{ runner.temp }}/test-results/*.trx
+          retention-days: 7
+          if-no-files-found: error
+          include-hidden-files: false
+      - run: dotnet publish src/DSC.Api/DSC.Api.csproj --configuration Release --no-build --output "${{ runner.temp }}/api-publish"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: api-publish
+          path: ${{ runner.temp }}/api-publish
+          retention-days: 7
+          include-hidden-files: false

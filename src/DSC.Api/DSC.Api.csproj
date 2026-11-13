@@ -5,6 +5,12 @@
         <ImplicitUsings>enable</ImplicitUsings>
     </PropertyGroup>
 
+    <!-- Runtime secrets belong to the hosting environment, never to publish artifacts. -->
+    <ItemGroup>
+        <Content Remove="**/.env;**/.env.*;**/secrets.json;**/*.publishsettings;**/*.pfx;**/*.pem" />
+        <None Remove="**/.env;**/.env.*;**/secrets.json;**/*.publishsettings;**/*.pfx;**/*.pem" />
+    </ItemGroup>
+
     <ItemGroup>
         <PackageReference Include="Microsoft.AspNetCore.OpenApi" />
         <PackageReference Include="DotNetEnv" />

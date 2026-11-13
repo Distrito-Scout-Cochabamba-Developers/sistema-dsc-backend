@@ -46,7 +46,8 @@ public class AttendanceController(
                 {
                     Status = StatusCodes.Status404NotFound,
                     Title = "Módulo No Encontrado",
-                    Detail = $"No se encontró ningún módulo de capacitación con el código '{code}'.",
+                    Detail =
+                        $"No se encontró ningún módulo de capacitación con el código '{code}'.",
                 }
             );
 

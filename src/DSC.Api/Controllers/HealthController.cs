@@ -4,10 +4,17 @@ using Microsoft.EntityFrameworkCore;
 
 namespace DSC.Api.Controllers;
 
+/// <summary>Expone diagnósticos de salud preservando los detalles internos sólo en desarrollo.</summary>
+/// <param name="dbContext">Contexto de persistencia de la solicitud.</param>
+/// <param name="environment">Entorno del host que determina la visibilidad de errores.</param>
 [ApiController]
 [Route("api/health")]
-public class HealthController(ScoutDbContext dbContext) : ControllerBase
+public class HealthController(ScoutDbContext dbContext, IHostEnvironment environment)
+    : ControllerBase
 {
+    private const string DiagnosticError =
+        "No se pudo completar el diagnóstico de la base de datos.";
+
     /// <summary>
     /// Verifica el estado de salud de la API y la conectividad con la base de datos.
     /// </summary>
@@ -27,7 +34,8 @@ public class HealthController(ScoutDbContext dbContext) : ControllerBase
         }
         catch (Exception ex)
         {
-            errorMessage = ex.Message;
+            // Los errores del proveedor pueden incluir credenciales o fragmentos de configuración.
+            errorMessage = environment.IsDevelopment() ? ex.Message : DiagnosticError;
         }
 
         var response = new
@@ -93,7 +101,12 @@ public class HealthController(ScoutDbContext dbContext) : ControllerBase
         {
             return StatusCode(
                 StatusCodes.Status503ServiceUnavailable,
-                new { Status = "Exception", Error = ex.Message }
+                new
+                {
+                    Status = "Exception",
+                    // Sólo Development permite detalles; también protege fallos de consultas de catálogo.
+                    Error = environment.IsDevelopment() ? ex.Message : DiagnosticError,
+                }
             );
         }
     }

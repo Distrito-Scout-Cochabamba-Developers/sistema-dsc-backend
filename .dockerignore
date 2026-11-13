@@ -16,6 +16,11 @@ tests
 *.md
 .env
 **/.env
+.env.*
+**/.env.*
+**/*.publishsettings
+**/*.pfx
+**/*.pem
 **/*.user
 **/*.suo
 **/node_modules

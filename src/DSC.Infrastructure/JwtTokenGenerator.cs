@@ -1,7 +1,6 @@
 using System.Globalization;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
-using System.Text;
 using DSC.Application.DTOs;
 using DSC.Application.Interfaces;
 using DSC.Domain.Entities;
@@ -10,23 +9,23 @@ using Microsoft.IdentityModel.Tokens;
 
 namespace DSC.Infrastructure;
 
+/// <summary>Emite tokens HS256 con la misma configuración validada que utiliza la API.</summary>
 public class JwtTokenGenerator : IJwtTokenGenerator
 {
     private const string RolesClaim = "roles";
     private const string PersonIdClaim = "personId";
     private const string UsernameClaim = "username";
 
-    private readonly IConfiguration _configuration;
+    private readonly JwtSettings _settings;
 
-    public JwtTokenGenerator(IConfiguration configuration) => _configuration = configuration;
+    /// <summary>Valida la configuración externa de autenticación al construir el emisor.</summary>
+    /// <param name="configuration">Configuración con el secreto, emisor y audiencia JWT.</param>
+    public JwtTokenGenerator(IConfiguration configuration) =>
+        _settings = JwtSettings.Load(configuration);
 
     public JwtTokenResult GenerateToken(User user)
     {
-        var key = _configuration["Jwt:Key"];
-        if (string.IsNullOrWhiteSpace(key) || Encoding.UTF8.GetByteCount(key) < 32)
-            throw new InvalidOperationException("Jwt:Key debe tener al menos 32 bytes.");
-
-        var expiresAt = DateTimeOffset.UtcNow.AddMinutes(GetExpirationMinutes());
+        var expiresAt = DateTimeOffset.UtcNow.AddMinutes(_settings.ExpiresMinutes);
         var today = DateOnly.FromDateTime(DateTime.UtcNow);
 
         var claims = new List<Claim>
@@ -42,12 +41,12 @@ public class JwtTokenGenerator : IJwtTokenGenerator
         );
 
         var credentials = new SigningCredentials(
-            new SymmetricSecurityKey(Encoding.UTF8.GetBytes(key)),
+            _settings.CreateSigningKey(),
             SecurityAlgorithms.HmacSha256
         );
         var token = new JwtSecurityToken(
-            issuer: _configuration["Jwt:Issuer"],
-            audience: _configuration["Jwt:Audience"],
+            issuer: _settings.Issuer,
+            audience: _settings.Audience,
             claims: claims,
             expires: expiresAt.UtcDateTime,
             signingCredentials: credentials
@@ -55,10 +54,4 @@ public class JwtTokenGenerator : IJwtTokenGenerator
 
         return new JwtTokenResult(new JwtSecurityTokenHandler().WriteToken(token), expiresAt);
     }
-
-    private int GetExpirationMinutes() =>
-        int.TryParse(_configuration["Jwt:ExpiresMinutes"], out var configuredMinutes)
-        && configuredMinutes > 0
-            ? configuredMinutes
-            : 60;
 }

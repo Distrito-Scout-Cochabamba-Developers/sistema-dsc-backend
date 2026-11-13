@@ -1,0 +1,17 @@
+title = "DSC secret scanning"
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "BMAD asset integrity digest, not an authentication credential"
+condition = "AND"
+paths = ['''(^|/)_bmad/_config/files-manifest\.csv$''']
+regexTarget = "secret"
+regexes = ['''^[a-f0-9]{64}$''']
+
+[[allowlists]]
+description = "Historical deterministic unit-test fixture, replaced by a random test-only key"
+condition = "AND"
+paths = ['''(^|/)tests/DSC\.UnitTests/Application/LoginHandlerTests\.cs$''']
+regexTarget = "secret"
+regexes = ['''^this-is-a-valid-test-secret-key-32bytes-long$''']
