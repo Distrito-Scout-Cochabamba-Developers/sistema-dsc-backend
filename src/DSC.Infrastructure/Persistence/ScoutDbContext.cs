@@ -37,7 +37,6 @@ public class ScoutDbContext(DbContextOptions<ScoutDbContext> options) : DbContex
 
     // 5. Catálogo Curricular y Plantillas Maestras
     public DbSet<TrainingLine> TrainingLines => Set<TrainingLine>();
-    public DbSet<TrainingStage> TrainingStages => Set<TrainingStage>();
     public DbSet<TrainingLevel> TrainingLevels => Set<TrainingLevel>();
     public DbSet<TrainingLevelRequirement> TrainingLevelRequirements =>
         Set<TrainingLevelRequirement>();

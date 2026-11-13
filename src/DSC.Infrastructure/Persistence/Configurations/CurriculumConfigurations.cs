@@ -23,25 +23,6 @@ public class TrainingLineConfiguration : IEntityTypeConfiguration<TrainingLine>
     }
 }
 
-public class TrainingStageConfiguration : IEntityTypeConfiguration<TrainingStage>
-{
-    public void Configure(EntityTypeBuilder<TrainingStage> builder)
-    {
-        builder.ToTable("training_stage");
-
-        builder.HasKey(x => x.Id);
-        builder.Property(x => x.Id).HasColumnName("id");
-
-        builder.Property(x => x.Code).HasColumnName("code").HasMaxLength(30).IsRequired();
-
-        builder.Property(x => x.Name).HasColumnName("name").HasMaxLength(80).IsRequired();
-
-        builder.Property(x => x.Description).HasColumnName("description").HasMaxLength(255);
-
-        builder.HasIndex(x => x.Code).IsUnique();
-    }
-}
-
 public class TrainingLevelConfiguration : IEntityTypeConfiguration<TrainingLevel>
 {
     public void Configure(EntityTypeBuilder<TrainingLevel> builder)
@@ -57,8 +38,6 @@ public class TrainingLevelConfiguration : IEntityTypeConfiguration<TrainingLevel
 
         builder.Property(x => x.TrainingLineId).HasColumnName("training_line_id").IsRequired();
 
-        builder.Property(x => x.TrainingStageId).HasColumnName("training_stage_id");
-
         builder
             .Property(x => x.IsActive)
             .HasColumnName("is_active")
@@ -71,12 +50,6 @@ public class TrainingLevelConfiguration : IEntityTypeConfiguration<TrainingLevel
             .HasOne(x => x.TrainingLine)
             .WithMany(mt => mt.TrainingLevels)
             .HasForeignKey(x => x.TrainingLineId)
-            .OnDelete(DeleteBehavior.Restrict);
-
-        builder
-            .HasOne(x => x.TrainingStage)
-            .WithMany(ts => ts.TrainingLevels)
-            .HasForeignKey(x => x.TrainingStageId)
             .OnDelete(DeleteBehavior.Restrict);
     }
 }
