@@ -5,11 +5,24 @@ Vocabulario del esquema de formación de dirigentes.
 ## Language
 
 **TrainingLine (línea de formación)**:
-Área de formación que agrupa niveles y comparte módulos con otras líneas: Programa de Jóvenes (PJ), Gestión Institucional (GI) y Adjuntos/Asesores de Formación (AE).
-_Avoid_: ModuleType, tipo de módulo.
+Área de formación que agrupa niveles y comparte módulos con otras líneas. Existen tres líneas oficiales:
+- **PJ (Programa de Jóvenes)**: Orientada a capacitar a los Dirigentes de Unidad.
+- **GI (Gestión Institucional)**: Dirigida a los dirigentes que ocupan cargos de dirección, administración y gestión organizativa (como Consejos de Grupo, Comités Distritales, Directores de Grupo o Comisionados).
+- **AE (Adultos en el Escultismo)**: Orientada a la capacitación de los dirigentes encargados de formar, acompañar y evaluar a otros adultos dentro del sistema educativo de la ASB.
+_Avoid_: ModuleType, tipo de módulo, Adjuntos/Asesores de Formación como nombre de línea.
 
 **TrainingLevel (nivel de formación)**:
-Calificación de una línea que puede obtener un dirigente; un dirigente puede obtener varios niveles.
+Calificación de una línea que puede obtener un dirigente; un dirigente puede obtener varios niveles. Cada nivel pertenece estrictamente a una línea:
+- Línea **PJ**:
+  - `IM I-II` (Insignia de Madera I-II): Nivel único de la línea Programa de Jóvenes (PJ), no dos niveles separados.
+  - `IM III` (Insignia de Madera III).
+- Línea **GI**:
+  - `NIVEL_GRUPO` (Nivel Grupo).
+  - `NIVEL_DISTRITO` (Nivel Distrito).
+- Línea **AE**:
+  - `ASESOR_PERSONAL_FORMACION` (Asesor Personal de Formación).
+  - `ADJUNTO_FORMACION` (Adjunto de Formación).
+  - `DIRECTOR_FORMACION` (Director de Formación).
 
 **IM I-II (Insignia de Madera I-II)**:
 Nivel único de la línea Programa de Jóvenes (PJ), no dos niveles separados.
