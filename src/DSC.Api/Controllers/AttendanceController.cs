@@ -11,7 +11,7 @@ namespace DSC.Api.Controllers;
 public class AttendanceController(
     LookupLeaderByCiQueryHandler lookupHandler,
     ListTrainingModulesQueryHandler listModulesHandler,
-    GetTrainingModuleByCodeQueryHandler getModuleHandler,
+    GetTrainingModuleByIdQueryHandler getModuleHandler,
     RegisterDigitalAttendanceCommandHandler registerHandler
 ) : ControllerBase
 {
@@ -21,7 +21,7 @@ public class AttendanceController(
     [HttpGet("modules")]
     [EndpointSummary("Lista módulos de formación (asistencia, anónimo)")]
     [EndpointDescription(
-        "Público. Devuelve training_module ordenado por nombre, con tipo incluido. El CRUD admin vive en /api/v1/admin/modules."
+        "Público. Devuelve training_module ordenado por nombre, con sus líneas. El CRUD admin vive en /api/v1/admin/modules."
     )]
     [ProducesResponseType(typeof(IReadOnlyList<TrainingModuleDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> ListModules(CancellationToken cancellationToken)
@@ -31,22 +31,22 @@ public class AttendanceController(
     }
 
     /// <summary>
-    /// Obtiene un módulo por código (el mismo token del deep link / QR de asistencia).
+    /// Obtiene un módulo por id (el identificador para el deep link / QR de asistencia).
     /// </summary>
-    [HttpGet("modules/{code}")]
-    [EndpointSummary("Obtiene un módulo por código (asistencia, anónimo)")]
+    [HttpGet("modules/{id:long}")]
+    [EndpointSummary("Obtiene un módulo por id (asistencia, anónimo)")]
     [EndpointDescription(
-        "Público. El código es TrainingModule.Code y coincide con el token del deep link / QR de asistencia."
+        "Público. El id coincide con el identificador del módulo para el deep link / QR de asistencia."
     )]
     [ProducesResponseType(typeof(TrainingModuleDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> GetModuleByCode(
-        [FromRoute] string code,
+    public async Task<IActionResult> GetModuleById(
+        [FromRoute] long id,
         CancellationToken cancellationToken
     )
     {
         var module = await getModuleHandler.HandleAsync(
-            new GetTrainingModuleByCodeQuery(code),
+            new GetTrainingModuleByIdQuery(id),
             cancellationToken
         );
         if (module is null)
@@ -55,7 +55,7 @@ public class AttendanceController(
                 {
                     Status = StatusCodes.Status404NotFound,
                     Title = "Módulo No Encontrado",
-                    Detail = $"No se encontró ningún módulo de capacitación con el código '{code}'.",
+                    Detail = $"No se encontró ningún módulo de capacitación con el id '{id}'.",
                 }
             );
 

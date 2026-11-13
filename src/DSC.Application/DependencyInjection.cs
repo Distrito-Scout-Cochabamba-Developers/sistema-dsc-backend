@@ -11,7 +11,7 @@ public static class DependencyInjection
     {
         services.AddScoped<LookupLeaderByCiQueryHandler>();
         services.AddScoped<ListTrainingModulesQueryHandler>();
-        services.AddScoped<GetTrainingModuleByCodeQueryHandler>();
+        services.AddScoped<GetTrainingModuleByIdQueryHandler>();
         services.AddScoped<ListTrainingLinesQueryHandler>();
         services.AddScoped<ListTrainingLevelsQueryHandler>();
         services.AddScoped<GetTrainingLevelRequirementsQueryHandler>();

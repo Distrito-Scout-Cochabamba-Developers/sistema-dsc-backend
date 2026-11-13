@@ -52,7 +52,7 @@ public class AdminTrainingLevelsController(
     [HttpPut("{code}/requirements")]
     [EndpointSummary("Configura el criterio de módulos de un nivel")]
     [EndpointDescription(
-        "Requiere ADMIN o DISTRICT_SECRETARY. Total, mínimo obligatorio y mandatoryModuleCodes son obligatorios. Reemplaza solo MODULES. Cantidades no negativas; mínimo no supera total ni selección. Códigos existentes, únicos tras recortar espacios. El catálogo no dispone de estado activo de módulo. 400 para selección inválida; 404 para nivel inexistente; 409 para conflicto de persistencia."
+        "Requiere ADMIN o DISTRICT_SECRETARY. Total, mínimo obligatorio y mandatoryModuleIds son obligatorios. Reemplaza solo MODULES. Cantidades no negativas; mínimo no supera total ni selección. IDs existentes y únicos. El catálogo no dispone de estado activo de módulo. 400 para selección inválida; 404 para nivel inexistente; 409 para conflicto de persistencia."
     )]
     [ProducesResponseType(typeof(TrainingLevelRequirementsDto), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]

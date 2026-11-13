@@ -3,7 +3,7 @@ using DSC.Domain.Repositories;
 
 namespace DSC.Application.Commands;
 
-public record class DeleteTrainingModuleCommand(string Code);
+public record class DeleteTrainingModuleCommand(long Id);
 
 public class DeleteTrainingModuleCommandHandler(ITrainingModuleRepository moduleRepository)
 {
@@ -12,19 +12,18 @@ public class DeleteTrainingModuleCommandHandler(ITrainingModuleRepository module
         CancellationToken cancellationToken = default
     )
     {
-        var code = command.Code.Trim();
-        if (string.IsNullOrWhiteSpace(code))
-            throw new RequestValidationException("El código de la ruta es obligatorio.");
+        if (command.Id <= 0)
+            throw new RequestValidationException("El id debe ser un número positivo.");
 
-        var module = await moduleRepository.GetTrackedByCodeAsync(code, cancellationToken);
+        var module = await moduleRepository.GetTrackedByIdAsync(command.Id, cancellationToken);
         if (module is null)
             throw new KeyNotFoundException(
-                $"No se encontró ningún módulo de capacitación con el código '{code}'."
+                $"No se encontró ningún módulo de capacitación con el id '{command.Id}'."
             );
 
         if (await moduleRepository.HasDependenciesAsync(module.Id, cancellationToken))
             throw new InvalidOperationException(
-                $"No se puede eliminar el módulo '{code}' porque tiene requisitos de nivel, asistencia, sesiones o plantillas asociadas."
+                $"No se puede eliminar el módulo '{module.Name}' porque tiene requisitos de nivel, asistencia, sesiones o plantillas asociadas."
             );
 
         await moduleRepository.RemoveAsync(module, cancellationToken);

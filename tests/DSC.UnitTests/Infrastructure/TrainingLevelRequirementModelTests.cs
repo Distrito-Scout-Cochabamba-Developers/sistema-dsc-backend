@@ -30,7 +30,7 @@ public class TrainingLevelRequirementModelTests(RequirementsPostgres postgres)
         var repository = new TrainingLevelRepository(first);
         await new ConfigureTrainingLevelRequirementsCommandHandler(repository).HandleAsync(
             ScoutTrainingCatalog.LevelCode,
-            new(12, 2, ScoutTrainingCatalog.MandatoryCodes)
+            new(12, 2, ScoutTrainingCatalog.MandatoryIds)
         );
         first.ChangeTracker.Clear();
         await using var second = postgres.Open(first.Database.GetConnectionString()!);
@@ -45,8 +45,8 @@ public class TrainingLevelRequirementModelTests(RequirementsPostgres postgres)
             .ConfigureCurricularModules(
                 12,
                 2,
-                await repository.GetTrackedModulesByCodesAsync(
-                    ["PRIMEROS-AUXILIOS", "CICLO-PROGRAMA"],
+                await repository.GetTrackedModulesByIdsAsync(
+                    [3L, 4L],
                     default
                 )
             );
@@ -55,8 +55,8 @@ public class TrainingLevelRequirementModelTests(RequirementsPostgres postgres)
             .ConfigureCurricularModules(
                 12,
                 2,
-                await other.GetTrackedModulesByCodesAsync(
-                    ["RESPONSABILIDAD-LEGAL", "IMPACTO-AMBIENTAL"],
+                await other.GetTrackedModulesByIdsAsync(
+                    [1L, 2L],
                     default
                 )
             );
@@ -68,8 +68,8 @@ public class TrainingLevelRequirementModelTests(RequirementsPostgres postgres)
             new TrainingLevelRepository(reader)
         ).HandleAsync(ScoutTrainingCatalog.LevelCode);
         Assert.Equal(
-            new[] { "CICLO-PROGRAMA", "PRIMEROS-AUXILIOS" },
-            result.Modules!.MandatoryModuleCodes
+            new long[] { 3, 4 },
+            result.Modules!.MandatoryModules.Select(m => m.Id).Order()
         );
     }
 
@@ -91,7 +91,7 @@ public class TrainingLevelRequirementModelTests(RequirementsPostgres postgres)
             new TrainingLevelRepository(db)
         ).HandleAsync(
             ScoutTrainingCatalog.LevelCode,
-            new(12, 2, ScoutTrainingCatalog.MandatoryCodes)
+            new(12, 2, ScoutTrainingCatalog.MandatoryIds)
         );
         var sql = scenario switch
         {
@@ -101,7 +101,7 @@ public class TrainingLevelRequirementModelTests(RequirementsPostgres postgres)
                 "INSERT INTO training_level_mandatory_module SELECT id, 3 FROM training_level_requirement",
             "unknown-module" =>
                 "INSERT INTO training_level_mandatory_module SELECT id, 999 FROM training_level_requirement",
-            "referenced-module" => "DELETE FROM training_module WHERE code = 'PRIMEROS-AUXILIOS'",
+            "referenced-module" => "DELETE FROM training_module WHERE id = 3",
             "negative-total" => "UPDATE training_level_requirement SET total_modules_count = -1",
             "negative-minimum" =>
                 "UPDATE training_level_requirement SET min_mandatory_modules_count = -1",
@@ -118,7 +118,7 @@ public class TrainingLevelRequirementModelTests(RequirementsPostgres postgres)
         ).HandleAsync(ScoutTrainingCatalog.LevelCode);
         Assert.Equal(12, result.Modules!.TotalModulesCount);
         Assert.Equal(2, result.Modules.MinMandatoryModulesCount);
-        Assert.Equal(4, result.Modules.MandatoryModuleCodes.Count);
+        Assert.Equal(4, result.Modules.MandatoryModules.Count);
     }
 
     [Theory]
@@ -138,7 +138,7 @@ public class TrainingLevelRequirementModelTests(RequirementsPostgres postgres)
                 new TrainingLevelRepository(db)
             ).HandleAsync(
                 ScoutTrainingCatalog.LevelCode,
-                new(12, 2, ScoutTrainingCatalog.MandatoryCodes)
+                new(12, 2, ScoutTrainingCatalog.MandatoryIds)
             );
             await db.Database.ExecuteSqlRawAsync(
                 "INSERT INTO training_stage (id, code, name) VALUES (1, 'LEGACY', 'Clasificación retirada'); UPDATE training_level SET training_stage_id = 1"
@@ -152,7 +152,7 @@ public class TrainingLevelRequirementModelTests(RequirementsPostgres postgres)
                 new TrainingLevelRepository(db)
             ).HandleAsync(
                 ScoutTrainingCatalog.LevelCode,
-                new(12, 2, ScoutTrainingCatalog.MandatoryCodes)
+                new(12, 2, ScoutTrainingCatalog.MandatoryIds)
             );
         }
         db.ChangeTracker.Clear();
@@ -168,12 +168,12 @@ public class TrainingLevelRequirementModelTests(RequirementsPostgres postgres)
         Assert.Equal(
             new[]
             {
-                "CICLO-PROGRAMA",
-                "IMPACTO-AMBIENTAL",
-                "PRIMEROS-AUXILIOS",
-                "RESPONSABILIDAD-LEGAL",
+                "Ciclo de programa",
+                "Impacto ambiental en actividades Scouts",
+                "Primeros auxilios",
+                "Responsabilidad legal del dirigente",
             },
-            result.Modules.MandatoryModuleCodes
+            result.Modules.MandatoryModules.Select(m => m.Name).Order()
         );
         Assert.Null(
             await db
@@ -219,11 +219,11 @@ public class TrainingLevelRequirementModelTests(RequirementsPostgres postgres)
         );
         await handler.HandleAsync(
             ScoutTrainingCatalog.LevelCode,
-            new(12, 2, ScoutTrainingCatalog.MandatoryCodes)
+            new(12, 2, ScoutTrainingCatalog.MandatoryIds)
         );
         await handler.HandleAsync(
             ScoutTrainingCatalog.LevelCode,
-            new(12, 2, ["PRIMEROS-AUXILIOS", "CICLO-PROGRAMA"])
+            new(12, 2, [3L, 4L])
         );
         await using var reader = postgres.Open(db.Database.GetConnectionString()!);
         Assert.Equal(before, await History(reader));

@@ -63,13 +63,11 @@ public class TrainingModuleConfiguration : IEntityTypeConfiguration<TrainingModu
         builder.HasKey(x => x.Id);
         builder.Property(x => x.Id).HasColumnName("id");
 
-        builder.Property(x => x.Code).HasColumnName("code").HasMaxLength(30).IsRequired();
-
         builder.Property(x => x.Name).HasColumnName("name").HasMaxLength(150).IsRequired();
 
         builder.Property(x => x.Description).HasColumnName("description");
 
-        builder.HasIndex(x => x.Code).IsUnique();
+        builder.HasIndex(x => x.Name).IsUnique();
     }
 }
 

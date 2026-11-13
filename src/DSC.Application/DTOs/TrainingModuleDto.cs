@@ -5,7 +5,6 @@ namespace DSC.Application.DTOs;
 /// </summary>
 public record class TrainingModuleDto(
     long Id,
-    string Code,
     string Name,
     string? Description,
     IReadOnlyList<TrainingLineDto> TrainingLines

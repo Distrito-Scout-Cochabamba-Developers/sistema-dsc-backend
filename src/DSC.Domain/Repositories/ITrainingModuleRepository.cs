@@ -4,22 +4,18 @@ namespace DSC.Domain.Repositories;
 
 public interface ITrainingModuleRepository
 {
-    Task<TrainingModule?> GetByCodeAsync(string code, CancellationToken cancellationToken);
-    Task<TrainingModule?> GetByIdAsync(long id, CancellationToken cancellationToken);
-    Task<IReadOnlyList<TrainingModule>> ListAsync(CancellationToken cancellationToken);
-    Task AddAsync(TrainingModule trainingModule, CancellationToken cancellationToken);
-
-    /// <summary>
-    /// Obtiene el módulo rastreado por EF para mutarlo (sin <c>AsNoTracking</c>).
-    /// </summary>
-    Task<TrainingModule?> GetTrackedByCodeAsync(string code, CancellationToken cancellationToken);
-
-    Task SaveChangesAsync(CancellationToken cancellationToken);
+    Task<TrainingModule?> GetByIdAsync(long id, CancellationToken cancellationToken = default);
+    Task<TrainingModule?> GetTrackedByIdAsync(long id, CancellationToken cancellationToken = default);
+    Task<TrainingModule?> GetByNameAsync(string name, CancellationToken cancellationToken = default);
+    Task<bool> ExistsByNameAsync(string name, long? excludeId = null, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<TrainingModule>> ListAsync(string? search = null, CancellationToken cancellationToken = default);
+    Task AddAsync(TrainingModule trainingModule, CancellationToken cancellationToken = default);
+    Task SaveChangesAsync(CancellationToken cancellationToken = default);
 
     /// <summary>
     /// True si hay requisitos de nivel, asistencia, sesiones o plantillas que impiden borrar el módulo.
     /// </summary>
-    Task<bool> HasDependenciesAsync(long id, CancellationToken cancellationToken);
+    Task<bool> HasDependenciesAsync(long id, CancellationToken cancellationToken = default);
 
-    Task RemoveAsync(TrainingModule trainingModule, CancellationToken cancellationToken);
+    Task RemoveAsync(TrainingModule trainingModule, CancellationToken cancellationToken = default);
 }

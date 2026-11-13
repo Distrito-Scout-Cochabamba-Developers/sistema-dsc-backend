@@ -5,16 +5,18 @@ namespace DSC.Application.DTOs;
 
 public record TrainingLevelDto(string Code, string Name, string TrainingLineCode, bool IsActive);
 
+public record MandatoryModuleDto(long Id, string Name, string? Description);
+
 public record WriteTrainingLevelRequirementsDto(
     [Required] int? TotalModulesCount,
     [Required] int? MinMandatoryModulesCount,
-    [Required] IReadOnlyList<string>? MandatoryModuleCodes
+    [Required] IReadOnlyList<long>? MandatoryModuleIds
 );
 
 public record ModuleRequirementsDto(
     int TotalModulesCount,
     int MinMandatoryModulesCount,
-    IReadOnlyList<string> MandatoryModuleCodes
+    IReadOnlyList<MandatoryModuleDto> MandatoryModules
 );
 
 public record TrainingLevelRequirementsDto(string TrainingLevelCode, ModuleRequirementsDto? Modules)
@@ -32,8 +34,13 @@ public record TrainingLevelRequirementsDto(string TrainingLevelCode, ModuleRequi
                     requirement.TotalModulesCount,
                     requirement.MinMandatoryModulesCount,
                     requirement
-                        .MandatoryModules.Select(link => link.TrainingModule.Code)
-                        .OrderBy(code => code, StringComparer.Ordinal)
+                        .MandatoryModules.Select(link => link.TrainingModule)
+                        .OrderBy(module => module.Id)
+                        .Select(module => new MandatoryModuleDto(
+                            module.Id,
+                            module.Name,
+                            module.Description
+                        ))
                         .ToArray()
                 )
         );

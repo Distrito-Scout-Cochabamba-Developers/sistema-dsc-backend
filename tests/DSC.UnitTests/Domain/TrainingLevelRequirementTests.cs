@@ -20,12 +20,12 @@ public class TrainingLevelRequirementTests
         Assert.Equal(
             new[]
             {
-                "CICLO-PROGRAMA",
-                "IMPACTO-AMBIENTAL",
-                "PRIMEROS-AUXILIOS",
-                "RESPONSABILIDAD-LEGAL",
+                "Ciclo de programa",
+                "Impacto ambiental en actividades Scouts",
+                "Primeros auxilios",
+                "Responsabilidad legal del dirigente",
             },
-            requirement.MandatoryModules.Select(link => link.TrainingModule.Code).Order()
+            requirement.MandatoryModules.Select(link => link.TrainingModule.Name).Order()
         );
     }
 
@@ -72,7 +72,7 @@ public class TrainingLevelRequirementTests
         {
             "null-selection" => null,
             "null-module" => [null!],
-            "unpersisted-module" => [new() { Code = "TRIBU-TIERRA", Name = "Tribu Tierra" }],
+            "unpersisted-module" => [new() { Name = "Tribu Tierra" }],
             "duplicate-first-aid" =>
             [
                 ScoutTrainingCatalog.Mandatory()[2],
@@ -96,31 +96,26 @@ internal static class ScoutTrainingCatalog
 {
     internal const string LevelCode = "IM-I-II";
 
-    // Códigos descriptivos de fixtures; no son códigos oficiales del catálogo DSC.
     internal static TrainingModule[] Mandatory() =>
         [
             new()
             {
                 Id = 1,
-                Code = "RESPONSABILIDAD-LEGAL",
                 Name = "Responsabilidad legal del dirigente",
             },
             new()
             {
                 Id = 2,
-                Code = "IMPACTO-AMBIENTAL",
                 Name = "Impacto ambiental en actividades Scouts",
             },
             new()
             {
                 Id = 3,
-                Code = "PRIMEROS-AUXILIOS",
                 Name = "Primeros auxilios",
             },
             new()
             {
                 Id = 4,
-                Code = "CICLO-PROGRAMA",
                 Name = "Ciclo de programa",
             },
         ];
@@ -130,23 +125,19 @@ internal static class ScoutTrainingCatalog
             new()
             {
                 Id = 5,
-                Code = "TRIBU-TIERRA",
                 Name = "Tribu Tierra",
             },
             new()
             {
                 Id = 6,
-                Code = "PARA-LLEGAR-A-SER-24",
                 Name = "Para llegar a ser 24",
             },
             new()
             {
                 Id = 7,
-                Code = "SISTEMA-EQUIPOS",
                 Name = "El sistema de equipos",
             },
         ];
 
-    internal static string[] MandatoryCodes =>
-        ["RESPONSABILIDAD-LEGAL", "IMPACTO-AMBIENTAL", "PRIMEROS-AUXILIOS", "CICLO-PROGRAMA"];
+    internal static long[] MandatoryIds => [1L, 2L, 3L, 4L];
 }

@@ -13,7 +13,7 @@ namespace DSC.Api.Controllers;
 [Route("v1/admin")]
 public class AdminCatalogController(
     ListTrainingModulesQueryHandler listModulesHandler,
-    GetTrainingModuleByCodeQueryHandler getModuleHandler,
+    GetTrainingModuleByIdQueryHandler getModuleHandler,
     ListTrainingLinesQueryHandler listTrainingLinesHandler,
     CreateTrainingModuleCommandHandler createHandler,
     UpdateTrainingModuleCommandHandler updateHandler,
@@ -26,43 +26,47 @@ public class AdminCatalogController(
     [HttpGet("modules")]
     [EndpointSummary("Lista módulos de formación (admin / secretaría)")]
     [EndpointDescription(
-        "Requiere JWT con rol ADMIN o DISTRICT_SECRETARY. Devuelve training_module ordenado por nombre, con sus líneas de formación."
+        "Requiere JWT con rol ADMIN o DISTRICT_SECRETARY. Devuelve training_module ordenado por nombre, con sus líneas de formación. Permite filtro por búsqueda en el nombre."
     )]
     [ProducesResponseType(typeof(IReadOnlyList<TrainingModuleDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<ActionResult<IReadOnlyList<TrainingModuleDto>>> ListModules(
+        [FromQuery] string? search,
         CancellationToken cancellationToken
     )
     {
-        var modules = await listModulesHandler.HandleAsync(cancellationToken);
+        var modules = await listModulesHandler.HandleAsync(
+            new ListTrainingModulesQuery(search),
+            cancellationToken
+        );
         return Ok(modules);
     }
 
     /// <summary>
-    /// Obtiene un módulo por código.
+    /// Obtiene un módulo por id.
     /// </summary>
-    [HttpGet("modules/{code}")]
-    [EndpointSummary("Obtiene un módulo por código (admin / secretaría)")]
+    [HttpGet("modules/{id:long}")]
+    [EndpointSummary("Obtiene un módulo por id (admin / secretaría)")]
     [EndpointDescription(
-        "Requiere JWT con rol ADMIN o DISTRICT_SECRETARY. El código es TrainingModule.Code (máx. 30)."
+        "Requiere JWT con rol ADMIN o DISTRICT_SECRETARY. El id identifica el registro en training_module."
     )]
     [ProducesResponseType(typeof(TrainingModuleDto), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
-    public async Task<ActionResult<TrainingModuleDto>> GetModuleByCode(
-        [FromRoute] string code,
+    public async Task<ActionResult<TrainingModuleDto>> GetModuleById(
+        [FromRoute] long id,
         CancellationToken cancellationToken
     )
     {
         var module = await getModuleHandler.HandleAsync(
-            new GetTrainingModuleByCodeQuery(code),
+            new GetTrainingModuleByIdQuery(id),
             cancellationToken
         );
         if (module is null)
             throw new KeyNotFoundException(
-                $"No se encontró ningún módulo de capacitación con el código '{code}'."
+                $"No se encontró ningún módulo de capacitación con el id '{id}'."
             );
 
         return Ok(module);
@@ -74,7 +78,7 @@ public class AdminCatalogController(
     [HttpPost("modules")]
     [EndpointSummary("Crea un módulo de formación")]
     [EndpointDescription(
-        "Requiere JWT con rol ADMIN o DISTRICT_SECRETARY. El código debe ser único (máx. 30). trainingLineCodes debe contener al menos un código existente en training_line, sin duplicados (p. ej. AE, PJ)."
+        "Requiere JWT con rol ADMIN o DISTRICT_SECRETARY. El nombre debe ser único (máx. 150, case-insensitive). trainingLineCodes debe contener al menos un código existente en training_line, sin duplicados (p. ej. AE, PJ)."
     )]
     [ProducesResponseType(typeof(TrainingModuleDto), StatusCodes.Status201Created)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
@@ -88,16 +92,16 @@ public class AdminCatalogController(
     )
     {
         var created = await createHandler.HandleAsync(body, cancellationToken);
-        return CreatedAtAction(nameof(GetModuleByCode), new { code = created.Code }, created);
+        return CreatedAtAction(nameof(GetModuleById), new { id = created.Id }, created);
     }
 
     /// <summary>
-    /// Actualiza nombre, descripción y líneas. El código de la ruta no cambia.
+    /// Actualiza nombre, descripción y líneas. El id de la ruta no cambia.
     /// </summary>
-    [HttpPut("modules/{code}")]
+    [HttpPut("modules/{id:long}")]
     [EndpointSummary("Actualiza un módulo de formación")]
     [EndpointDescription(
-        "Requiere JWT con rol ADMIN o DISTRICT_SECRETARY. El código de la URL identifica el módulo y no se modifica. El body usa name, description y trainingLineCodes; reemplaza las líneas actuales por al menos una línea existente, sin duplicados."
+        "Requiere JWT con rol ADMIN o DISTRICT_SECRETARY. El id de la URL identifica el módulo y no se modifica. El body usa name, description y trainingLineCodes; reemplaza las líneas actuales por al menos una línea existente, sin duplicados."
     )]
     [ProducesResponseType(typeof(TrainingModuleDto), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
@@ -105,13 +109,13 @@ public class AdminCatalogController(
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<ActionResult<TrainingModuleDto>> UpdateModule(
-        [FromRoute] string code,
+        [FromRoute] long id,
         [FromBody] WriteTrainingModuleDto body,
         CancellationToken cancellationToken
     )
     {
         var updated = await updateHandler.HandleAsync(
-            new UpdateTrainingModuleCommand(code, body),
+            new UpdateTrainingModuleCommand(id, body),
             cancellationToken
         );
         return Ok(updated);
@@ -120,7 +124,7 @@ public class AdminCatalogController(
     /// <summary>
     /// Elimina un módulo si no tiene requisitos de nivel, asistencia, sesiones ni plantillas.
     /// </summary>
-    [HttpDelete("modules/{code}")]
+    [HttpDelete("modules/{id:long}")]
     [EndpointSummary("Elimina un módulo de formación")]
     [EndpointDescription(
         "Requiere JWT con rol ADMIN o DISTRICT_SECRETARY. 204 si se elimina. 409 si el módulo tiene requisitos de nivel, asistencia, sesiones o plantillas asociadas (FK Restrict)."
@@ -132,11 +136,11 @@ public class AdminCatalogController(
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> DeleteModule(
-        [FromRoute] string code,
+        [FromRoute] long id,
         CancellationToken cancellationToken
     )
     {
-        await deleteHandler.HandleAsync(new DeleteTrainingModuleCommand(code), cancellationToken);
+        await deleteHandler.HandleAsync(new DeleteTrainingModuleCommand(id), cancellationToken);
         return NoContent();
     }
 
@@ -146,7 +150,7 @@ public class AdminCatalogController(
     [HttpGet("training-lines")]
     [EndpointSummary("Lista líneas de formación (AE, PJ, GI)")]
     [EndpointDescription(
-        "Requiere JWT con rol ADMIN o DISTRICT_SECRETARY. Devuelve training_line ordenado por nombre para el catálogo admin."
+        "Requiere JWT con rol ADMIN o DISTRICT_SECRETARY. Devuelve training_line ordenado por id para el catálogo admin."
     )]
     [ProducesResponseType(typeof(IReadOnlyList<TrainingLineDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]

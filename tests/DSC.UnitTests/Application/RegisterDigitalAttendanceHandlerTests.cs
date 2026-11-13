@@ -42,7 +42,7 @@ public class RegisterDigitalAttendanceHandlerTests
         using var db = CreateInMemoryDbContext();
         var sampleModule = new TrainingModule
         {
-            Code = "TOKEN-123",
+            Id = 123,
             Name = "Módulo de Prueba",
             ModuleLines = [new TrainingModuleLine { TrainingLineId = 1 }],
         };
@@ -59,7 +59,7 @@ public class RegisterDigitalAttendanceHandlerTests
         );
 
         var request = new RegisterDigitalAttendanceDto(
-            SessionToken: "TOKEN-123",
+            SessionToken: sampleModule.Id.ToString(),
             CiNumber: "7654321",
             Extension: "CB",
             FirstName: "Juan",
@@ -96,7 +96,7 @@ public class RegisterDigitalAttendanceHandlerTests
         using var db = CreateInMemoryDbContext();
         var sampleModule = new TrainingModule
         {
-            Code = "TOKEN-DUPLICATE",
+            Id = 456,
             Name = "Módulo de Prueba",
             ModuleLines = [new TrainingModuleLine { TrainingLineId = 1 }],
         };
@@ -113,7 +113,7 @@ public class RegisterDigitalAttendanceHandlerTests
         );
 
         var request = new RegisterDigitalAttendanceDto(
-            SessionToken: "TOKEN-DUPLICATE",
+            SessionToken: sampleModule.Id.ToString(),
             CiNumber: "8888888",
             Extension: "LP",
             FirstName: "María",
@@ -147,7 +147,7 @@ public class RegisterDigitalAttendanceHandlerTests
         );
 
         var request = new RegisterDigitalAttendanceDto(
-            SessionToken: "TOKEN-INVALID",
+            SessionToken: "999999",
             CiNumber: "7654321",
             Extension: "CB",
             FirstName: "Juan",
@@ -168,7 +168,7 @@ public class RegisterDigitalAttendanceHandlerTests
         using var db = CreateInMemoryDbContext();
         var sampleModule = new TrainingModule
         {
-            Code = "TOKEN-INVALID-CI",
+            Id = 789,
             Name = "Módulo de Prueba",
             ModuleLines = [new TrainingModuleLine { TrainingLineId = 1 }],
         };
@@ -185,7 +185,7 @@ public class RegisterDigitalAttendanceHandlerTests
         );
 
         var request = new RegisterDigitalAttendanceDto(
-            SessionToken: "TOKEN-INVALID-CI",
+            SessionToken: sampleModule.Id.ToString(),
             CiNumber: "7654321A", // Invalid alphabetic CI
             Extension: "CB",
             FirstName: "Juan",
@@ -214,7 +214,7 @@ public class RegisterDigitalAttendanceHandlerTests
         using var db = CreateInMemoryDbContext();
         var sampleModule = new TrainingModule
         {
-            Code = "TOKEN-NO-NAME",
+            Id = 101,
             Name = "Módulo de Prueba",
             ModuleLines = [new TrainingModuleLine { TrainingLineId = 1 }],
         };
@@ -231,7 +231,7 @@ public class RegisterDigitalAttendanceHandlerTests
         );
 
         var request = new RegisterDigitalAttendanceDto(
-            SessionToken: "TOKEN-NO-NAME",
+            SessionToken: sampleModule.Id.ToString(),
             CiNumber: "7654321",
             Extension: "CB",
             FirstName: firstName,

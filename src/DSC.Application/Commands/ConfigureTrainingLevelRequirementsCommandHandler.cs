@@ -17,28 +17,28 @@ public class ConfigureTrainingLevelRequirementsCommandHandler(ITrainingLevelRepo
             request is null
             || request.TotalModulesCount is null
             || request.MinMandatoryModulesCount is null
-            || request.MandatoryModuleCodes is null
+            || request.MandatoryModuleIds is null
         )
             throw new RequestValidationException(
                 "Total, mínimo obligatorio y selección son obligatorios."
             );
 
-        var codes = request.MandatoryModuleCodes.Select(value => value?.Trim()).ToArray();
-        if (codes.Any(value => string.IsNullOrEmpty(value) || value.Length > 30))
-            throw new RequestValidationException(
-                "Cada código de módulo debe tener entre 1 y 30 caracteres."
-            );
-        if (codes.Distinct(StringComparer.Ordinal).Count() != codes.Length)
+        var ids = request.MandatoryModuleIds;
+        if (ids.Any(id => id <= 0))
+            throw new RequestValidationException("Cada id de módulo debe ser un número positivo.");
+
+        if (ids.Distinct().Count() != ids.Count)
             throw new RequestValidationException("Los módulos obligatorios no pueden repetirse.");
 
         var level =
             await repository.GetTrackedByCodeAsync(code.Trim(), cancellationToken)
             ?? throw new KeyNotFoundException($"No se encontró el nivel '{code}'.");
-        var modules = await repository.GetTrackedModulesByCodesAsync(codes!, cancellationToken);
-        var found = modules.Select(module => module.Code).ToHashSet(StringComparer.Ordinal);
-        if (codes.Any(value => !found.Contains(value!)))
+
+        var modules = await repository.GetTrackedModulesByIdsAsync(ids, cancellationToken);
+        var found = modules.Select(module => module.Id).ToHashSet();
+        if (ids.Any(id => !found.Contains(id)))
             throw new RequestValidationException(
-                "La selección contiene códigos de módulos inexistentes."
+                "La selección contiene identificadores de módulos inexistentes."
             );
 
         var requirement = level.Requirements.SingleOrDefault(requirement =>

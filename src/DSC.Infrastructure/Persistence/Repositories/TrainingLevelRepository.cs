@@ -39,12 +39,12 @@ public class TrainingLevelRepository(ScoutDbContext dbContext) : ITrainingLevelR
                 .ThenInclude(requirement => requirement.MandatoryModules)
                     .ThenInclude(link => link.TrainingModule);
 
-    public async Task<IReadOnlyList<TrainingModule>> GetTrackedModulesByCodesAsync(
-        IReadOnlyCollection<string> codes,
+    public async Task<IReadOnlyList<TrainingModule>> GetTrackedModulesByIdsAsync(
+        IReadOnlyCollection<long> ids,
         CancellationToken cancellationToken
     ) =>
         await dbContext
-            .TrainingModules.Where(module => codes.Contains(module.Code))
+            .TrainingModules.Where(module => ids.Contains(module.Id))
             .ToListAsync(cancellationToken);
 
     public async Task SaveChangesAsync(CancellationToken cancellationToken)

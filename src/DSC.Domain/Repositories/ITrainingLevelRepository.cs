@@ -7,8 +7,8 @@ public interface ITrainingLevelRepository
     Task<IReadOnlyList<TrainingLevel>> ListAsync(CancellationToken cancellationToken);
     Task<TrainingLevel?> GetByCodeAsync(string code, CancellationToken cancellationToken);
     Task<TrainingLevel?> GetTrackedByCodeAsync(string code, CancellationToken cancellationToken);
-    Task<IReadOnlyList<TrainingModule>> GetTrackedModulesByCodesAsync(
-        IReadOnlyCollection<string> codes,
+    Task<IReadOnlyList<TrainingModule>> GetTrackedModulesByIdsAsync(
+        IReadOnlyCollection<long> ids,
         CancellationToken cancellationToken
     );
     Task SaveChangesAsync(CancellationToken cancellationToken);

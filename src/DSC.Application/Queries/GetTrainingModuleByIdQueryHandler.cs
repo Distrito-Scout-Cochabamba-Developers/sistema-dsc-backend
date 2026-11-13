@@ -3,16 +3,16 @@ using DSC.Domain.Repositories;
 
 namespace DSC.Application.Queries;
 
-public record class GetTrainingModuleByCodeQuery(string Code);
+public record class GetTrainingModuleByIdQuery(long Id);
 
-public class GetTrainingModuleByCodeQueryHandler(ITrainingModuleRepository moduleRepository)
+public class GetTrainingModuleByIdQueryHandler(ITrainingModuleRepository moduleRepository)
 {
     public async Task<TrainingModuleDto?> HandleAsync(
-        GetTrainingModuleByCodeQuery query,
+        GetTrainingModuleByIdQuery query,
         CancellationToken cancellationToken = default
     )
     {
-        var module = await moduleRepository.GetByCodeAsync(query.Code, cancellationToken);
+        var module = await moduleRepository.GetByIdAsync(query.Id, cancellationToken);
         if (module is null)
             return null;
 

@@ -5,7 +5,7 @@ using DSC.Domain.Repositories;
 
 namespace DSC.Application.Commands;
 
-public record class UpdateTrainingModuleCommand(string Code, WriteTrainingModuleDto Body);
+public record class UpdateTrainingModuleCommand(long Id, WriteTrainingModuleDto Body);
 
 public class UpdateTrainingModuleCommandHandler(
     ITrainingModuleRepository moduleRepository,
@@ -17,20 +17,23 @@ public class UpdateTrainingModuleCommandHandler(
         CancellationToken cancellationToken = default
     )
     {
-        var code = command.Code.Trim();
-        if (string.IsNullOrWhiteSpace(code))
-            throw new RequestValidationException("El código de la ruta es obligatorio.");
+        if (command.Id <= 0)
+            throw new RequestValidationException("El id debe ser un número positivo.");
 
         var name = NormalizeRequired(command.Body.Name, "El nombre es obligatorio.");
 
         if (name.Length > 150)
             throw new RequestValidationException("El nombre no puede superar 150 caracteres.");
 
-        var module = await moduleRepository.GetTrackedByCodeAsync(code, cancellationToken);
+        var module = await moduleRepository.GetTrackedByIdAsync(command.Id, cancellationToken);
         if (module is null)
             throw new KeyNotFoundException(
-                $"No se encontró ningún módulo de capacitación con el código '{code}'."
+                $"No se encontró ningún módulo de capacitación con el id '{command.Id}'."
             );
+
+        var exists = await moduleRepository.ExistsByNameAsync(name, command.Id, cancellationToken);
+        if (exists)
+            throw new InvalidOperationException($"Ya existe un módulo con el nombre '{name}'.");
 
         var lines = await CreateTrainingModuleCommandHandler.ResolveLinesAsync(
             command.Body.TrainingLineCodes,
@@ -57,7 +60,7 @@ public class UpdateTrainingModuleCommandHandler(
         await moduleRepository.SaveChangesAsync(cancellationToken);
 
         var updated =
-            await moduleRepository.GetByCodeAsync(code, cancellationToken)
+            await moduleRepository.GetByIdAsync(command.Id, cancellationToken)
             ?? throw new InvalidOperationException(
                 "El módulo se actualizó pero no se pudo recargar."
             );

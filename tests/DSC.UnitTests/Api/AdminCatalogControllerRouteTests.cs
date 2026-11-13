@@ -50,12 +50,12 @@ public class AdminCatalogControllerRouteTests
     }
 
     [Fact]
-    public void Delete_ShouldBeHttpDeleteModulesByCode()
+    public void Delete_ShouldBeHttpDeleteModulesById()
     {
         var method = typeof(AdminCatalogController).GetMethod(
             nameof(AdminCatalogController.DeleteModule)
         );
         var httpDelete = method?.GetCustomAttribute<HttpDeleteAttribute>();
-        Assert.Equal("modules/{code}", httpDelete?.Template);
+        Assert.Equal("modules/{id:long}", httpDelete?.Template);
     }
 }

@@ -26,7 +26,7 @@ public class TrainingLevelRequirementsTests(RequirementsPostgres postgres)
             new TrainingLevelRepository(db)
         ).HandleAsync(
             ScoutTrainingCatalog.LevelCode,
-            new(12, 2, ScoutTrainingCatalog.MandatoryCodes)
+            new(12, 2, ScoutTrainingCatalog.MandatoryIds)
         );
 
         await using var reader = postgres.Open(db.Database.GetConnectionString()!);
@@ -37,41 +37,43 @@ public class TrainingLevelRequirementsTests(RequirementsPostgres postgres)
         Assert.Equal(12, result.Modules!.TotalModulesCount);
         Assert.Equal(2, result.Modules.MinMandatoryModulesCount);
         Assert.Equal(
+            new long[] { 1, 2, 3, 4 },
+            result.Modules.MandatoryModules.Select(m => m.Id).Order()
+        );
+        Assert.Equal(
             new[]
             {
-                "CICLO-PROGRAMA",
-                "IMPACTO-AMBIENTAL",
-                "PRIMEROS-AUXILIOS",
-                "RESPONSABILIDAD-LEGAL",
+                "Ciclo de programa",
+                "Impacto ambiental en actividades Scouts",
+                "Primeros auxilios",
+                "Responsabilidad legal del dirigente",
             },
-            result.Modules.MandatoryModuleCodes
+            result.Modules.MandatoryModules.Select(m => m.Name).Order()
         );
     }
 
     public static IEnumerable<object?[]> InvalidConfigurations =>
         [
             [null],
-            [new WriteTrainingLevelRequirementsDto(null, 2, ScoutTrainingCatalog.MandatoryCodes)],
-            [new WriteTrainingLevelRequirementsDto(12, null, ScoutTrainingCatalog.MandatoryCodes)],
+            [new WriteTrainingLevelRequirementsDto(null, 2, ScoutTrainingCatalog.MandatoryIds)],
+            [new WriteTrainingLevelRequirementsDto(12, null, ScoutTrainingCatalog.MandatoryIds)],
             [new WriteTrainingLevelRequirementsDto(12, 2, null)],
-            [new WriteTrainingLevelRequirementsDto(12, 2, [null!])],
-            [new WriteTrainingLevelRequirementsDto(12, 2, [" "])],
-            [new WriteTrainingLevelRequirementsDto(12, 2, [new string('X', 31)])],
+            [new WriteTrainingLevelRequirementsDto(12, 2, [-1L])],
+            [new WriteTrainingLevelRequirementsDto(12, 2, [0L])],
             [
                 new WriteTrainingLevelRequirementsDto(
                     12,
                     2,
-                    ["PRIMEROS-AUXILIOS", " PRIMEROS-AUXILIOS "]
+                    [1L, 1L]
                 ),
             ],
             [
                 new WriteTrainingLevelRequirementsDto(
                     12,
                     2,
-                    ["PRIMEROS-AUXILIOS", "MODULO-INEXISTENTE"]
+                    [1L, 9999L]
                 ),
             ],
-            [new WriteTrainingLevelRequirementsDto(12, 2, ["PRIMEROS-AUXILIOS", "ciclo-programa"])],
         ];
 
     [Fact]
@@ -83,13 +85,13 @@ public class TrainingLevelRequirementsTests(RequirementsPostgres postgres)
         );
         await handler.HandleAsync(
             ScoutTrainingCatalog.LevelCode,
-            new(12, 2, ScoutTrainingCatalog.MandatoryCodes)
+            new(12, 2, ScoutTrainingCatalog.MandatoryIds)
         );
         // Cambio administrativo de configuración, no evaluación de aprobaciones individuales.
         var replacement = new WriteTrainingLevelRequirementsDto(
             12,
             2,
-            [" PRIMEROS-AUXILIOS ", "CICLO-PROGRAMA"]
+            [3L, 4L]
         );
         await handler.HandleAsync(ScoutTrainingCatalog.LevelCode, replacement);
         await handler.HandleAsync(ScoutTrainingCatalog.LevelCode, replacement);
@@ -99,8 +101,8 @@ public class TrainingLevelRequirementsTests(RequirementsPostgres postgres)
             new TrainingLevelRepository(reader)
         ).HandleAsync(ScoutTrainingCatalog.LevelCode);
         Assert.Equal(
-            new[] { "CICLO-PROGRAMA", "PRIMEROS-AUXILIOS" },
-            result.Modules!.MandatoryModuleCodes
+            new long[] { 3, 4 },
+            result.Modules!.MandatoryModules.Select(m => m.Id).Order()
         );
         Assert.Equal(12, result.Modules.TotalModulesCount);
         Assert.Equal(2, result.Modules.MinMandatoryModulesCount);
@@ -115,7 +117,7 @@ public class TrainingLevelRequirementsTests(RequirementsPostgres postgres)
         );
         await handler.HandleAsync(
             ScoutTrainingCatalog.LevelCode,
-            new(12, 2, ScoutTrainingCatalog.MandatoryCodes)
+            new(12, 2, ScoutTrainingCatalog.MandatoryIds)
         );
         await handler.HandleAsync(ScoutTrainingCatalog.LevelCode, new(0, 0, []));
         await using var reader = postgres.Open(db.Database.GetConnectionString()!);
@@ -127,7 +129,7 @@ public class TrainingLevelRequirementsTests(RequirementsPostgres postgres)
         Assert.NotNull(modules);
         Assert.Equal(0, modules.TotalModulesCount);
         Assert.Equal(0, modules.MinMandatoryModulesCount);
-        Assert.Empty(modules.MandatoryModuleCodes);
+        Assert.Empty(modules.MandatoryModules);
     }
 
     [Theory]
@@ -142,7 +144,7 @@ public class TrainingLevelRequirementsTests(RequirementsPostgres postgres)
         );
         await handler.HandleAsync(
             ScoutTrainingCatalog.LevelCode,
-            new(12, 2, ScoutTrainingCatalog.MandatoryCodes)
+            new(12, 2, ScoutTrainingCatalog.MandatoryIds)
         );
 
         await Assert.ThrowsAsync<RequestValidationException>(() =>
@@ -158,14 +160,8 @@ public class TrainingLevelRequirementsTests(RequirementsPostgres postgres)
         Assert.Equal(12, modules.TotalModulesCount);
         Assert.Equal(2, modules.MinMandatoryModulesCount);
         Assert.Equal(
-            new[]
-            {
-                "CICLO-PROGRAMA",
-                "IMPACTO-AMBIENTAL",
-                "PRIMEROS-AUXILIOS",
-                "RESPONSABILIDAD-LEGAL",
-            },
-            modules.MandatoryModuleCodes
+            new long[] { 1, 2, 3, 4 },
+            modules.MandatoryModules.Select(m => m.Id).Order()
         );
     }
 }
@@ -282,6 +278,20 @@ public sealed class RequirementsPostgres : IDisposable
 
     internal static async Task Seed(ScoutDbContext db)
     {
+        await db.Database.ExecuteSqlRawAsync(
+            """
+            DO $$
+            BEGIN
+                IF EXISTS (
+                    SELECT 1 FROM information_schema.columns
+                    WHERE table_schema = 'public' AND table_name = 'training_module' AND column_name = 'code'
+                ) THEN
+                    ALTER TABLE training_module ALTER COLUMN code SET DEFAULT substr(gen_random_uuid()::text, 1, 25);
+                END IF;
+            END $$;
+            """
+        );
+
         var line = new TrainingLine
         {
             Id = 1,

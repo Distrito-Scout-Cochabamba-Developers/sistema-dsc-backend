@@ -35,7 +35,7 @@ public class TrainingLevelRequirementsHttpTests(RequirementsPostgres postgres) :
         Encoding.UTF8.GetBytes("test-only-key-not-a-production-secret-1234567890")
     );
     private static WriteTrainingLevelRequirementsDto Valid =>
-        new(12, 2, ScoutTrainingCatalog.MandatoryCodes);
+        new(12, 2, ScoutTrainingCatalog.MandatoryIds);
     private ScoutDbContext db = null!;
     private WebApplication app = null!;
     private HttpClient client = null!;
@@ -118,14 +118,18 @@ public class TrainingLevelRequirementsHttpTests(RequirementsPostgres postgres) :
         Assert.Equal(12, result.Modules!.TotalModulesCount);
         Assert.Equal(2, result.Modules.MinMandatoryModulesCount);
         Assert.Equal(
+            new long[] { 1, 2, 3, 4 },
+            result.Modules!.MandatoryModules.Select(m => m.Id).Order()
+        );
+        Assert.Equal(
             new[]
             {
-                "CICLO-PROGRAMA",
-                "IMPACTO-AMBIENTAL",
-                "PRIMEROS-AUXILIOS",
-                "RESPONSABILIDAD-LEGAL",
+                "Ciclo de programa",
+                "Impacto ambiental en actividades Scouts",
+                "Primeros auxilios",
+                "Responsabilidad legal del dirigente",
             },
-            result.Modules.MandatoryModuleCodes
+            result.Modules.MandatoryModules.Select(m => m.Name).Order()
         );
     }
 
@@ -153,31 +157,31 @@ public class TrainingLevelRequirementsHttpTests(RequirementsPostgres postgres) :
     [InlineData("{}")]
     [InlineData("{\"totalModulesCount\":12,\"minMandatoryModulesCount\":2}")]
     [InlineData(
-        "{\"totalModulesCount\":12,\"minMandatoryModulesCount\":2,\"mandatoryModuleCodes\":null}"
+        "{\"totalModulesCount\":12,\"minMandatoryModulesCount\":2,\"mandatoryModuleIds\":null}"
     )]
     [InlineData(
-        "{\"totalModulesCount\":12,\"minMandatoryModulesCount\":2,\"mandatoryModuleCodes\":[null]}"
+        "{\"totalModulesCount\":12,\"minMandatoryModulesCount\":2,\"mandatoryModuleIds\":[null]}"
     )]
     [InlineData(
-        "{\"totalModulesCount\":12,\"minMandatoryModulesCount\":2,\"mandatoryModuleCodes\":[\"PRIMEROS-AUXILIOS\",\" PRIMEROS-AUXILIOS \"]}"
+        "{\"totalModulesCount\":12,\"minMandatoryModulesCount\":2,\"mandatoryModuleIds\":[3, 3]}"
     )]
     [InlineData(
-        "{\"totalModulesCount\":12,\"minMandatoryModulesCount\":2,\"mandatoryModuleCodes\":[\"PRIMEROS-AUXILIOS\",\"MODULO-INEXISTENTE\"]}"
+        "{\"totalModulesCount\":12,\"minMandatoryModulesCount\":2,\"mandatoryModuleIds\":[3, 9999]}"
     )]
     [InlineData(
-        "{\"totalModulesCount\":-1,\"minMandatoryModulesCount\":0,\"mandatoryModuleCodes\":[]}"
+        "{\"totalModulesCount\":-1,\"minMandatoryModulesCount\":0,\"mandatoryModuleIds\":[]}"
     )]
     [InlineData(
-        "{\"totalModulesCount\":12,\"minMandatoryModulesCount\":-1,\"mandatoryModuleCodes\":[]}"
+        "{\"totalModulesCount\":12,\"minMandatoryModulesCount\":-1,\"mandatoryModuleIds\":[]}"
     )]
     [InlineData(
-        "{\"totalModulesCount\":1,\"minMandatoryModulesCount\":2,\"mandatoryModuleCodes\":[\"PRIMEROS-AUXILIOS\",\"CICLO-PROGRAMA\"]}"
+        "{\"totalModulesCount\":1,\"minMandatoryModulesCount\":2,\"mandatoryModuleIds\":[3, 4]}"
     )]
     [InlineData(
-        "{\"totalModulesCount\":12,\"minMandatoryModulesCount\":2,\"mandatoryModuleCodes\":[\"PRIMEROS-AUXILIOS\"]}"
+        "{\"totalModulesCount\":12,\"minMandatoryModulesCount\":2,\"mandatoryModuleIds\":[3]}"
     )]
     [InlineData(
-        "{\"totalModulesCount\":12.5,\"minMandatoryModulesCount\":2,\"mandatoryModuleCodes\":[]}"
+        "{\"totalModulesCount\":12.5,\"minMandatoryModulesCount\":2,\"mandatoryModuleIds\":[]}"
     )]
     public async Task InvalidJsonOrConfiguration_ReturnsProblemDetailsAndPreservesRequirements(
         string json
@@ -195,14 +199,18 @@ public class TrainingLevelRequirementsHttpTests(RequirementsPostgres postgres) :
         Assert.Equal(12, modules.TotalModulesCount);
         Assert.Equal(2, modules.MinMandatoryModulesCount);
         Assert.Equal(
+            new long[] { 1, 2, 3, 4 },
+            modules.MandatoryModules.Select(m => m.Id).Order()
+        );
+        Assert.Equal(
             new[]
             {
-                "CICLO-PROGRAMA",
-                "IMPACTO-AMBIENTAL",
-                "PRIMEROS-AUXILIOS",
-                "RESPONSABILIDAD-LEGAL",
+                "Ciclo de programa",
+                "Impacto ambiental en actividades Scouts",
+                "Primeros auxilios",
+                "Responsabilidad legal del dirigente",
             },
-            modules.MandatoryModuleCodes
+            modules.MandatoryModules.Select(m => m.Name).Order()
         );
     }
 
@@ -239,14 +247,14 @@ public class TrainingLevelRequirementsHttpTests(RequirementsPostgres postgres) :
     {
         Authenticate("ADMIN");
         Assert.Equal(HttpStatusCode.OK, (await client.PutAsJsonAsync(Write, Valid)).StatusCode);
-        using var blocked = await client.DeleteAsync("/api/v1/admin/modules/PRIMEROS-AUXILIOS");
+        using var blocked = await client.DeleteAsync("/api/v1/admin/modules/3");
         Assert.Equal(HttpStatusCode.Conflict, blocked.StatusCode);
         Assert.Equal(409, (await blocked.Content.ReadFromJsonAsync<ProblemDetails>())!.Status);
 
         var replacement = new WriteTrainingLevelRequirementsDto(
             12,
             2,
-            ["RESPONSABILIDAD-LEGAL", "IMPACTO-AMBIENTAL", "CICLO-PROGRAMA"]
+            [1L, 2L, 4L]
         );
         Assert.Equal(
             HttpStatusCode.OK,
@@ -257,14 +265,16 @@ public class TrainingLevelRequirementsHttpTests(RequirementsPostgres postgres) :
             (await client.PutAsJsonAsync(Write, replacement)).StatusCode
         );
         Assert.Equal(
-            new[] { "CICLO-PROGRAMA", "IMPACTO-AMBIENTAL", "RESPONSABILIDAD-LEGAL" },
+            new long[] { 1, 2, 4 },
             (await client.GetFromJsonAsync<TrainingLevelRequirementsDto>(Read))!
                 .Modules!
-                .MandatoryModuleCodes
+                .MandatoryModules
+                .Select(m => m.Id)
+                .Order()
         );
         Assert.Equal(
             HttpStatusCode.NoContent,
-            (await client.DeleteAsync("/api/v1/admin/modules/PRIMEROS-AUXILIOS")).StatusCode
+            (await client.DeleteAsync("/api/v1/admin/modules/3")).StatusCode
         );
     }
 

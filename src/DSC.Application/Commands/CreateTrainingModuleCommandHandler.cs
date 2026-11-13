@@ -15,18 +15,14 @@ public class CreateTrainingModuleCommandHandler(
         CancellationToken cancellationToken = default
     )
     {
-        var code = NormalizeRequired(request.Code, "El código es obligatorio.");
         var name = NormalizeRequired(request.Name, "El nombre es obligatorio.");
-
-        if (code.Length > 30)
-            throw new RequestValidationException("El código no puede superar 30 caracteres.");
 
         if (name.Length > 150)
             throw new RequestValidationException("El nombre no puede superar 150 caracteres.");
 
-        var existing = await moduleRepository.GetByCodeAsync(code, cancellationToken);
-        if (existing is not null)
-            throw new InvalidOperationException($"Ya existe un módulo con el código '{code}'.");
+        var exists = await moduleRepository.ExistsByNameAsync(name, null, cancellationToken);
+        if (exists)
+            throw new InvalidOperationException($"Ya existe un módulo con el nombre '{name}'.");
 
         var lines = await ResolveLinesAsync(
             request.TrainingLineCodes,
@@ -36,7 +32,6 @@ public class CreateTrainingModuleCommandHandler(
 
         var module = new TrainingModule
         {
-            Code = code,
             Name = name,
             Description = NormalizeOptional(request.Description),
             ModuleLines = lines
@@ -47,7 +42,7 @@ public class CreateTrainingModuleCommandHandler(
         await moduleRepository.AddAsync(module, cancellationToken);
 
         var created =
-            await moduleRepository.GetByCodeAsync(code, cancellationToken)
+            await moduleRepository.GetByIdAsync(module.Id, cancellationToken)
             ?? throw new InvalidOperationException("El módulo se creó pero no se pudo recargar.");
 
         return TrainingModuleMapping.ToDto(created);

@@ -26,11 +26,16 @@ public class RegisterDigitalAttendanceCommandHandler(
         )
             throw new DomainException("El nombre completo (nombre y apellido) es obligatorio.");
 
-        // 1. Verify training module existence by code
+        // 1. Verify training module existence by id
+        if (!long.TryParse(request.SessionToken, out var moduleId))
+            throw new KeyNotFoundException(
+                $"No se encontró ningún módulo de capacitación activo con el identificador '{request.SessionToken}'."
+            );
+
         var module =
-            await moduleRepository.GetByCodeAsync(request.SessionToken, cancellationToken)
+            await moduleRepository.GetByIdAsync(moduleId, cancellationToken)
             ?? throw new KeyNotFoundException(
-                $"No se encontró ningún módulo de capacitación activo con el código '{request.SessionToken}'."
+                $"No se encontró ningún módulo de capacitación activo con el identificador '{request.SessionToken}'."
             );
 
         // 2. Validate CI Value Object

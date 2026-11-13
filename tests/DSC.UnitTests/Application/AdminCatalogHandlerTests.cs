@@ -47,24 +47,24 @@ public class AdminCatalogHandlerTests
         );
 
         var result = await handler.HandleAsync(
-            new WriteTrainingModuleDto("mod-nuevo", "Módulo nuevo", "Desc", ["AE"])
+            new WriteTrainingModuleDto("Módulo nuevo", "Desc", ["AE"])
         );
 
-        Assert.Equal("mod-nuevo", result.Code);
+        Assert.True(result.Id > 0);
         Assert.Equal("Módulo nuevo", result.Name);
+        Assert.Equal("Desc", result.Description);
         Assert.Equal("AE", Assert.Single(result.TrainingLines).Code);
         Assert.Equal("Adjuntos/Asesores de Formación", result.TrainingLines[0].Name);
     }
 
     [Fact]
-    public async Task Create_DuplicateCode_ShouldConflict()
+    public async Task Create_DuplicateName_ShouldConflict()
     {
         using var db = CreateDb();
         await SeedLineAsync(db);
         db.TrainingModules.Add(
             new TrainingModule
             {
-                Code = "mod-nuevo",
                 Name = "Existente",
                 ModuleLines =
                 [
@@ -80,7 +80,7 @@ public class AdminCatalogHandlerTests
         );
 
         await Assert.ThrowsAsync<InvalidOperationException>(() =>
-            handler.HandleAsync(new WriteTrainingModuleDto("mod-nuevo", "Otro", null, ["AE"]))
+            handler.HandleAsync(new WriteTrainingModuleDto(" Existente ", null, ["AE"]))
         );
     }
 
@@ -94,12 +94,12 @@ public class AdminCatalogHandlerTests
         );
 
         await Assert.ThrowsAsync<KeyNotFoundException>(() =>
-            handler.HandleAsync(new WriteTrainingModuleDto("mod-nuevo", "Nuevo", null, ["ZZ"]))
+            handler.HandleAsync(new WriteTrainingModuleDto("Nuevo", null, ["ZZ"]))
         );
     }
 
     [Fact]
-    public async Task Create_EmptyCode_ShouldValidate()
+    public async Task Create_EmptyName_ShouldValidate()
     {
         using var db = CreateDb();
         var handler = new CreateTrainingModuleCommandHandler(
@@ -108,7 +108,7 @@ public class AdminCatalogHandlerTests
         );
 
         await Assert.ThrowsAsync<RequestValidationException>(() =>
-            handler.HandleAsync(new WriteTrainingModuleDto("  ", "Nuevo", null, ["AE"]))
+            handler.HandleAsync(new WriteTrainingModuleDto("  ", null, ["AE"]))
         );
     }
 
@@ -120,15 +120,13 @@ public class AdminCatalogHandlerTests
         db.TrainingLines.Add(new TrainingLine { Code = "PJ", Name = "Programa de Jóvenes" });
         await db.SaveChangesAsync();
         var aeId = db.TrainingLines.Single(t => t.Code == "AE").Id;
-        db.TrainingModules.Add(
-            new TrainingModule
-            {
-                Code = "mod-edit",
-                Name = "Viejo",
-                Description = "A",
-                ModuleLines = [new TrainingModuleLine { TrainingLineId = aeId }],
-            }
-        );
+        var module = new TrainingModule
+        {
+            Name = "Viejo",
+            Description = "A",
+            ModuleLines = [new TrainingModuleLine { TrainingLineId = aeId }],
+        };
+        db.TrainingModules.Add(module);
         await db.SaveChangesAsync();
 
         var handler = new UpdateTrainingModuleCommandHandler(
@@ -138,12 +136,12 @@ public class AdminCatalogHandlerTests
 
         var result = await handler.HandleAsync(
             new UpdateTrainingModuleCommand(
-                "mod-edit",
-                new WriteTrainingModuleDto("ignored", "Nuevo nombre", "B", ["PJ"])
+                module.Id,
+                new WriteTrainingModuleDto("Nuevo nombre", "B", ["PJ"])
             )
         );
 
-        Assert.Equal("mod-edit", result.Code);
+        Assert.Equal(module.Id, result.Id);
         Assert.Equal("Nuevo nombre", result.Name);
         Assert.Equal("B", result.Description);
         Assert.Equal("PJ", Assert.Single(result.TrainingLines).Code);
@@ -166,8 +164,8 @@ public class AdminCatalogHandlerTests
         await Assert.ThrowsAsync<KeyNotFoundException>(() =>
             handler.HandleAsync(
                 new UpdateTrainingModuleCommand(
-                    "no-existe",
-                    new WriteTrainingModuleDto("", "Nombre", null, ["AE"])
+                    999,
+                    new WriteTrainingModuleDto("Nombre", null, ["AE"])
                 )
             )
         );
@@ -178,23 +176,21 @@ public class AdminCatalogHandlerTests
     {
         using var db = CreateDb();
         await SeedLineAsync(db);
-        db.TrainingModules.Add(
-            new TrainingModule
-            {
-                Code = "mod-borrar",
-                Name = "Para borrar",
-                ModuleLines =
-                [
-                    new TrainingModuleLine { TrainingLineId = db.TrainingLines.Single().Id },
-                ],
-            }
-        );
+        var module = new TrainingModule
+        {
+            Name = "Para borrar",
+            ModuleLines =
+            [
+                new TrainingModuleLine { TrainingLineId = db.TrainingLines.Single().Id },
+            ],
+        };
+        db.TrainingModules.Add(module);
         await db.SaveChangesAsync();
 
         var handler = new DeleteTrainingModuleCommandHandler(new TrainingModuleRepository(db));
-        await handler.HandleAsync(new DeleteTrainingModuleCommand("mod-borrar"));
+        await handler.HandleAsync(new DeleteTrainingModuleCommand(module.Id));
 
-        Assert.Null(await db.TrainingModules.SingleOrDefaultAsync(m => m.Code == "mod-borrar"));
+        Assert.Null(await db.TrainingModules.SingleOrDefaultAsync(m => m.Id == module.Id));
         Assert.Empty(db.TrainingModuleLines);
     }
 
@@ -205,7 +201,7 @@ public class AdminCatalogHandlerTests
         var handler = new DeleteTrainingModuleCommandHandler(new TrainingModuleRepository(db));
 
         await Assert.ThrowsAsync<KeyNotFoundException>(() =>
-            handler.HandleAsync(new DeleteTrainingModuleCommand("no-existe"))
+            handler.HandleAsync(new DeleteTrainingModuleCommand(999))
         );
     }
 
@@ -214,28 +210,26 @@ public class AdminCatalogHandlerTests
     {
         using var db = CreateDb();
         await SeedLineAsync(db);
-        db.TrainingModules.Add(
-            new TrainingModule
-            {
-                Code = "mod-usado",
-                Name = "Con asistencia",
-                ModuleLines =
-                [
-                    new TrainingModuleLine { TrainingLineId = db.TrainingLines.Single().Id },
-                ],
-            }
-        );
+        var module = new TrainingModule
+        {
+            Name = "Con asistencia",
+            ModuleLines =
+            [
+                new TrainingModuleLine { TrainingLineId = db.TrainingLines.Single().Id },
+            ],
+        };
+        db.TrainingModules.Add(module);
         await db.SaveChangesAsync();
-        var moduleId = db.TrainingModules.Single().Id;
+        var moduleId = module.Id;
         db.ModuleAttendances.Add(ModuleAttendance.Create(moduleId, 1));
         await db.SaveChangesAsync();
 
         var handler = new DeleteTrainingModuleCommandHandler(new TrainingModuleRepository(db));
 
         await Assert.ThrowsAsync<InvalidOperationException>(() =>
-            handler.HandleAsync(new DeleteTrainingModuleCommand("mod-usado"))
+            handler.HandleAsync(new DeleteTrainingModuleCommand(moduleId))
         );
-        Assert.NotNull(await db.TrainingModules.SingleOrDefaultAsync(m => m.Code == "mod-usado"));
+        Assert.NotNull(await db.TrainingModules.SingleOrDefaultAsync(m => m.Id == moduleId));
     }
 
     [Fact]
@@ -251,12 +245,12 @@ public class AdminCatalogHandlerTests
         );
 
         var result = await handler.HandleAsync(
-            new WriteTrainingModuleDto("compartido", "Módulo compartido", null, [" PJ ", "AE"])
+            new WriteTrainingModuleDto("Módulo compartido", null, [" PJ ", "AE"])
         );
 
         Assert.Equal(new[] { "AE", "PJ" }, result.TrainingLines.Select(line => line.Code));
         db.ChangeTracker.Clear();
-        var saved = await new TrainingModuleRepository(db).GetByCodeAsync("compartido", default);
+        var saved = await new TrainingModuleRepository(db).GetByIdAsync(result.Id, default);
         Assert.NotNull(saved);
         Assert.Equal(
             new[] { "AE", "PJ" },
@@ -286,7 +280,7 @@ public class AdminCatalogHandlerTests
         ];
         foreach (var codes in invalidCodes)
             await Assert.ThrowsAsync<RequestValidationException>(() =>
-                handler.HandleAsync(new WriteTrainingModuleDto("nuevo", "Nuevo", null, codes))
+                handler.HandleAsync(new WriteTrainingModuleDto("Nuevo", null, codes))
             );
 
         Assert.Empty(db.TrainingModules);
@@ -300,21 +294,21 @@ public class AdminCatalogHandlerTests
         await SeedLineAsync(db, "PJ");
         var repository = new TrainingModuleRepository(db);
         var lines = new TrainingLineRepository(db);
-        await new CreateTrainingModuleCommandHandler(repository, lines).HandleAsync(
-            new WriteTrainingModuleDto("compartido", "Compartido", null, ["AE"])
+        var created = await new CreateTrainingModuleCommandHandler(repository, lines).HandleAsync(
+            new WriteTrainingModuleDto("Compartido", null, ["AE"])
         );
         db.ChangeTracker.Clear();
 
         var result = await new UpdateTrainingModuleCommandHandler(repository, lines).HandleAsync(
             new UpdateTrainingModuleCommand(
-                "compartido",
-                new WriteTrainingModuleDto("", "Compartido", null, ["AE", "PJ"])
+                created.Id,
+                new WriteTrainingModuleDto("Compartido", null, ["AE", "PJ"])
             )
         );
 
         Assert.Equal(new[] { "AE", "PJ" }, result.TrainingLines.Select(line => line.Code));
         db.ChangeTracker.Clear();
-        var saved = await repository.GetByCodeAsync("compartido", default);
+        var saved = await repository.GetByIdAsync(created.Id, default);
         Assert.NotNull(saved);
         Assert.Equal(
             new[] { "AE", "PJ" },
@@ -329,18 +323,18 @@ public class AdminCatalogHandlerTests
         await SeedLineAsync(db);
         var repository = new TrainingModuleRepository(db);
         var lines = new TrainingLineRepository(db);
-        await new CreateTrainingModuleCommandHandler(repository, lines).HandleAsync(
-            new WriteTrainingModuleDto("existente", "Original", "Descripción original", ["AE"])
+        var created = await new CreateTrainingModuleCommandHandler(repository, lines).HandleAsync(
+            new WriteTrainingModuleDto("Original", "Descripción original", ["AE"])
         );
-        var tracked = await repository.GetTrackedByCodeAsync("existente", default);
+        var tracked = await repository.GetTrackedByIdAsync(created.Id, default);
         Assert.NotNull(tracked);
         var originalLink = Assert.Single(tracked.ModuleLines);
 
         await Assert.ThrowsAsync<KeyNotFoundException>(() =>
             new UpdateTrainingModuleCommandHandler(repository, lines).HandleAsync(
                 new UpdateTrainingModuleCommand(
-                    "existente",
-                    new WriteTrainingModuleDto("", "Modificado", "Modificada", ["AE", "ZZ"])
+                    created.Id,
+                    new WriteTrainingModuleDto("Modificado", "Modificada", ["AE", "ZZ"])
                 )
             )
         );
@@ -350,7 +344,7 @@ public class AdminCatalogHandlerTests
         Assert.Same(originalLink, Assert.Single(tracked.ModuleLines));
         Assert.False(db.ChangeTracker.HasChanges());
         db.ChangeTracker.Clear();
-        var saved = await repository.GetByCodeAsync("existente", default);
+        var saved = await repository.GetByIdAsync(created.Id, default);
         Assert.NotNull(saved);
         Assert.Equal("Original", saved.Name);
         Assert.Equal("Descripción original", saved.Description);

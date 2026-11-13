@@ -10,7 +10,7 @@ public class TrainingLineRepository(ScoutDbContext dbContext) : ITrainingLineRep
     {
         return await dbContext
             .TrainingLines.AsNoTracking()
-            .OrderBy(x => x.Name)
+            .OrderBy(x => x.Id)
             .ToListAsync(cancellationToken);
     }
 
