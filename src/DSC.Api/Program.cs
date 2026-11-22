@@ -41,7 +41,7 @@ public partial class Program
                         Title = "DSC System API",
                         Version = "v1",
                         Description =
-                            "API de backend para DSC System: autenticación JWT, catálogo de módulos (asistencia anónima y administración con roles) y registro de asistencia.",
+                            "API de backend para DSC System: autenticación JWT, catálogo de módulos, calendario de convocatorias e inscripción, y registro de asistencia.",
                     };
 
                     var securityScheme = new OpenApiSecurityScheme
@@ -82,7 +82,12 @@ public partial class Program
                     EnsureTag(
                         document,
                         OpenApiTags.Modules,
-                        "CRUD del catálogo curricular (`training_module`). Requiere JWT con rol ADMIN o DISTRICT_SECRETARY."
+                        "CRUD del catálogo curricular (`training_module`) y alta de convocatorias. Requiere JWT con rol ADMIN o DISTRICT_SECRETARY."
+                    );
+                    EnsureTag(
+                        document,
+                        OpenApiTags.Calendar,
+                        "Calendario de convocatorias (`training_module_session` + `training_module_schedule`) e inscripción digital."
                     );
 
                     foreach (

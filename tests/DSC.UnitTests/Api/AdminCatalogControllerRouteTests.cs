@@ -24,6 +24,16 @@ public class AdminCatalogControllerRouteTests
     }
 
     [Fact]
+    public void CreateModuleSession_ShouldBeHttpPostUnderModules()
+    {
+        var method = typeof(AdminCatalogController).GetMethod(
+            nameof(AdminCatalogController.CreateModuleSession)
+        );
+        var httpPost = method?.GetCustomAttribute<HttpPostAttribute>();
+        Assert.Equal("modules/{id:long}/sessions", httpPost?.Template);
+    }
+
+    [Fact]
     public void Attendance_ShouldUseAttendanceOpenApiTag()
     {
         var tags = typeof(AttendanceController).GetCustomAttribute<TagsAttribute>();

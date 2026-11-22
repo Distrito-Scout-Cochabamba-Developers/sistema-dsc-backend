@@ -284,6 +284,7 @@ try
         try
         {
             await DSC.Seeder.TrainingCatalogSeeder.SeedAsync(db);
+            await DSC.Seeder.CalendarCatalogSeeder.SeedAsync(db);
             await catalogTransaction.CommitAsync();
         }
         catch
