@@ -1,7 +1,9 @@
+using System.Data;
 using DSC.Domain.Entities;
 using DSC.Domain.Exceptions;
 using DSC.Domain.Repositories;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage;
 using Npgsql;
 
 namespace DSC.Infrastructure.Persistence.Repositories;
@@ -142,6 +144,14 @@ public class TrainingModuleSessionRepository(ScoutDbContext dbContext)
             if (dbContext.Database.CurrentTransaction is null)
                 throw new InvalidOperationException(
                     "La inscripción atómica requiere una transacción ambiente."
+                );
+
+            if (
+                dbContext.Database.CurrentTransaction.GetDbTransaction().IsolationLevel
+                != IsolationLevel.ReadCommitted
+            )
+                throw new InvalidOperationException(
+                    "La inscripción atómica requiere una transacción READ COMMITTED."
                 );
 
             // Serializa a los competidores por el último cupo antes de leer el

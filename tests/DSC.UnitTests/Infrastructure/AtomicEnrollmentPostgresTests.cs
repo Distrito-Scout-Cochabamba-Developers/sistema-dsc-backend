@@ -1,3 +1,4 @@
+using System.Data;
 using DSC.Application.Commands;
 using DSC.Domain.Entities;
 using DSC.Domain.Exceptions;
@@ -18,6 +19,71 @@ namespace DSC.UnitTests.Infrastructure;
 public class AtomicEnrollmentPostgresTests(RequirementsPostgres postgres)
 {
     private const string SourceCode = "AUTHENTICATED_USER";
+
+    [Fact]
+    public async Task SharedHandlerJoinsAmbientTransactionAndRollsBackPersonAndEnrollment()
+    {
+        await using var db = await postgres.CreateDatabase();
+        var fixture = await SeedAsync(db, capacity: 1);
+        await using var transaction = await db.Database.BeginTransactionAsync(
+            IsolationLevel.ReadCommitted
+        );
+        var person = await AddPersonAsync(db, fixture.PersonStatusId, "9910001", "Celia");
+        await CreateHandler(db).HandleAsync(
+            new(fixture.SessionId, person.Id, SourceCode, "Usuario", null)
+        );
+        await transaction.RollbackAsync();
+        db.ChangeTracker.Clear();
+        Assert.False(await db.Persons.AnyAsync(item => item.Id == person.Id));
+        Assert.Equal(0, await db.TrainingModuleEnrollments.CountAsync());
+    }
+
+    [Fact]
+    public async Task EnrollmentWaitsForCapacityExpansionAndUsesNewCapacity()
+    {
+        await using var db = await postgres.CreateDatabase();
+        var fixture = await SeedAsync(db, capacity: 0);
+        var person = await AddPersonAsync(db, fixture.PersonStatusId, "9920001", "Dalia");
+        await using var expanding = postgres.Open(db.Database.GetConnectionString()!);
+        await using var transaction = await expanding.Database.BeginTransactionAsync();
+        await new TrainingModuleSessionRepository(expanding).ExpandCapacityAsync(
+            fixture.SessionId, 1
+        );
+        var attempt = CreateHandler(db).HandleAsync(
+            new(fixture.SessionId, person.Id, SourceCode, "Usuario", null)
+        );
+        await Task.Delay(300);
+        Assert.False(attempt.IsCompleted);
+        await transaction.CommitAsync();
+        await attempt;
+        Assert.Equal(1, await db.TrainingModuleEnrollments.CountAsync());
+    }
+
+    [Fact]
+    public async Task OldRepeatableReadSnapshotCannotEnrollPastCapacity()
+    {
+        await using var db = await postgres.CreateDatabase();
+        var fixture = await SeedAsync(db, capacity: 1);
+        var first = await AddPersonAsync(db, fixture.PersonStatusId, "9900001", "Alba");
+        var second = await AddPersonAsync(db, fixture.PersonStatusId, "9900002", "Bruno");
+        await using var stale = postgres.Open(db.Database.GetConnectionString()!);
+        await using var transaction = await stale.Database.BeginTransactionAsync(
+            IsolationLevel.RepeatableRead
+        );
+        Assert.Equal(0, await stale.TrainingModuleEnrollments.CountAsync());
+        await CreateHandler(db).HandleAsync(
+            new(fixture.SessionId, first.Id, SourceCode, "Usuario", null)
+        );
+
+        var error = await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            CreateHandler(stale).HandleAsync(
+                new(fixture.SessionId, second.Id, SourceCode, "Usuario", null)
+            )
+        );
+        Assert.Contains("READ COMMITTED", error.Message);
+        await transaction.RollbackAsync();
+        Assert.Equal(1, await db.TrainingModuleEnrollments.CountAsync());
+    }
 
     [Fact]
     public async Task ConcurrentEnrollmentWaitsForTheSessionLockAndLosesTheLastSeat()

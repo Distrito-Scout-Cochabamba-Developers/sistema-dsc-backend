@@ -59,11 +59,10 @@ public class CalendarEnrollmentConcurrencyHttpTests(RequirementsPostgres postgre
         cancelled = new TrainingModuleSessionStatus { Code = "CANCELLED", Name = "Cancelada" };
         closed = new TrainingModuleSessionStatus { Code = "CLOSED", Name = "Cerrada" };
         personStatus = new PersonStatus { Code = "ACTIVE", Name = "Activa" };
-        userStatus = new UserStatus { Code = "ACTIVE", Name = "Activa" };
+        userStatus = await db.UserStatuses.SingleAsync(status => status.Code == "ACTIVE");
         source = new EnrollmentSource { Code = "AUTHENTICATED_USER", Name = "Usuario autenticado" };
         db.TrainingModuleSessionStatuses.AddRange(open, cancelled, closed);
         db.PersonStatuses.Add(personStatus);
-        db.UserStatuses.Add(userStatus);
         db.EnrollmentSources.Add(source);
         await db.SaveChangesAsync();
         module = await db.TrainingModules.FirstAsync();
