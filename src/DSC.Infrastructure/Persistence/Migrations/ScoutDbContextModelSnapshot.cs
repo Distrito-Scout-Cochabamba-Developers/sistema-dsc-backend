@@ -1653,6 +1653,15 @@ namespace DSC.Infrastructure.Persistence.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
 
+                    b.Property<DateTime?>("ActivationExpiresAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("activation_expires_at");
+
+                    b.Property<string>("ActivationTokenHash")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("activation_token_hash");
+
                     b.Property<DateTime>("CreatedAt")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("timestamp with time zone")
@@ -1698,6 +1707,9 @@ namespace DSC.Infrastructure.Persistence.Migrations
                         .HasColumnName("username");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("ActivationTokenHash")
+                        .IsUnique();
 
                     b.HasIndex("Email")
                         .IsUnique();
