@@ -194,8 +194,7 @@ public class TrainingLevelRequirementModelTests(RequirementsPostgres postgres)
         // Datos históricos completos: las FK reales deben aceptar la fixture.
         await db.Database.ExecuteSqlRawAsync(
             """
-            INSERT INTO person_status (id, code, name) VALUES (1, 'ACTIVE', 'Activo');
-            INSERT INTO person (id, id_card, first_name, first_last_name, person_status_id)
+                        INSERT INTO person (id, id_card, first_name, first_last_name, person_status_id)
                 VALUES (1, 'FIXTURE-DSC', 'Dirigente', 'De prueba', 1);
             INSERT INTO scout_leader (person_id) VALUES (1);
             INSERT INTO leader_training_status (id, code, name) VALUES (1, 'APPROVED', 'Aprobado');

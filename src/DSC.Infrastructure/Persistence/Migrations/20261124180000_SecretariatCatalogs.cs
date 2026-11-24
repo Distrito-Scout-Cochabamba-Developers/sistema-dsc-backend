@@ -9,9 +9,22 @@ namespace DSC.Infrastructure.Persistence.Migrations;
 public sealed class SecretariatCatalogs : Migration
 {
     protected override void Up(MigrationBuilder migrationBuilder) => migrationBuilder.Sql("""
-        INSERT INTO person_status (code, name) VALUES ('ACTIVE', 'Activa') ON CONFLICT (code) DO NOTHING;
-        INSERT INTO contact_purpose_type (code, name) VALUES ('PERSONAL', 'Personal') ON CONFLICT (code) DO NOTHING;
-        INSERT INTO contact_mechanism_type (code, name) VALUES ('EMAIL', 'Correo'), ('CELLPHONE', 'Celular') ON CONFLICT (code) DO NOTHING;
+        -- Ids explícitos (max+1) y secuencia sincronizada: una instalación con filas insertadas a mano no colisiona.
+        INSERT INTO person_status (id, code, name) OVERRIDING SYSTEM VALUE
+            SELECT COALESCE((SELECT MAX(id) FROM person_status), 0) + 1, 'ACTIVE', 'Activa'
+            WHERE NOT EXISTS (SELECT 1 FROM person_status WHERE code = 'ACTIVE');
+        INSERT INTO contact_purpose_type (id, code, name) OVERRIDING SYSTEM VALUE
+            SELECT COALESCE((SELECT MAX(id) FROM contact_purpose_type), 0) + 1, 'PERSONAL', 'Personal'
+            WHERE NOT EXISTS (SELECT 1 FROM contact_purpose_type WHERE code = 'PERSONAL');
+        INSERT INTO contact_mechanism_type (id, code, name) OVERRIDING SYSTEM VALUE
+            SELECT COALESCE((SELECT MAX(id) FROM contact_mechanism_type), 0) + 1, 'EMAIL', 'Correo'
+            WHERE NOT EXISTS (SELECT 1 FROM contact_mechanism_type WHERE code = 'EMAIL');
+        INSERT INTO contact_mechanism_type (id, code, name) OVERRIDING SYSTEM VALUE
+            SELECT COALESCE((SELECT MAX(id) FROM contact_mechanism_type), 0) + 1, 'CELLPHONE', 'Celular'
+            WHERE NOT EXISTS (SELECT 1 FROM contact_mechanism_type WHERE code = 'CELLPHONE');
+        SELECT setval(pg_get_serial_sequence('person_status', 'id'), (SELECT MAX(id) FROM person_status));
+        SELECT setval(pg_get_serial_sequence('contact_purpose_type', 'id'), (SELECT MAX(id) FROM contact_purpose_type));
+        SELECT setval(pg_get_serial_sequence('contact_mechanism_type', 'id'), (SELECT MAX(id) FROM contact_mechanism_type));
         -- Respaldo atómico del bloqueo por CI: NULL y vacío cuentan como el mismo complemento.
         CREATE UNIQUE INDEX IF NOT EXISTS ux_person_ci_extension ON person (id_card, COALESCE(id_card_extension, ''));
         """);

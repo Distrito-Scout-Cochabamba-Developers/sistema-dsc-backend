@@ -49,7 +49,7 @@ public class AccountActivationHttpTests(RequirementsPostgres postgres) : IAsyncL
                 IdCard = "99000162",
                 FirstName = "Persona",
                 FirstLastName = "Ficticia",
-                PersonStatus = new PersonStatus { Code = "ACTIVE", Name = "Activo" },
+                PersonStatus = await db.PersonStatuses.SingleAsync(x => x.Code == "ACTIVE"),
             },
         };
         db.Add(user);
