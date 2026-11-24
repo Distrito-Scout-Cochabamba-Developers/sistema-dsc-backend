@@ -19,8 +19,19 @@ public class ScoutLeaderRepository(ScoutDbContext dbContext) : IScoutLeaderRepos
             throw new InvalidOperationException("La inscripción asistida requiere una transacción PostgreSQL.");
         if (dbContext.Database.CurrentTransaction.GetDbTransaction().IsolationLevel != System.Data.IsolationLevel.ReadCommitted)
             throw new InvalidOperationException("La inscripción asistida requiere READ COMMITTED.");
-        var key = 158_000_000_000L + long.Parse(ciNumber, System.Globalization.CultureInfo.InvariantCulture);
-        await dbContext.Database.ExecuteSqlInterpolatedAsync($"SELECT pg_advisory_xact_lock({key})", cancellationToken);
+        await dbContext.Database.ExecuteSqlInterpolatedAsync(
+            $"SELECT pg_advisory_xact_lock({PersonCiLock.Namespace}, hashtext({PersonCiLock.KeyFor(ciNumber)}))", cancellationToken);
+    }
+
+    public async Task<PersonCatalogIds> GetPersonCatalogIdsAsync(CancellationToken cancellationToken)
+    {
+        var status = await dbContext.PersonStatuses.AsNoTracking().Where(x => x.Code == "ACTIVE").Select(x => (short?)x.Id).SingleOrDefaultAsync(cancellationToken)
+            ?? throw new CatalogMissingException("person_status", "ACTIVE");
+        var phone = await dbContext.ContactMechanismTypes.AsNoTracking().Where(x => x.Code == "CELLPHONE").Select(x => (short?)x.Id).SingleOrDefaultAsync(cancellationToken)
+            ?? throw new CatalogMissingException("contact_mechanism_type", "CELLPHONE");
+        var purpose = await dbContext.ContactPurposeTypes.AsNoTracking().Where(x => x.Code == "PERSONAL").Select(x => (short?)x.Id).SingleOrDefaultAsync(cancellationToken)
+            ?? throw new CatalogMissingException("contact_purpose_type", "PERSONAL");
+        return new PersonCatalogIds(status, phone, purpose);
     }
 
     public async Task<Person> CreateSecretariatLeaderAsync(string ci, string? extension, string firstName, string lastName, string phone, string email, CancellationToken cancellationToken)

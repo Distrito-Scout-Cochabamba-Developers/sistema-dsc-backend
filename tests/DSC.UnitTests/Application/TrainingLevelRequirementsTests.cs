@@ -198,7 +198,9 @@ public sealed class RequirementsPostgres : IDisposable
             $"Host=127.0.0.1;Port={port};Username=postgres;Database=postgres;Pooling=false;Timeout=10";
     }
 
-    private void Run(string name, params string[] arguments)
+    private void Run(string name, params string[] arguments) => Run(name, 60_000, arguments);
+
+    private void Run(string name, int timeoutMs, params string[] arguments)
     {
         var info = new ProcessStartInfo(Path.Combine(bin, name + ".exe"))
         {
@@ -212,7 +214,7 @@ public sealed class RequirementsPostgres : IDisposable
             Process.Start(info) ?? throw new InvalidOperationException($"Cannot start {name}");
         var output = process.StandardOutput.ReadToEndAsync();
         var error = process.StandardError.ReadToEndAsync();
-        if (!process.WaitForExit(60_000))
+        if (!process.WaitForExit(timeoutMs))
         {
             process.Kill(entireProcessTree: true);
             throw new TimeoutException($"{name} timed out. Artifacts: {directory}");
@@ -293,12 +295,50 @@ public sealed class RequirementsPostgres : IDisposable
         db.ChangeTracker.Clear();
     }
 
+    // En Windows el postmaster puede quedar esperando a un backend que no llegó a iniciar
+    // ("could not reserve shared memory region ... error code 487" en postgres.log), de modo que
+    // un apagado "fast" nunca termina. Se escala: fast, immediate y, solo para el PID de ESTE clúster
+    // (postmaster.pid de su propio data dir), terminación del árbol de procesos. Nunca se tocan otros clústeres.
+    private void Stop()
+    {
+        var data = Path.Combine(directory, "data");
+        foreach (var mode in new[] { "fast", "immediate" })
+        {
+            try
+            {
+                Run("pg_ctl", 30_000, "-D", data, "-m", mode, "-w", "stop");
+                return;
+            }
+            catch (Exception ex) when (ex is TimeoutException or InvalidOperationException)
+            {
+                Console.WriteLine($"pg_ctl stop -m {mode} failed for {directory}: {ex.GetType().Name}");
+            }
+        }
+        var pidFile = Path.Combine(data, "postmaster.pid");
+        if (!File.Exists(pidFile))
+            return;
+        if (!int.TryParse(File.ReadLines(pidFile).First(), out var pid))
+            throw new InvalidOperationException($"postmaster.pid ilegible. Artifacts: {directory}");
+        try
+        {
+            using var postmaster = Process.GetProcessById(pid);
+            postmaster.Kill(entireProcessTree: true);
+            if (!postmaster.WaitForExit(30_000))
+                throw new TimeoutException($"postmaster {pid} did not exit. Artifacts: {directory}");
+            Console.WriteLine($"postmaster {pid} of {directory} was force-terminated after pg_ctl stop failed.");
+        }
+        catch (ArgumentException)
+        {
+            // El proceso ya no existe.
+        }
+    }
+
     public void Dispose()
     {
         if (started)
         {
-            Run("pg_ctl", "-D", Path.Combine(directory, "data"), "-m", "fast", "-w", "stop");
             started = false;
+            Stop();
         }
         Console.WriteLine($"PostgreSQL stopped. Local test artifacts: {directory}");
     }

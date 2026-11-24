@@ -1,5 +1,8 @@
 using DSC.UnitTests.Application;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
+using Npgsql;
 
 namespace DSC.UnitTests.Infrastructure;
 
@@ -25,5 +28,42 @@ public class SecretariatCatalogsMigrationTests(RequirementsPostgres postgres)
         var ex = await Assert.ThrowsAsync<Npgsql.PostgresException>(() =>
             db.Database.ExecuteSqlRawAsync("INSERT INTO person (id_card, first_name, first_last_name, person_status_id) VALUES ('9100061','C','D',1)"));
         Assert.Equal("ux_person_ci_extension", ex.ConstraintName);
+    }
+
+    private const string Previous = "20261124173738_AddRoverEnrollmentModality";
+    private const string Target = "20261124180000_SecretariatCatalogs";
+
+    private static async Task MigrateToPreviousAsync(DbContext db)
+    {
+        await db.GetService<IMigrator>().MigrateAsync(Previous);
+        await db.Database.ExecuteSqlRawAsync("INSERT INTO person_status (code, name) VALUES ('TMP', 'Tmp') ON CONFLICT DO NOTHING");
+    }
+
+    [Fact]
+    public async Task MigrationFailsWithClearMessageWhenPersonCiIsDuplicatedAndDoesNotPrintTheCi()
+    {
+        await using var db = await postgres.CreateDatabase(migrate: false, seed: false);
+        await MigrateToPreviousAsync(db);
+        await db.Database.ExecuteSqlRawAsync("INSERT INTO person (id_card, first_name, first_last_name, person_status_id) SELECT '9100077', n, 'B', id FROM person_status, (VALUES ('A'), ('C')) v(n) WHERE code = 'TMP'");
+
+        var ex = await Assert.ThrowsAsync<PostgresException>(() => db.GetService<IMigrator>().MigrateAsync(Target));
+
+        Assert.Contains("CI duplicados", ex.MessageText);
+        Assert.DoesNotContain("9100077", ex.MessageText + ex.Detail + ex.Hint);
+        Assert.False(await db.Database.SqlQueryRaw<int>("SELECT 1 AS \"Value\" FROM pg_indexes WHERE indexname = 'ux_person_ci_extension'").AnyAsync());
+    }
+
+    [Theory]
+    [InlineData("CREATE INDEX ux_person_ci_extension ON person (id_card)")]
+    [InlineData("CREATE UNIQUE INDEX ux_person_ci_extension ON person (id_card)")]
+    public async Task MigrationFailsWhenAHomonymousIndexIsNotTheExpectedUniqueIndex(string createIndex)
+    {
+        await using var db = await postgres.CreateDatabase(migrate: false, seed: false);
+        await MigrateToPreviousAsync(db);
+        await db.Database.ExecuteSqlRawAsync(createIndex);
+
+        var ex = await Assert.ThrowsAsync<PostgresException>(() => db.GetService<IMigrator>().MigrateAsync(Target));
+
+        Assert.Contains("ux_person_ci_extension", ex.MessageText);
     }
 }
