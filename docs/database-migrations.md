@@ -2,6 +2,20 @@
 
 Un solo `ScoutDbContext` y un solo `__EFMigrationsHistory`. No se reemplaza la migración inicial histórica ni se modifica el arranque de la aplicación.
 
+## Cupo de convocatoria (AB#155)
+
+`20261124060541_AddTrainingModuleSessionCapacity` añade `training_module_session.capacity`, entero nullable no negativo. Conserva las inscripciones y congela el cupo efectivo anterior: usa la primera sede en orden de parte, fecha y hora (ID de bloque para desempatar). Si esa sede tiene cupo `NULL`, no busca otra; si no hay sede o bloques, queda `NULL`. Un cupo histórico negativo ya implicaba cero plazas y se normaliza a `0`. Si hay más inscritos que plazas, se conservan todos y quedan cero plazas libres. No se vuelve a copiar el valor al cambiar la sede.
+
+**Producción (Run SQL):** respaldar la base y detener las escrituras de convocatorias, sedes e inscripciones. Generar y revisar desde la raíz el script completo idempotente, que cubre tanto una base vacía como una base con historial EF desde la migración inicial. Ejecutarlo antes de publicar la nueva API, sin dejar escritores de la versión anterior activos tras el backfill:
+
+```powershell
+dotnet ef migrations script --idempotent --project src/DSC.Infrastructure --startup-project src/DSC.Infrastructure --context ScoutDbContext --output .\schema.sql
+```
+
+En la ruta incremental local, `dotnet ef database update` aplica la misma migración; no hay un SQL de cupo independiente. Verificar el historial y una muestra de cupos comparados con los bloques originales. No importar un baseline en una base existente. Los scripts de baseline limpio descritos abajo no están versionados en esta rama: para base nueva usar la cadena completa de migraciones, no marcar manualmente AB#155 como aplicada.
+
+El rollback elimina los cupos propios, incluidas las ampliaciones posteriores: respaldarlos antes de revertir. Para #156, leer `TrainingModuleSession.Capacity` en la operación común de inscripción y coordinarla con las escrituras de esa misma fila. La disponibilidad publicada por el calendario no garantiza el último cupo.
+
 ## Base nueva y vacía: SQL limpio
 
 Requiere PowerShell 5.1+, SDK, herramientas locales y paquetes ya instalados/restaurados. Desde la raíz del repositorio:

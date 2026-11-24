@@ -7,7 +7,8 @@ namespace DSC.Application.Commands;
 
 public record class CreateTrainingModuleSessionCommand(
     long TrainingModuleId,
-    WriteTrainingModuleSessionDto Body
+    WriteTrainingModuleSessionDto Body,
+    bool CanExpandCapacity = false
 );
 
 public class CreateTrainingModuleSessionCommandHandler(
@@ -27,6 +28,36 @@ public class CreateTrainingModuleSessionCommandHandler(
             );
 
         var schedules = NormalizeSchedules(command.Body.Schedules);
+        var facilities = new Dictionary<long, Facility>();
+        foreach (var id in schedules.Select(block => block.FacilityId).OfType<long>().Distinct())
+        {
+            facilities[id] =
+                await sessionRepository.GetFacilityByIdAsync(id, cancellationToken)
+                ?? throw new KeyNotFoundException($"No se encontró la sede con el id '{id}'.");
+        }
+
+        var firstFacility = schedules
+            .Where(block => block.FacilityId.HasValue)
+            .OrderBy(block => block.PartNumber)
+            .ThenBy(block => block.SessionDate)
+            .ThenBy(block => block.StartTime)
+            .FirstOrDefault();
+        int? defaultCapacity =
+            firstFacility is not null
+            && facilities[firstFacility.FacilityId!.Value].Capacity is short facilityCapacity
+                ? Math.Max(0, (int)facilityCapacity)
+                : null;
+        var capacity = command.Body.HasCapacity ? command.Body.Capacity : defaultCapacity;
+        if (capacity is < 0)
+            throw new RequestValidationException("El cupo no puede ser negativo.");
+
+        if (
+            command.Body.HasCapacity
+            && !command.CanExpandCapacity
+            && (capacity is null || capacity > defaultCapacity)
+        )
+            throw new CapacityPermissionException();
+
         var statusCode = string.IsNullOrWhiteSpace(command.Body.StatusCode)
             ? CalendarSessionMapping.DefaultSessionStatusCode
             : command.Body.StatusCode.Trim();
@@ -42,20 +73,12 @@ public class CreateTrainingModuleSessionCommandHandler(
             TrainingModuleId = module.Id,
             TrainingModuleSessionStatusId = status.Id,
             IsRegistrationOpen = command.Body.IsRegistrationOpen ?? true,
+            Capacity = capacity,
             QrToken = Guid.NewGuid(),
         };
 
         foreach (var block in schedules)
         {
-            if (block.FacilityId is long facilityId)
-            {
-                _ =
-                    await sessionRepository.GetFacilityByIdAsync(facilityId, cancellationToken)
-                    ?? throw new KeyNotFoundException(
-                        $"No se encontró la sede con el id '{facilityId}'."
-                    );
-            }
-
             session.Schedules.Add(
                 new TrainingModuleSchedule
                 {

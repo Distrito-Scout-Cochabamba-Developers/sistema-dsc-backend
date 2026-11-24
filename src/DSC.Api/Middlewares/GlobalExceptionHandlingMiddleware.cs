@@ -32,6 +32,10 @@ public class GlobalExceptionHandlingMiddleware(
             );
             await HandleExceptionAsync(context, ex);
         }
+        catch (CapacityPermissionException ex)
+        {
+            await HandleExceptionAsync(context, ex);
+        }
         catch (DomainException ex)
         {
             logger.LogWarning(
@@ -58,6 +62,11 @@ public class GlobalExceptionHandlingMiddleware(
                 HttpStatusCode.Unauthorized,
                 "Credenciales Inválidas",
                 "Las credenciales son inválidas."
+            ),
+            CapacityPermissionException permissionEx => (
+                HttpStatusCode.Forbidden,
+                "Acceso denegado",
+                permissionEx.Message
             ),
 
             RequestValidationException validationEx => (

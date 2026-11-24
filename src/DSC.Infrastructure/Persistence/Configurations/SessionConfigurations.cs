@@ -28,7 +28,12 @@ public class TrainingModuleSessionConfiguration : IEntityTypeConfiguration<Train
 {
     public void Configure(EntityTypeBuilder<TrainingModuleSession> builder)
     {
-        builder.ToTable("training_module_session");
+        builder.ToTable(
+            "training_module_session",
+            table =>
+                table.HasCheckConstraint("CK_training_module_session_capacity", "capacity >= 0")
+        );
+        builder.Property(x => x.Capacity).HasColumnName("capacity");
 
         builder.HasKey(x => x.Id);
         builder.Property(x => x.Id).HasColumnName("id");

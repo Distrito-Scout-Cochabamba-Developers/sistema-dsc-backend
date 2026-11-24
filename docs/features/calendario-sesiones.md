@@ -53,7 +53,16 @@ Roles `ADMIN` o `DISTRICT_SECRETARY`.
 }
 ```
 
-`statusCode` por defecto `OPEN`. Hace falta al menos un bloque. `facilityId` opcional (sede y cupo).
+`statusCode` por defecto `OPEN`. Hace falta al menos un bloque. `facilityId` es opcional.
+
+- Si se omite `capacity`, se guarda el cupo del primer bloque con sede (orden por parte, fecha, hora e ID/desempate por orden de alta); si esa sede no indica cupo o no hay sede, se guarda `null` (sin límite). No se recalcula si cambia la sede.
+- `capacity` explícito acepta enteros no negativos (`0` = sin plazas). Secretaría puede fijar un cupo igual o menor al predeterminado. Solo `ADMIN` puede superar ese valor cuando es finito o enviar explícitamente `capacity: null`; otros reciben `403`. Con un predeterminado sin límite, un entero fija un límite.
+
+### `PUT /api/v1/admin/sessions/{id}/capacity`
+
+Solo `ADMIN`. Cuerpo `{"capacity": 35}` para ampliar, o `{"capacity": null}` para quitar el límite. `capacity` es obligatorio, aunque puede ser `null`.
+
+Devuelve `204` al ampliar o repetir el valor actual; `400` por cuerpo inválido, `401` sin JWT, `403` sin el rol, `404` si no existe y `409` si reduciría el cupo, incluso de sin límite a finito. No modifica inscripciones ni reabre la ventana de inscripción.
 
 ## `CalendarSessionDto`
 
@@ -66,9 +75,9 @@ Roles `ADMIN` o `DISTRICT_SECRETARY`.
 | `startsAt` / `endsAt` | primer y último bloque de `training_module_schedule` |
 | `location` | `facility.name` del primer bloque con sede |
 | `status` | ver tabla de estados |
-| `capacity` | `facility.capacity` o `null` (sin límite) |
+| `capacity` | `training_module_session.capacity` o `null` (sin límite) |
 | `enrolledCount` | filas de inscripción |
-| `remainingSeats` | `capacity - enrolledCount`, o `null` |
+| `remainingSeats` | `max(0, capacity - enrolledCount)`, o `null` |
 | `isEnrolled` | la persona del JWT ya está inscrita |
 
 ### Estados
@@ -100,6 +109,6 @@ Sin sesiones, el GET devuelve `[]` y el calendario queda vacío (ya no usa fixtu
 
 ## Fuera de alcance
 
-- UI admin de convocatorias (solo Scalar / POST admin).
+- UI admin de convocatorias (solo API).
 - Inscripción por Secretaría (CI).
 - Una tarjeta de calendario por cada día de un dictado de varios bloques: la grilla usa `startsAt` (primer bloque).

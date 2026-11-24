@@ -53,6 +53,12 @@ public interface ITrainingModuleSessionRepository
         CancellationToken cancellationToken = default
     );
 
+    Task ExpandCapacityAsync(
+        long sessionId,
+        int? capacity,
+        CancellationToken cancellationToken = default
+    );
+
     Task AddEnrollmentAsync(
         TrainingModuleEnrollment enrollment,
         CancellationToken cancellationToken = default

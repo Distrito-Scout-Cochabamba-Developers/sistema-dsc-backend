@@ -18,7 +18,7 @@ namespace DSC.Infrastructure.Persistence.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "9.0.2")
+                .HasAnnotation("ProductVersion", "10.0.0")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "gender_type", new[] { "female", "male", "other" });
@@ -1522,6 +1522,10 @@ namespace DSC.Infrastructure.Persistence.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
 
+                    b.Property<int?>("Capacity")
+                        .HasColumnType("integer")
+                        .HasColumnName("capacity");
+
                     b.Property<DateTime>("CreatedAt")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("timestamp with time zone")
@@ -1557,7 +1561,10 @@ namespace DSC.Infrastructure.Persistence.Migrations
 
                     b.HasIndex("TrainingModuleSessionStatusId");
 
-                    b.ToTable("training_module_session", (string)null);
+                    b.ToTable("training_module_session", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_training_module_session_capacity", "capacity >= 0");
+                        });
                 });
 
             modelBuilder.Entity("DSC.Domain.Entities.TrainingModuleSessionStatus", b =>

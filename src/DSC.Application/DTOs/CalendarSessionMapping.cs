@@ -19,6 +19,7 @@ internal static class CalendarSessionMapping
             .Schedules.OrderBy(block => block.PartNumber)
             .ThenBy(block => block.SessionDate)
             .ThenBy(block => block.StartTime)
+            .ThenBy(block => block.Id)
             .ToArray();
 
         if (blocks.Length == 0)
@@ -28,14 +29,16 @@ internal static class CalendarSessionMapping
 
         var first = blocks[0];
         var last = blocks[^1];
-        var facility = blocks.Select(block => block.Facility).FirstOrDefault(item => item is not null);
+        var facility = blocks
+            .Select(block => block.Facility)
+            .FirstOrDefault(item => item is not null);
         var line = session
             .TrainingModule.ModuleLines.Select(link => link.TrainingLine)
             .OrderBy(item => item.Code)
             .FirstOrDefault();
 
         var enrolledCount = session.Enrollments.Count;
-        int? capacity = facility?.Capacity;
+        var capacity = session.Capacity;
         int? remaining = capacity is null ? null : Math.Max(0, capacity.Value - enrolledCount);
         var statusCode = MapStatus(session.Status?.Code, remaining);
 

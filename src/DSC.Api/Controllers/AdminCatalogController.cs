@@ -168,10 +168,37 @@ public class AdminCatalogController(
     )
     {
         var created = await createSessionHandler.HandleAsync(
-            new CreateTrainingModuleSessionCommand(id, body),
+            new CreateTrainingModuleSessionCommand(
+                id,
+                body,
+                User.IsInRole(CatalogAdminRoles.Admin)
+            ),
             cancellationToken
         );
         return Created($"/api/v1/calendar/sessions/{created.Id}", created);
+    }
+
+    [HttpPut("sessions/{id:long}/capacity")]
+    [Authorize(Roles = CatalogAdminRoles.Admin)]
+    [EndpointSummary("Amplía el cupo de una convocatoria (solo ADMIN)")]
+    [EndpointDescription(
+        "capacity es obligatorio: entero no negativo para ampliar o null para quitar el límite."
+    )]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
+    public async Task<IActionResult> ExpandSessionCapacity(
+        [FromRoute] long id,
+        [FromBody] ExpandTrainingModuleSessionCapacityDto body,
+        [FromServices] ExpandTrainingModuleSessionCapacityCommandHandler handler,
+        CancellationToken cancellationToken
+    )
+    {
+        await handler.HandleAsync(id, body.Capacity, cancellationToken);
+        return NoContent();
     }
 
     [HttpGet("training-lines")]

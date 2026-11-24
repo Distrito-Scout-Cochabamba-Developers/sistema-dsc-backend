@@ -157,6 +157,30 @@ public class TrainingModuleSessionRepository(ScoutDbContext dbContext)
         }
     }
 
+    public async Task ExpandCapacityAsync(
+        long sessionId,
+        int? capacity,
+        CancellationToken cancellationToken = default
+    )
+    {
+        var session = dbContext.TrainingModuleSessions.Where(item => item.Id == sessionId);
+        var updated = await session
+            .Where(item => capacity == null || (item.Capacity != null && item.Capacity <= capacity))
+            .ExecuteUpdateAsync(
+                setters => setters.SetProperty(item => item.Capacity, capacity),
+                cancellationToken
+            );
+        if (updated != 0)
+            return;
+
+        if (!await session.AnyAsync(cancellationToken))
+            throw new KeyNotFoundException(
+                $"No se encontró la convocatoria con el id '{sessionId}'."
+            );
+
+        throw new InvalidOperationException("La ampliación no puede reducir el cupo actual.");
+    }
+
     private IQueryable<TrainingModuleSession> CalendarQuery() =>
         dbContext
             .TrainingModuleSessions.AsNoTracking()

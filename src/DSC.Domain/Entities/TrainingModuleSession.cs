@@ -10,6 +10,7 @@ public class TrainingModuleSession
     public short TrainingModuleSessionStatusId { get; set; }
     public Guid QrToken { get; set; } = Guid.NewGuid();
     public bool IsRegistrationOpen { get; set; } = true;
+    public int? Capacity { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
     // Navegación

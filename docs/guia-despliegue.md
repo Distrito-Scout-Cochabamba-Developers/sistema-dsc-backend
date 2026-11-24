@@ -158,7 +158,7 @@ FROM "__EFMigrationsHistory";
 
 La primera instalación registró 41 tablas públicas y una migración aplicada.
 
-El script idempotente consulta el historial de migraciones. Las actualizaciones posteriores requieren revisar las migraciones nuevas y respaldar los datos antes de aplicarlas. En `Production`, el código inspeccionado aplica las migraciones mediante este procedimiento manual.
+El script idempotente consulta el historial de migraciones. Las actualizaciones posteriores requieren revisar las migraciones nuevas y respaldar los datos antes de aplicarlas. En `Production`, la API no aplica migraciones al arrancar: se ejecuta el SQL revisado antes de publicar la nueva API. Ver [migración de cupo de convocatoria](database-migrations.md#cupo-de-convocatoria-ab155).
 
 Para permitir el login se cargaron los catálogos mínimos y una sola cuenta ficticia, `dsc.pruebas`, con rol `ADMIN` y contraseña aleatoria almacenada como hash BCrypt. Las 11 cuentas creadas durante las pruebas locales quedaron en la base local. Las contraseñas se entregaron por separado.
 
