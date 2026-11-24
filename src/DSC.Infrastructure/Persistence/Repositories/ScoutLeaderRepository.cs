@@ -1,6 +1,7 @@
 using DSC.Domain.Entities;
 using DSC.Domain.Repositories;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage;
 
 namespace DSC.Infrastructure.Persistence.Repositories;
 
@@ -9,6 +10,30 @@ namespace DSC.Infrastructure.Persistence.Repositories;
 /// </summary>
 public class ScoutLeaderRepository(ScoutDbContext dbContext) : IScoutLeaderRepository
 {
+    public async Task LockCiAsync(string ciNumber, CancellationToken cancellationToken)
+    {
+        if (!dbContext.Database.IsNpgsql() || dbContext.Database.CurrentTransaction is null)
+            throw new InvalidOperationException("La inscripción asistida requiere una transacción PostgreSQL.");
+        if (dbContext.Database.CurrentTransaction.GetDbTransaction().IsolationLevel != System.Data.IsolationLevel.ReadCommitted)
+            throw new InvalidOperationException("La inscripción asistida requiere READ COMMITTED.");
+        var key = 158_000_000_000L + long.Parse(ciNumber, System.Globalization.CultureInfo.InvariantCulture);
+        await dbContext.Database.ExecuteSqlInterpolatedAsync($"SELECT pg_advisory_xact_lock({key})", cancellationToken);
+    }
+
+    public async Task<Person> CreateSecretariatLeaderAsync(string ci, string? extension, string firstName, string lastName, string phone, string email, CancellationToken cancellationToken)
+    {
+        var status = await dbContext.PersonStatuses.SingleAsync(x => x.Code == "ACTIVE", cancellationToken);
+        var purpose = await dbContext.ContactPurposeTypes.SingleAsync(x => x.Code == "PERSONAL", cancellationToken);
+        var emailType = await dbContext.ContactMechanismTypes.SingleAsync(x => x.Code == "EMAIL", cancellationToken);
+        var phoneType = await dbContext.ContactMechanismTypes.SingleAsync(x => x.Code == "CELLPHONE", cancellationToken);
+        var today = DateOnly.FromDateTime(DateTime.UtcNow);
+        var person = new Person { IdCard = ci, IdCardExtension = extension, FirstName = firstName, FirstLastName = lastName, PersonStatusId = status.Id, ScoutLeader = new ScoutLeader(), ContactMechanisms = [
+            new() { ContactMechanismTypeId = phoneType.Id, ContactPurposeTypeId = purpose.Id, ContactValue = phone, IsPrimary = true, ValidFrom = today },
+            new() { ContactMechanismTypeId = emailType.Id, ContactPurposeTypeId = purpose.Id, ContactValue = email, IsPrimary = true, ValidFrom = today }
+        ] };
+        await AddAsync(person, cancellationToken);
+        return person;
+    }
     public async Task<IReadOnlyList<Person>> FindByCiAsync(
         string ciNumber,
         string? extension,

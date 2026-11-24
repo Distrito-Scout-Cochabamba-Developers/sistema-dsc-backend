@@ -16,4 +16,6 @@ public interface IScoutLeaderRepository
     Task<Person?> GetByIdAsync(long id, CancellationToken cancellationToken);
     Task AddAsync(Person person, CancellationToken cancellationToken);
     Task UpdateAsync(Person person, CancellationToken cancellationToken);
+    Task LockCiAsync(string ciNumber, CancellationToken cancellationToken);
+    Task<Person> CreateSecretariatLeaderAsync(string ci, string? extension, string firstName, string lastName, string phone, string email, CancellationToken cancellationToken);
 }

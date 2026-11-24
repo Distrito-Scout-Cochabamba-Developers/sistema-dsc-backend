@@ -38,6 +38,7 @@ public class UnitOfWork(ScoutDbContext dbContext) : IUnitOfWork
             catch
             {
                 await transaction.RollbackAsync(cancellationToken);
+                dbContext.ChangeTracker.Clear();
                 throw;
             }
         });

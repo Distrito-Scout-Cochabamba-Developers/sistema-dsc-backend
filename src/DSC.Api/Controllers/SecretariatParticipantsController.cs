@@ -22,18 +22,15 @@ public class SecretariatParticipantsController(
     /// <summary>Confirma la inscripción asistida de un dirigente existente.</summary>
     [HttpPost("{personId:long}/sessions/{sessionId:long}/enrollments")]
     public async Task<IActionResult> Enroll(long personId, long sessionId,
-        [FromServices] EnrollParticipantInSessionCommandHandler enrollmentHandler,
-        [FromServices] IScoutLeaderRepository people,
+        [FromBody] SecretariatParticipantLookupRequest request,
+        [FromServices] SecretariatEnrollment enrollmentHandler,
         [FromServices] ICurrentUser currentUser,
         CancellationToken cancellationToken)
     {
         try
         {
             if (currentUser.Id is null) return Unauthorized();
-            var person = await people.GetByIdAsync(personId, cancellationToken);
-            if (person?.ScoutLeader is null) return NotFound();
-            var enrollment = await enrollmentHandler.HandleAsync(
-                new(sessionId, personId, "SECRETARIAT", "Inscripción asistida por Secretaría", currentUser.Id), cancellationToken);
+            var enrollment = await enrollmentHandler.ExistingAsync(sessionId, personId, currentUser.Id.Value, request.Ci, request.Extension, cancellationToken);
             return StatusCode(StatusCodes.Status201Created, new { enrollmentId = enrollment.Id });
         }
         catch (EnrollmentConflictException ex)
@@ -47,12 +44,37 @@ public class SecretariatParticipantsController(
             return Problem(statusCode: 409, type: $"urn:dsc:enrollment:{type}", detail: ex.Message);
         }
         catch (KeyNotFoundException) { return NotFound(); }
+        catch (AmbiguousSecretariatCiException) { return Problem(statusCode: 409, type: "urn:dsc:secretariat:identity-changed", detail: "La identidad ya no es inequívoca. Vuelve a buscar."); }
+        catch (DomainException) { return Problem(statusCode: 400, detail: "CI o complemento inválido."); }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) { return new EmptyResult(); }
         catch (Exception ex)
         {
             logger.LogError("Falló la inscripción de Secretaría: {ExceptionType}", ex.GetType().Name);
             return Problem(statusCode: 500, detail: "No se pudo completar la inscripción.");
         }
+    }
+
+    /// <summary>Crea el perfil mínimo y confirma la inscripción de forma atómica.</summary>
+    [HttpPost("sessions/{sessionId:long}/enrollments")]
+    public async Task<IActionResult> CreateAndEnroll(long sessionId, [FromBody] NewSecretariatLeader request,
+        [FromServices] SecretariatEnrollment enrollmentHandler, [FromServices] ICurrentUser currentUser, CancellationToken cancellationToken)
+    {
+        try
+        {
+            if (currentUser.Id is null) return Unauthorized();
+            var result = await enrollmentHandler.CreateAsync(sessionId, currentUser.Id.Value, request, cancellationToken);
+            return StatusCode(201, new { enrollmentId = result.Id });
+        }
+        catch (AmbiguousSecretariatCiException) { return Problem(statusCode: 409, type: "urn:dsc:secretariat:identity-changed", detail: "El CI ya tiene coincidencias. Vuelve a buscar."); }
+        catch (DomainException ex) { return Problem(statusCode: 400, detail: ex.Message); }
+        catch (EnrollmentConflictException ex)
+        {
+            var type = ex switch { AlreadyEnrolledException => "already-enrolled", SessionFullException => "session-full", _ => "enrollment-closed" };
+            return Problem(statusCode: 409, type: $"urn:dsc:enrollment:{type}", detail: ex.Message);
+        }
+        catch (KeyNotFoundException) { return NotFound(); }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) { return new EmptyResult(); }
+        catch (Exception ex) { logger.LogError("Falló la inscripción de Secretaría: {ExceptionType}", ex.GetType().Name); return Problem(statusCode: 500, detail: "No se pudo completar la inscripción."); }
     }
     /// <summary>Busca una persona por CI sin crear una inscripción.</summary>
     [HttpPost("lookup")]
