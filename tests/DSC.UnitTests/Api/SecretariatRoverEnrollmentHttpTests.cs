@@ -52,10 +52,9 @@ public class SecretariatRoverEnrollmentHttpTests(RequirementsPostgres postgres) 
         await db.Database.OpenConnectionAsync();
         await ((NpgsqlConnection)db.Database.GetDbConnection()).ReloadTypesAsync();
         open = new TrainingModuleSessionStatus { Code = "OPEN", Name = "Abierta" };
-        personStatus = new PersonStatus { Code = "ACTIVE", Name = "Activa" };
+        personStatus = await db.PersonStatuses.SingleAsync(s => s.Code == "ACTIVE");
         userStatus = await db.UserStatuses.SingleAsync(s => s.Code == "ACTIVE");
         db.TrainingModuleSessionStatuses.Add(open);
-        db.PersonStatuses.Add(personStatus);
         db.EnrollmentSources.Add(new EnrollmentSource { Code = "AUTHENTICATED_USER", Name = "Usuario autenticado" });
         await db.SaveChangesAsync();
         module = await db.TrainingModules.FirstAsync();
