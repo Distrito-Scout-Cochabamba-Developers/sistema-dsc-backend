@@ -17,7 +17,8 @@ public class AdminCatalogController(
     ListTrainingLinesQueryHandler listTrainingLinesHandler,
     CreateTrainingModuleCommandHandler createHandler,
     UpdateTrainingModuleCommandHandler updateHandler,
-    DeleteTrainingModuleCommandHandler deleteHandler
+    DeleteTrainingModuleCommandHandler deleteHandler,
+    CreateTrainingModuleSessionCommandHandler createSessionHandler
 ) : ControllerBase
 {
     /// <summary>
@@ -147,6 +148,32 @@ public class AdminCatalogController(
     /// <summary>
     /// Lista líneas de formación para el formulario de alta/edición.
     /// </summary>
+    /// <summary>
+    /// Crea una convocatoria (sesión + bloques de horario) para un módulo del catálogo.
+    /// </summary>
+    [HttpPost("modules/{id:long}/sessions")]
+    [EndpointSummary("Crea una convocatoria de un módulo")]
+    [EndpointDescription(
+        "Requiere JWT con rol ADMIN o DISTRICT_SECRETARY. Fecha y horas van en schedules (training_module_schedule). statusCode por defecto OPEN. La sede (facilityId) es opcional."
+    )]
+    [ProducesResponseType(typeof(CalendarSessionDto), StatusCodes.Status201Created)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public async Task<ActionResult<CalendarSessionDto>> CreateModuleSession(
+        [FromRoute] long id,
+        [FromBody] WriteTrainingModuleSessionDto body,
+        CancellationToken cancellationToken
+    )
+    {
+        var created = await createSessionHandler.HandleAsync(
+            new CreateTrainingModuleSessionCommand(id, body),
+            cancellationToken
+        );
+        return Created($"/api/v1/calendar/sessions/{created.Id}", created);
+    }
+
     [HttpGet("training-lines")]
     [EndpointSummary("Lista líneas de formación (AE, PJ, GI)")]
     [EndpointDescription(

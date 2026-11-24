@@ -19,6 +19,9 @@ public static class DependencyInjection
         services.AddScoped<CreateTrainingModuleCommandHandler>();
         services.AddScoped<UpdateTrainingModuleCommandHandler>();
         services.AddScoped<DeleteTrainingModuleCommandHandler>();
+        services.AddScoped<ListCalendarSessionsQueryHandler>();
+        services.AddScoped<EnrollInCalendarSessionCommandHandler>();
+        services.AddScoped<CreateTrainingModuleSessionCommandHandler>();
         services.AddScoped<RegisterDigitalAttendanceCommandHandler>();
         services.AddScoped<LoginCommandHandler>();
 
