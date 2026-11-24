@@ -143,6 +143,70 @@ public class AccountActivationHttpTests(RequirementsPostgres postgres) : IAsyncL
         Assert.Equal(HttpStatusCode.NoContent, allowed.StatusCode);
     }
 
+    [Fact]
+    public async Task IssuedLinkIsStoredOnlyAsHashAndExpiresInOneDay()
+    {
+        var token = await IssueAsync();
+        var stored = await db
+            .Users.AsNoTracking()
+            .Where(user => user.Id == userId)
+            .Select(user => new
+            {
+                user.ActivationTokenHash,
+                user.ActivationExpiresAt,
+                user.Password,
+                user.IsEmailVerified,
+            })
+            .SingleAsync();
+
+        Assert.NotNull(stored.ActivationTokenHash);
+        Assert.Matches("^[0-9A-F]{64}$", stored.ActivationTokenHash!);
+        Assert.DoesNotContain(token, stored.ActivationTokenHash!, StringComparison.OrdinalIgnoreCase);
+        Assert.Equal(string.Empty, stored.Password);
+        Assert.False(stored.IsEmailVerified);
+        var expected = clock.GetUtcNow().UtcDateTime.AddHours(24);
+        Assert.InRange(
+            stored.ActivationExpiresAt!.Value,
+            expected.AddSeconds(-1),
+            expected.AddSeconds(1)
+        );
+    }
+
+    [Fact]
+    public async Task RedeemActivatesAndClearsLinkInTheSameWrite()
+    {
+        var token = await IssueAsync();
+        using var activated = await RedeemAsync(token, Password);
+        Assert.Equal(HttpStatusCode.NoContent, activated.StatusCode);
+
+        var stored = await db
+            .Users.AsNoTracking()
+            .Where(user => user.Id == userId)
+            .Select(user => new
+            {
+                user.Password,
+                user.IsEmailVerified,
+                user.ActivationTokenHash,
+                user.ActivationExpiresAt,
+                Status = user.UserStatus.Code,
+            })
+            .SingleAsync();
+
+        Assert.Equal("ACTIVE", stored.Status);
+        Assert.True(stored.IsEmailVerified);
+        Assert.Null(stored.ActivationTokenHash);
+        Assert.Null(stored.ActivationExpiresAt);
+        Assert.NotEqual(Password, stored.Password);
+        Assert.StartsWith("$2", stored.Password);
+        Assert.Equal(HttpStatusCode.OK, await LoginAsync(Password));
+
+        await using var scope = app.Services.CreateAsyncScope();
+        var reissued = await scope
+            .ServiceProvider.GetRequiredService<AccountActivation>()
+            .IssueAsync(userId);
+        Assert.Null(reissued);
+    }
+
     private async Task<string> IssueAsync()
     {
         await using var scope = app.Services.CreateAsyncScope();

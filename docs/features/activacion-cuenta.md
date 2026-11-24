@@ -16,3 +16,20 @@
 El token vive como SHA-256 en `user.activation_token_hash`. Solo hay uno vigente por cuenta; el estado, hash y expiración se comprueban al escribir. Dos canjes concurrentes no pueden ganar. La migración agrega columnas anulables y asegura el catálogo `PENDING_VERIFICATION` / `ACTIVE`, sin cambiar cuentas existentes.
 
 Mantener desactivada la captura de cuerpos HTTP de esta ruta (aplicación, proxy y telemetría), el registro sensible de EF y el registro de enlaces en el correo. El fragmento URL no viaja al servidor. El endpoint pide `Cache-Control: no-store`. El correo, alta y reintentos pertenecen a AB#161; no cambia Rover.
+
+## Contrato de emisión para AB#161
+
+```csharp
+Task<string?> IssueAsync(long userId, CancellationToken cancellationToken = default);
+```
+
+- Elegibilidad: `user_status.code = 'PENDING_VERIFICATION'` y `password = ''`. Cualquier otro estado devuelve `null` sin modificar la fila.
+- Efecto: reemplaza `activation_token_hash` y `activation_expires_at` de esa cuenta. No crea usuarios, no envía correo y no inscribe.
+- Token: 32 bytes de CSPRNG en Base64URL sin relleno (43 caracteres). El valor bruto solo existe en memoria del emisor.
+- Caducidad: 24 horas desde la emisión. Solo hay un hash vigente por cuenta.
+- Concurrencia: el canje usa un `UPDATE` condicional; dos solicitudes simultáneas no pueden consumir el mismo enlace.
+- Entrega: AB#161 envía usuario y `https://<origen-configurado>/auth/activar#token=<token>`; nunca registra el token, el enlace completo ni la contraseña.
+
+## Cobertura de pruebas
+
+`tests/DSC.UnitTests/Api/AccountActivationHttpTests.cs`: enlace abierto sin canje, canje repetido, expiración a 24 horas, reemisión invalidante, dos canjes simultáneos, login antes/después, límite BCrypt, almacenamiento solo como hash y limpieza atómica del enlace. `src/app/features/auth/activation-page.spec.ts`: sin token, no canje al cargar, envío explícito, etiquetas y errores accesibles, reintento tras `400` y éxito con enlace a login.
