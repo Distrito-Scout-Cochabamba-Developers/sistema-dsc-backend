@@ -1,6 +1,9 @@
 using DSC.Application.DTOs;
+using DSC.Application.Commands;
+using DSC.Application.Interfaces;
 using DSC.Application.Queries;
 using DSC.Domain.Exceptions;
+using DSC.Domain.Repositories;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -13,9 +16,43 @@ public record SecretariatParticipantLookupRequest(string Ci, string? Extension);
 [Route("v1/secretariat/participants")]
 public class SecretariatParticipantsController(
     LookupSecretariatParticipantByCiQueryHandler handler,
+    EnrollParticipantInSessionCommandHandler enrollmentHandler,
+    IScoutLeaderRepository people,
+    ICurrentUser currentUser,
     ILogger<SecretariatParticipantsController> logger
 ) : ControllerBase
 {
+    /// <summary>Confirma la inscripción asistida de un dirigente existente.</summary>
+    [HttpPost("{personId:long}/sessions/{sessionId:long}/enrollments")]
+    public async Task<IActionResult> Enroll(long personId, long sessionId, CancellationToken cancellationToken)
+    {
+        try
+        {
+            if (currentUser.Id is null) return Unauthorized();
+            var person = await people.GetByIdAsync(personId, cancellationToken);
+            if (person?.ScoutLeader is null) return NotFound();
+            var enrollment = await enrollmentHandler.HandleAsync(
+                new(sessionId, personId, "SECRETARIAT", "Inscripción asistida por Secretaría", currentUser.Id), cancellationToken);
+            return StatusCode(StatusCodes.Status201Created, new { enrollmentId = enrollment.Id });
+        }
+        catch (EnrollmentConflictException ex)
+        {
+            var type = ex switch
+            {
+                AlreadyEnrolledException => "already-enrolled",
+                SessionFullException => "session-full",
+                _ => "enrollment-closed",
+            };
+            return Problem(statusCode: 409, type: $"urn:dsc:enrollment:{type}", detail: ex.Message);
+        }
+        catch (KeyNotFoundException) { return NotFound(); }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) { return new EmptyResult(); }
+        catch (Exception ex)
+        {
+            logger.LogError("Falló la inscripción de Secretaría: {ExceptionType}", ex.GetType().Name);
+            return Problem(statusCode: 500, detail: "No se pudo completar la inscripción.");
+        }
+    }
     /// <summary>Busca una persona por CI sin crear una inscripción.</summary>
     [HttpPost("lookup")]
     [EndpointSummary("Busca un participante por CI (Secretaría)")]

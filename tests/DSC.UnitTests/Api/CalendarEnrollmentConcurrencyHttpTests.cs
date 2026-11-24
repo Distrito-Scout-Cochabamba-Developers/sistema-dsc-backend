@@ -114,6 +114,48 @@ public class CalendarEnrollmentConcurrencyHttpTests(RequirementsPostgres postgre
     }
 
     [Fact]
+    public async Task AssistedEnrollmentRequiresSecretaryAndPersistsJwtOperator()
+    {
+        var session = await CreateSessionAsync(capacity: 1);
+        var leader = await CreatePersonAsync("9100021", "Dirigente");
+        var secretary = await CreatePersonAsync("9100022", "Secretaria");
+        db.ScoutLeaders.Add(new ScoutLeader { PersonId = leader.Id });
+        await db.SaveChangesAsync();
+        var url = $"/api/v1/secretariat/participants/{leader.Id}/sessions/{session.Id}/enrollments";
+        using var anonymous = await client.PostAsync(url, null);
+        Assert.Equal(HttpStatusCode.Unauthorized, anonymous.StatusCode);
+        using var forbiddenRequest = new HttpRequestMessage(HttpMethod.Post, url);
+        forbiddenRequest.Headers.Authorization = new AuthenticationHeaderValue("Bearer", Token(leader));
+        using var forbidden = await client.SendAsync(forbiddenRequest);
+        Assert.Equal(HttpStatusCode.Forbidden, forbidden.StatusCode);
+        using var request = new HttpRequestMessage(HttpMethod.Post, url) { Content = JsonContent.Create(new { registeredByUserId = userIds[leader.Id] }) };
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", Token(secretary, "DISTRICT_SECRETARY"));
+        using var response = await client.SendAsync(request);
+        Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+        var enrollment = await db.TrainingModuleEnrollments.Include(e => e.EnrollmentSource).SingleAsync(e => e.TrainingModuleSessionId == session.Id);
+        Assert.Equal(userIds[secretary.Id], enrollment.RegisteredByUserId);
+        Assert.Equal("SECRETARIAT", enrollment.EnrollmentSource.Code);
+    }
+
+    [Fact]
+    public async Task SecretariatAndSelfServiceCompeteForLastSeat()
+    {
+        var session = await CreateSessionAsync(capacity: 1);
+        var first = await CreatePersonAsync("9100011", "Ana");
+        var second = await CreatePersonAsync("9100012", "Beto");
+        var secretary = await CreatePersonAsync("9100013", "Secretaria");
+        db.ScoutLeaders.Add(new ScoutLeader { PersonId = second.Id });
+        await db.SaveChangesAsync();
+        using var assisted = new HttpRequestMessage(HttpMethod.Post, $"/api/v1/secretariat/participants/{second.Id}/sessions/{session.Id}/enrollments");
+        assisted.Headers.Authorization = new AuthenticationHeaderValue("Bearer", Token(secretary, "DISTRICT_SECRETARY"));
+        var responses = await Task.WhenAll(client.SendAsync(EnrollRequest(session.Id, first)), client.SendAsync(assisted));
+        Assert.Equal(1, responses.Count(r => r.StatusCode == HttpStatusCode.Created));
+        Assert.Equal(1, responses.Count(r => r.StatusCode == HttpStatusCode.Conflict));
+        Assert.Equal(1, await db.TrainingModuleEnrollments.CountAsync(e => e.TrainingModuleSessionId == session.Id));
+        foreach (var response in responses) response.Dispose();
+    }
+
+    [Fact]
     public async Task TwoSelfServiceRequestsForTheLastSeatLeaveOneEnrollment()
     {
         var session = await CreateSessionAsync(capacity: 1);
@@ -304,14 +346,14 @@ public class CalendarEnrollmentConcurrencyHttpTests(RequirementsPostgres postgre
         return request;
     }
 
-    private string Token(Person person)
+    private string Token(Person person, string role = "SCOUT_LEADER")
     {
         var token = new JwtSecurityToken(
             claims:
             [
                 new Claim("sub", userIds[person.Id].ToString()),
                 new Claim("personId", person.Id.ToString()),
-                new Claim("roles", "SCOUT_LEADER"),
+                new Claim("roles", role),
             ],
             expires: DateTime.UtcNow.AddMinutes(5),
             signingCredentials: new SigningCredentials(Key, SecurityAlgorithms.HmacSha256)
