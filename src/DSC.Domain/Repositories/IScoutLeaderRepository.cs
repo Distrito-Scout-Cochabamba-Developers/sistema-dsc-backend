@@ -8,6 +8,11 @@ namespace DSC.Domain.Repositories;
 public interface IScoutLeaderRepository
 {
     Task<Person?> GetByCiNumberAsync(string ciNumber, CancellationToken cancellationToken);
+    Task<IReadOnlyList<Person>> FindByCiAsync(
+        string ciNumber,
+        string? extension,
+        CancellationToken cancellationToken
+    );
     Task<Person?> GetByIdAsync(long id, CancellationToken cancellationToken);
     Task AddAsync(Person person, CancellationToken cancellationToken);
     Task UpdateAsync(Person person, CancellationToken cancellationToken);
