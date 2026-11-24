@@ -52,6 +52,9 @@ public static class DependencyInjection
         services.AddScoped<IPasswordHasher, BCryptPasswordHasher>();
         services.TryAddSingleton(TimeProvider.System);
         services.AddScoped<AccountActivation>();
+        services.AddScoped<IAccountInvitationRepository, AccountInvitationRepository>();
+        services.AddScoped<IAccountInvitationMailer, SmtpAccountInvitationMailer>();
+        services.AddScoped<AccountInvitationDelivery>();
         services.AddScoped<IJwtTokenGenerator, JwtTokenGenerator>();
 
         return services;

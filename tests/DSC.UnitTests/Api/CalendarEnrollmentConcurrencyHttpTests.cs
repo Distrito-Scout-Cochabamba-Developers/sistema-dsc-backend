@@ -74,7 +74,10 @@ public class CalendarEnrollmentConcurrencyHttpTests(RequirementsPostgres postgre
         Assert.Equal("SECRETARIAT", entry.EnrollmentSource.Code);
         Assert.Equal(userIds[secretary.Id], entry.RegisteredByUserId);
         Assert.Equal(2, await db.PersonContactMechanisms.CountAsync(c => c.PersonId == person.Id));
-        Assert.False(await db.Users.AnyAsync(u => u.PersonId == person.Id));
+        // AB#161: la cuenta queda pendiente de activación (sin contraseña) y nunca activa.
+        var account = await db.Users.Include(u => u.UserStatus).SingleAsync(u => u.PersonId == person.Id);
+        Assert.Equal("PENDING_VERIFICATION", account.UserStatus.Code);
+        Assert.Equal("", account.Password);
     }
 
     [Fact]
