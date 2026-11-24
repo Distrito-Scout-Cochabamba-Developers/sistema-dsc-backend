@@ -87,6 +87,13 @@ public class GlobalExceptionHandlingMiddleware(
                 notFoundEx.Message
             ),
 
+            // Conflicto de CI (alta concurrente): mensaje fijo, sin CI ni datos de la persona.
+            PersonCiConflictException => (
+                HttpStatusCode.Conflict,
+                "Conflicto de CI",
+                "Ya existe una persona con el mismo CI. Vuelve a buscar."
+            ),
+
             InvalidOperationException conflictEx => (
                 HttpStatusCode.Conflict,
                 "Conflicto en la Operación",
@@ -105,6 +112,7 @@ public class GlobalExceptionHandlingMiddleware(
         var problemDetails = new ProblemDetails
         {
             Status = (int)statusCode,
+            Type = exception is PersonCiConflictException ? "urn:dsc:person:ci-conflict" : null,
             Title = title,
             Detail = detail,
             Instance = context.Request.Path,

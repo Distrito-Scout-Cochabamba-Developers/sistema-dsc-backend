@@ -10,6 +10,31 @@ public sealed class SecretariatCatalogs : Migration
 {
     protected override void Up(MigrationBuilder migrationBuilder) => migrationBuilder.Sql("""
         -- Ids explícitos (max+1) y secuencia sincronizada: una instalación con filas insertadas a mano no colisiona.
+        -- Verificaciones previas del índice. Nunca imprimen CI ni datos de personas.
+        DO $$
+        DECLARE
+            existing_def text;
+            duplicate_groups bigint;
+        BEGIN
+            SELECT pg_get_indexdef(i.indexrelid) INTO existing_def
+            FROM pg_index i JOIN pg_class c ON c.oid = i.indexrelid
+            WHERE c.relname = 'ux_person_ci_extension' AND c.relnamespace = 'public'::regnamespace
+              AND i.indisunique AND i.indisvalid;
+            IF existing_def IS NULL AND EXISTS (SELECT 1 FROM pg_class WHERE relname = 'ux_person_ci_extension' AND relnamespace = 'public'::regnamespace) THEN
+                RAISE EXCEPTION 'Ya existe un objeto llamado ux_person_ci_extension que no es un índice único válido. Elimínelo o renómbrelo y reintente.';
+            END IF;
+            IF existing_def IS NOT NULL AND existing_def NOT LIKE '%(id_card, COALESCE(id_card_extension, ''''::text))%' THEN
+                RAISE EXCEPTION 'El índice ux_person_ci_extension existe con una definición distinta a la esperada. Revíselo manualmente antes de migrar.';
+            END IF;
+            IF existing_def IS NULL THEN
+                SELECT count(*) INTO duplicate_groups FROM (
+                    SELECT 1 FROM person GROUP BY id_card, COALESCE(id_card_extension, '') HAVING count(*) > 1
+                ) d;
+                IF duplicate_groups > 0 THEN
+                    RAISE EXCEPTION 'Hay % grupo(s) de personas con CI duplicados (mismo CI y complemento). Fusione o corrija los duplicados antes de migrar; consulte docs/database-migrations.md.', duplicate_groups;
+                END IF;
+            END IF;
+        END $$;
         INSERT INTO person_status (id, code, name) OVERRIDING SYSTEM VALUE
             SELECT COALESCE((SELECT MAX(id) FROM person_status), 0) + 1, 'ACTIVE', 'Activa'
             WHERE NOT EXISTS (SELECT 1 FROM person_status WHERE code = 'ACTIVE');

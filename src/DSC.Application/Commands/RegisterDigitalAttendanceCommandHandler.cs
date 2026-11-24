@@ -62,6 +62,8 @@ public class RegisterDigitalAttendanceCommandHandler(
         CancellationToken cancellationToken
     )
     {
+        // Catálogos por código (no ids fijos): falla antes de escribir si la instalación no los tiene.
+        var catalogs = await leaderRepository.GetPersonCatalogIdsAsync(cancellationToken);
         // 3. Find or Create Person / Scout Leader
         var person = await leaderRepository.GetByCiNumberAsync(ci.Number, cancellationToken);
         if (person == null)
@@ -72,7 +74,7 @@ public class RegisterDigitalAttendanceCommandHandler(
                 IdCardExtension = string.IsNullOrWhiteSpace(ci.Extension) ? null : ci.Extension,
                 FirstName = request.FirstName.Trim(),
                 FirstLastName = request.LastName.Trim(),
-                PersonStatusId = 1, // ACTIVE
+                PersonStatusId = catalogs.ActiveStatusId,
                 IsProfileComplete = false,
                 ScoutLeader = new ScoutLeader { IsSpeakerEligible = false },
             };
@@ -82,8 +84,8 @@ public class RegisterDigitalAttendanceCommandHandler(
                 person.ContactMechanisms.Add(
                     new PersonContactMechanism
                     {
-                        ContactMechanismTypeId = 2, // CELLPHONE
-                        ContactPurposeTypeId = 1, // PERSONAL
+                        ContactMechanismTypeId = catalogs.CellphoneTypeId,
+                        ContactPurposeTypeId = catalogs.PersonalPurposeId,
                         ContactValue = request.Phone.Trim(),
                         IsPrimary = true,
                         ValidFrom = DateOnly.FromDateTime(DateTime.UtcNow),
@@ -104,7 +106,7 @@ public class RegisterDigitalAttendanceCommandHandler(
             if (!string.IsNullOrWhiteSpace(request.Phone))
             {
                 var phoneMechanism = person.ContactMechanisms.FirstOrDefault(cm =>
-                    cm.ContactMechanismTypeId == 2
+                    cm.ContactMechanismTypeId == catalogs.CellphoneTypeId
                 );
                 if (phoneMechanism != null)
                 {
@@ -115,8 +117,8 @@ public class RegisterDigitalAttendanceCommandHandler(
                     person.ContactMechanisms.Add(
                         new PersonContactMechanism
                         {
-                            ContactMechanismTypeId = 2,
-                            ContactPurposeTypeId = 1,
+                            ContactMechanismTypeId = catalogs.CellphoneTypeId,
+                            ContactPurposeTypeId = catalogs.PersonalPurposeId,
                             ContactValue = request.Phone.Trim(),
                             IsPrimary = true,
                             ValidFrom = DateOnly.FromDateTime(DateTime.UtcNow),

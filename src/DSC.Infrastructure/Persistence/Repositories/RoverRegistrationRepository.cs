@@ -12,7 +12,7 @@ public class RoverRegistrationRepository(ScoutDbContext dbContext) : IRoverRegis
         if (!dbContext.Database.IsRelational())
             return;
         await dbContext.Database.ExecuteSqlInterpolatedAsync(
-            $"SELECT pg_advisory_xact_lock(hashtextextended({"dsc:person-ci:" + ciNumber}, 0))",
+            $"SELECT pg_advisory_xact_lock({PersonCiLock.Namespace}, hashtext({PersonCiLock.KeyFor(ciNumber)}))",
             cancellationToken
         );
     }
