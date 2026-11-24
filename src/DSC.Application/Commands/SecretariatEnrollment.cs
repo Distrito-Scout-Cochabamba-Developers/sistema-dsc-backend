@@ -12,7 +12,7 @@ namespace DSC.Application.Commands;
 public record NewSecretariatLeader(string Ci, string? Extension, string FirstName, string LastName, string Phone, string Email);
 
 /// <summary>Coordina identidad y cupo bajo la misma transacción.</summary>
-public class SecretariatEnrollment(IScoutLeaderRepository people, IUnitOfWork unitOfWork, EnrollParticipantInSessionCommandHandler enrollment)
+public class SecretariatEnrollment(IScoutLeaderRepository people, IUnitOfWork unitOfWork, EnrollParticipantInSessionCommandHandler enrollment, IAccountInvitationRepository invitations)
 {
     private static CiNumber Parse(string ci, string? extension)
     {
@@ -31,7 +31,7 @@ public class SecretariatEnrollment(IScoutLeaderRepository people, IUnitOfWork un
         if (string.IsNullOrWhiteSpace(input.FirstName) || input.FirstName.Trim().Length > 120 ||
             string.IsNullOrWhiteSpace(input.LastName) || input.LastName.Trim().Length > 120 ||
             string.IsNullOrWhiteSpace(input.Phone) || input.Phone.Trim().Length > 255 ||
-            string.IsNullOrWhiteSpace(input.Email) || input.Email.Trim().Length > 255 || !new EmailAddressAttribute().IsValid(input.Email.Trim()))
+            string.IsNullOrWhiteSpace(input.Email) || input.Email.Trim().Length > 150 || !new EmailAddressAttribute().IsValid(input.Email.Trim()))
             throw new DomainException("Nombres, apellidos, celular y correo válido son obligatorios.");
         return unitOfWork.ExecuteInTransactionAsync(async token =>
         {
@@ -40,7 +40,10 @@ public class SecretariatEnrollment(IScoutLeaderRepository people, IUnitOfWork un
             if ((await people.FindByCiAsync(ci.Number, null, token)).Count != 0)
                 throw new AmbiguousSecretariatCiException();
             var person = await people.CreateSecretariatLeaderAsync(ci.Number, string.IsNullOrEmpty(ci.Extension) ? null : ci.Extension, input.FirstName.Trim(), input.LastName.Trim(), input.Phone.Trim(), input.Email.Trim(), token);
-            return await enrollment.HandleAsync(new(sessionId, person.Id, "SECRETARIAT", "Inscripción asistida por Secretaría", operatorId, false), token);
+            var result = await enrollment.HandleAsync(new(sessionId, person.Id, "SECRETARIAT", "Inscripción asistida por Secretaría", operatorId, false), token);
+            // Cuenta pendiente e invitación PENDING se confirman o revierten con el perfil y la inscripción.
+            await invitations.CreatePendingAsync(person.Id, result.Id, input.Email, token);
+            return result;
         }, cancellationToken);
     }
 

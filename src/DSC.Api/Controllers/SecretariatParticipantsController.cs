@@ -62,14 +62,24 @@ public class SecretariatParticipantsController(
     /// <summary>Crea el perfil mínimo y confirma la inscripción de forma atómica.</summary>
     [HttpPost("sessions/{sessionId:long}/enrollments")]
     public async Task<IActionResult> CreateAndEnroll(long sessionId, [FromBody] NewSecretariatLeader request,
-        [FromServices] SecretariatEnrollment enrollmentHandler, [FromServices] ICurrentUser currentUser, CancellationToken cancellationToken)
+        [FromServices] SecretariatEnrollment enrollmentHandler, [FromServices] ICurrentUser currentUser,
+        [FromServices] DSC.Infrastructure.AccountInvitationDelivery invitations, CancellationToken cancellationToken)
     {
         try
         {
             if (currentUser.Id is null) return Unauthorized();
             var result = await enrollmentHandler.CreateAsync(sessionId, currentUser.Id.Value, request, cancellationToken);
-            return StatusCode(201, new { enrollmentId = result.Id });
+            // La inscripción ya está confirmada: un fallo de correo nunca la afecta; queda PENDING para reintento manual.
+            var invitation = "PENDING";
+            try
+            {
+                if (await invitations.DeliverAsync(result.Id, CancellationToken.None) == DSC.Infrastructure.InvitationDeliveryOutcome.Sent)
+                    invitation = "SENT";
+            }
+            catch (Exception ex) { logger.LogError("Falló la entrega de la invitación: {ExceptionType}", ex.GetType().Name); }
+            return StatusCode(201, new { enrollmentId = result.Id, invitation });
         }
+        catch (EmailInUseException) { return Problem(statusCode: 409, type: "urn:dsc:secretariat:email-in-use", detail: "El correo ya pertenece a otra cuenta."); }
         catch (AmbiguousSecretariatCiException) { return Problem(statusCode: 409, type: "urn:dsc:secretariat:identity-changed", detail: "El CI ya tiene coincidencias. Vuelve a buscar."); }
         catch (PersonCiConflictException) { return Problem(statusCode: 409, type: "urn:dsc:secretariat:identity-changed", detail: "El CI ya tiene coincidencias. Vuelve a buscar."); }
         catch (DomainException ex) { return Problem(statusCode: 400, detail: ex.Message); }

@@ -36,6 +36,7 @@ public class ScoutDbContext(DbContextOptions<ScoutDbContext> options) : DbContex
     public DbSet<User> Users => Set<User>();
     public DbSet<Role> Roles => Set<Role>();
     public DbSet<UserRole> UserRoles => Set<UserRole>();
+    public DbSet<AccountInvitation> AccountInvitations => Set<AccountInvitation>();
 
     // 5. Catálogo Curricular y Plantillas Maestras
     public DbSet<TrainingLine> TrainingLines => Set<TrainingLine>();
