@@ -1,8 +1,10 @@
 using System.IdentityModel.Tokens.Jwt;
+using System.Collections.Concurrent;
 using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Security.Claims;
+using System.Text.Json;
 using DSC.Api;
 using DSC.Api.Controllers;
 using DSC.Api.Conventions;
@@ -48,6 +50,7 @@ public class CalendarEnrollmentConcurrencyHttpTests(RequirementsPostgres postgre
     private EnrollmentSource source = null!;
     private UserStatus userStatus = null!;
     private readonly Dictionary<long, long> userIds = [];
+    private readonly CapturedLogs logs = new();
 
     public async Task InitializeAsync()
     {
@@ -73,6 +76,7 @@ public class CalendarEnrollmentConcurrencyHttpTests(RequirementsPostgres postgre
         );
         builder.WebHost.UseUrls("http://127.0.0.1:0");
         builder.Logging.ClearProviders();
+        builder.Logging.AddProvider(logs);
         builder
             .Services.AddControllers(options =>
                 options.Conventions.Add(new GlobalRoutePrefixConvention(new RouteAttribute("api")))
@@ -111,6 +115,50 @@ public class CalendarEnrollmentConcurrencyHttpTests(RequirementsPostgres postgre
                     .Addresses.Single()
             ),
         };
+    }
+
+    [Fact]
+    public async Task AssistedConfirmationDoesNotExposePersonalDataInResponseOrLogs()
+    {
+        const string ci = "9876543";
+        const string phone = "76543210";
+        var session = await CreateSessionAsync(capacity: 1);
+        var leader = await CreatePersonAsync(ci, "Dirigente");
+        var secretary = await CreatePersonAsync("9876544", "Secretaria");
+        db.ScoutLeaders.Add(new ScoutLeader { PersonId = leader.Id });
+        db.Add(new PersonContactMechanism { PersonId = leader.Id, ContactMechanismType = new() { Code = "TEST_PHONE", Name = "Teléfono ficticio" }, ContactPurposeType = new() { Code = "TEST_PERSONAL", Name = "Personal ficticio" }, ContactValue = phone });
+        await db.SaveChangesAsync();
+        var url = $"/api/v1/secretariat/participants/{leader.Id}/sessions/{session.Id}/enrollments";
+        Assert.DoesNotContain(ci, url);
+        Assert.DoesNotContain(phone, url);
+        async Task<HttpResponseMessage> Confirm()
+        {
+            using var request = new HttpRequestMessage(HttpMethod.Post, url) { Content = JsonContent.Create(new { }) };
+            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", Token(secretary, "DISTRICT_SECRETARY"));
+            return await client.SendAsync(request);
+        }
+        using var success = await Confirm();
+        Assert.Equal(HttpStatusCode.Created, success.StatusCode);
+        var successBody = await success.Content.ReadAsStringAsync();
+        using var json = JsonDocument.Parse(successBody);
+        Assert.Equal(new[] { "enrollmentId" }, json.RootElement.EnumerateObject().Select(p => p.Name).ToArray());
+        using var duplicate = await Confirm();
+        Assert.Equal(HttpStatusCode.Conflict, duplicate.StatusCode);
+        var conflictBody = await duplicate.Content.ReadAsStringAsync();
+        Assert.DoesNotContain(ci, successBody + conflictBody);
+        Assert.DoesNotContain(phone, successBody + conflictBody);
+        Assert.NotEmpty(logs.Messages);
+        Assert.DoesNotContain(logs.Messages, line => line.Contains(ci) || line.Contains(phone));
+    }
+
+    private sealed class CapturedLogs : ILoggerProvider, ILogger
+    {
+        public ConcurrentQueue<string> Messages { get; } = new();
+        public ILogger CreateLogger(string categoryName) => this;
+        public IDisposable? BeginScope<TState>(TState state) where TState : notnull => null;
+        public bool IsEnabled(LogLevel logLevel) => true;
+        public void Log<TState>(LogLevel level, EventId eventId, TState state, Exception? exception, Func<TState, Exception?, string> formatter) => Messages.Enqueue($"{formatter(state, exception)} {exception}");
+        public void Dispose() { }
     }
 
     [Fact]
