@@ -115,6 +115,59 @@ public class AccountActivationHttpTests(RequirementsPostgres postgres) : IAsyncL
     }
 
     [Fact]
+    public async Task LinkExpiringWhileWaitingForRowLockCannotActivate()
+    {
+        var token = await IssueAsync();
+        await db.Database.ExecuteSqlRawAsync("UPDATE \"user\" SET activation_expires_at = clock_timestamp() + interval '3 seconds' WHERE id = {0}", userId);
+        await using var transaction = await db.Database.BeginTransactionAsync();
+        await db.Database.ExecuteSqlRawAsync("SELECT 1 FROM \"user\" WHERE id = {0} FOR UPDATE", userId);
+        var redeem = RedeemAsync(token, Password);
+        await WaitForBlockedUpdateAsync();
+        await Task.Delay(TimeSpan.FromSeconds(4));
+        await transaction.CommitAsync();
+        using var response = await redeem;
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        Assert.Equal(HttpStatusCode.Unauthorized, await LoginAsync(Password));
+    }
+
+    private async Task WaitForBlockedUpdateAsync()
+    {
+        await using var observer = new NpgsqlConnection(db.Database.GetConnectionString());
+        await observer.OpenAsync();
+        for (var i = 0; i < 100; i++)
+        {
+            await using var command = new NpgsqlCommand("SELECT count(*) FROM pg_stat_activity WHERE datname = current_database() AND wait_event_type = 'Lock' AND query ILIKE '%user%'", observer);
+            if ((long)(await command.ExecuteScalarAsync())! > 0) return;
+            await Task.Delay(100);
+        }
+        throw new TimeoutException("El canje no quedó esperando el bloqueo");
+    }
+
+    [Fact]
+    public async Task ConcurrentIssueAndRedeem_OnlyCurrentLinkCanActivate()
+    {
+        var original = await IssueAsync();
+        await using var scope = app.Services.CreateAsyncScope();
+        var issue = scope.ServiceProvider.GetRequiredService<AccountActivation>().IssueAsync(userId);
+        var redeem = RedeemAsync(original, Password);
+        await Task.WhenAll(issue, redeem);
+        using var response = await redeem;
+        var replacement = await issue;
+        if (response.StatusCode == HttpStatusCode.NoContent)
+        {
+            Assert.Null(replacement);
+            Assert.Equal(HttpStatusCode.OK, await LoginAsync(Password));
+        }
+        else
+        {
+            Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+            Assert.NotNull(replacement);
+            using var accepted = await RedeemAsync(replacement, Password);
+            Assert.Equal(HttpStatusCode.NoContent, accepted.StatusCode);
+        }
+    }
+
+    [Fact]
     public async Task ConcurrentPosts_OnlyTheWinningPasswordCanLogIn()
     {
         var token = await IssueAsync();

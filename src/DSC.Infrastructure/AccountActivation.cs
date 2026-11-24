@@ -73,21 +73,29 @@ public sealed class AccountActivation(
             .Select(status => status.Id)
             .SingleAsync(cancellationToken);
         var passwordHash = passwords.Hash(password);
-        now = clock.GetUtcNow().UtcDateTime;
-        var updated = await matching
-            .Where(user => user.ActivationExpiresAt > now)
-            .ExecuteUpdateAsync(
-                setters =>
-                    setters
-                        .SetProperty(user => user.Password, passwordHash)
-                        .SetProperty(user => user.UserStatusId, activeId)
-                        .SetProperty(user => user.IsEmailVerified, true)
-                        .SetProperty(user => user.ActivationTokenHash, (string?)null)
-                        .SetProperty(user => user.ActivationExpiresAt, (DateTime?)null)
-                        .SetProperty(user => user.UpdatedAt, now),
-                cancellationToken
-            );
-        return updated == 1;
+        return await db.Database.CreateExecutionStrategy().ExecuteAsync(async () =>
+        {
+            await using var transaction = await db.Database.BeginTransactionAsync(cancellationToken);
+            await db.Database.SqlQuery<long>($"SELECT id AS \"Value\" FROM \"user\" WHERE activation_token_hash = {digest} FOR UPDATE")
+                .ToListAsync(cancellationToken);
+            now = await db.Database.SqlQuery<DateTime>($"SELECT clock_timestamp() AS \"Value\"")
+                .SingleAsync(cancellationToken);
+            var updated = await matching
+                .Where(user => user.ActivationExpiresAt > now)
+                .ExecuteUpdateAsync(
+                    setters =>
+                        setters
+                            .SetProperty(user => user.Password, passwordHash)
+                            .SetProperty(user => user.UserStatusId, activeId)
+                            .SetProperty(user => user.IsEmailVerified, true)
+                            .SetProperty(user => user.ActivationTokenHash, (string?)null)
+                            .SetProperty(user => user.ActivationExpiresAt, (DateTime?)null)
+                            .SetProperty(user => user.UpdatedAt, now),
+                    cancellationToken
+                );
+            await transaction.CommitAsync(cancellationToken);
+            return updated == 1;
+        });
     }
 
     private IQueryable<User> PendingUsers() =>
