@@ -1,7 +1,6 @@
 using DSC.Application.Commands;
 using DSC.Application.DTOs;
 using DSC.Application.Interfaces;
-using DSC.Infrastructure;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -21,7 +20,7 @@ public class AuthController(LoginCommandHandler loginHandler, ICurrentUser curre
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> Activate(
         [FromBody] AccountActivationRequest request,
-        [FromServices] AccountActivation activation,
+        [FromServices] IAccountActivation activation,
         CancellationToken cancellationToken
     ) =>
         await activation.RedeemAsync(request.Token, request.Password, cancellationToken)

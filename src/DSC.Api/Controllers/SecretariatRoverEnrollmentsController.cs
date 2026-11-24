@@ -1,5 +1,6 @@
 using DSC.Application.Commands;
 using DSC.Application.Interfaces;
+using DSC.Application.Queries;
 using DSC.Domain.Exceptions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -35,16 +36,8 @@ public class SecretariatRoverEnrollmentsController(
         }
         catch (RequestValidationException ex) { return Problem(statusCode: 400, detail: ex.Message); }
         catch (RoverPersonExistsException) { return Problem(statusCode: 409, type: "urn:dsc:enrollment:person-exists", detail: "Ya existe una persona con el CI indicado. Búsquela antes de inscribirla."); }
-        catch (EnrollmentConflictException ex)
-        {
-            var type = ex switch
-            {
-                AlreadyEnrolledException => "already-enrolled",
-                SessionFullException => "session-full",
-                _ => "enrollment-closed",
-            };
-            return Problem(statusCode: 409, type: $"urn:dsc:enrollment:{type}", detail: ex.Message);
-        }
+        catch (CiExtensionRequiredException) { return this.ExtensionRequiredProblem(); }
+        catch (EnrollmentConflictException ex) { return this.EnrollmentConflictProblem(ex); }
         catch (KeyNotFoundException) { return NotFound(); }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) { return new EmptyResult(); }
         catch (Exception ex)

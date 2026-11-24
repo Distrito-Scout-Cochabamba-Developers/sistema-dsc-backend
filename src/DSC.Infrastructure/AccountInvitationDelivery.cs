@@ -7,11 +7,6 @@ using Microsoft.Extensions.Logging;
 
 namespace DSC.Infrastructure;
 
-public enum InvitationDeliveryOutcome { Sent, Pending, AlreadySent, NotEligible, NotFound }
-
-/// <summary>Resumen sin datos personales de una invitación pendiente.</summary>
-public sealed record PendingInvitationDto(long EnrollmentId, int Attempts, string? LastFailureCode, DateTime CreatedAt);
-
 /// <summary>
 /// Entrega la invitación de una cuenta pendiente. Serializa por invitación con un bloqueo de fila,
 /// de modo que reintentos simultáneos no envían dos veces. La entrega es "al menos una vez": si el
@@ -20,12 +15,12 @@ public sealed record PendingInvitationDto(long EnrollmentId, int Attempts, strin
 /// </summary>
 public sealed class AccountInvitationDelivery(
     ScoutDbContext db,
-    AccountActivation activation,
+    IAccountActivation activation,
     IAccountInvitationMailer mailer,
     IConfiguration configuration,
     TimeProvider clock,
     ILogger<AccountInvitationDelivery> logger
-)
+) : IAccountInvitationDelivery
 {
     public async Task<InvitationDeliveryOutcome> DeliverAsync(long enrollmentId, CancellationToken cancellationToken)
     {

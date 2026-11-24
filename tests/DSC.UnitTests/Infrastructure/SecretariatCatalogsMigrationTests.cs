@@ -21,6 +21,21 @@ public class SecretariatCatalogsMigrationTests(RequirementsPostgres postgres)
     }
 
     [Fact]
+    public async Task BothAltaRepositoriesFailWithCatalogMissingWhenACatalogCodeIsAbsent()
+    {
+        await using var db = await postgres.CreateDatabase(seed: false);
+        await db.Database.ExecuteSqlRawAsync("DELETE FROM contact_purpose_type WHERE code = 'PERSONAL'");
+        await using var transaction = await db.Database.BeginTransactionAsync(System.Data.IsolationLevel.ReadCommitted);
+
+        await Assert.ThrowsAsync<DSC.Domain.Exceptions.CatalogMissingException>(() =>
+            new DSC.Infrastructure.Persistence.Repositories.RoverRegistrationRepository(db)
+                .CreateAsync("9100062", null, "Ana", "Ficticia", "70000000", CancellationToken.None));
+        await Assert.ThrowsAsync<DSC.Domain.Exceptions.CatalogMissingException>(() =>
+            new DSC.Infrastructure.Persistence.Repositories.ScoutLeaderRepository(db)
+                .CreateSecretariatLeaderAsync("9100063", null, "Ana", "Ficticia", "70000000", "ana@example.test", CancellationToken.None));
+    }
+
+    [Fact]
     public async Task MigrationRejectsDuplicatePersonCiWithoutExtension()
     {
         await using var db = await postgres.CreateDatabase(seed: false);

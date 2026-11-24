@@ -12,6 +12,8 @@ namespace DSC.Infrastructure;
 /// </summary>
 public sealed class SmtpAccountInvitationMailer(IConfiguration configuration) : IAccountInvitationMailer
 {
+    private const int DefaultTimeoutSeconds = 5;
+
     public async Task SendAsync(AccountInvitationMessage message, CancellationToken cancellationToken)
     {
         var host = configuration["Smtp:Host"];
@@ -21,7 +23,9 @@ public sealed class SmtpAccountInvitationMailer(IConfiguration configuration) : 
         var port = int.TryParse(configuration["Smtp:Port"], out var p) ? p : 587;
         var ssl = !bool.TryParse(configuration["Smtp:EnableSsl"], out var s) || s;
 
-        using var client = new SmtpClient(host, port) { EnableSsl = ssl, Timeout = 15_000 };
+        var timeoutSeconds = int.TryParse(configuration["Smtp:TimeoutSeconds"], out var t) ? Math.Clamp(t, 1, 30) : DefaultTimeoutSeconds;
+        var timeout = TimeSpan.FromSeconds(timeoutSeconds);
+        using var client = new SmtpClient(host, port) { EnableSsl = ssl, Timeout = (int)timeout.TotalMilliseconds };
         var user = configuration["Smtp:Username"];
         if (!string.IsNullOrEmpty(user))
             client.Credentials = new NetworkCredential(user, configuration["Smtp:Password"]);
@@ -41,6 +45,16 @@ public sealed class SmtpAccountInvitationMailer(IConfiguration configuration) : 
                 "Si no esperabas este correo, ignóralo."
             ),
         };
-        await client.SendMailAsync(mail, cancellationToken);
+        // SmtpClient.Timeout no cubre todas las fases asíncronas: el tope se impone también con cancelación.
+        using var limit = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        limit.CancelAfter(timeout);
+        try
+        {
+            await client.SendMailAsync(mail, limit.Token);
+        }
+        catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
+        {
+            throw new TimeoutException("Se agotó el tiempo de espera del envío SMTP.");
+        }
     }
 }

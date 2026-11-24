@@ -7,10 +7,13 @@ namespace DSC.Application.Queries;
 
 public record LookupSecretariatParticipantByCiQuery(string CiNumber, string? Extension);
 
-public sealed class AmbiguousSecretariatCiException()
-    : InvalidOperationException(
-        "El CI tiene varias coincidencias. El complemento debe identificar a una sola persona."
-    );
+public class AmbiguousSecretariatCiException(
+    string message = "El CI tiene varias coincidencias. El complemento debe identificar a una sola persona."
+) : InvalidOperationException(message);
+
+/// <summary>El CI existe con varios complementos o solo con otros: la API pide el complemento que lo desambigüe.</summary>
+public sealed class CiExtensionRequiredException()
+    : AmbiguousSecretariatCiException("El CI tiene coincidencias con otros complementos. Indica el complemento que identifique a la persona.");
 
 public class LookupSecretariatParticipantByCiQueryHandler(IScoutLeaderRepository leaderRepository)
 {
@@ -36,11 +39,16 @@ public class LookupSecretariatParticipantByCiQueryHandler(IScoutLeaderRepository
         );
 
         if (matches.Count > 1)
-            throw new AmbiguousSecretariatCiException();
+            throw new CiExtensionRequiredException();
 
         var person = matches.SingleOrDefault();
         if (person is null)
+        {
+            // Con complemento sin coincidencia, pero con el CI existente bajo otro: se pide el complemento correcto.
+            if (!string.IsNullOrEmpty(ci.Extension) && (await leaderRepository.ExtensionsOfCiAsync(ci.Number, cancellationToken)).Count > 0)
+                throw new CiExtensionRequiredException();
             return null;
+        }
 
         var today = DateOnly.FromDateTime(DateTime.UtcNow);
         var phone =

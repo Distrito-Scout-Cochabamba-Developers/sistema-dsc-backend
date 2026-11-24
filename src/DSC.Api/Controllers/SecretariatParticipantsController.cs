@@ -38,17 +38,9 @@ public class SecretariatParticipantsController(
             return StatusCode(StatusCodes.Status201Created, new { enrollmentId = enrollment.Id });
         }
         catch (RoverHasAccountException) { return Problem(statusCode: 409, type: "urn:dsc:enrollment:rover-has-account", detail: "La persona ya tiene una cuenta."); }
-        catch (EnrollmentConflictException ex)
-        {
-            var type = ex switch
-            {
-                AlreadyEnrolledException => "already-enrolled",
-                SessionFullException => "session-full",
-                _ => "enrollment-closed",
-            };
-            return Problem(statusCode: 409, type: $"urn:dsc:enrollment:{type}", detail: ex.Message);
-        }
+        catch (EnrollmentConflictException ex) { return this.EnrollmentConflictProblem(ex); }
         catch (KeyNotFoundException) { return NotFound(); }
+        catch (CiExtensionRequiredException) { return this.ExtensionRequiredProblem(); }
         catch (AmbiguousSecretariatCiException) { return Problem(statusCode: 409, type: "urn:dsc:secretariat:identity-changed", detail: "La identidad ya no es inequívoca. Vuelve a buscar."); }
         catch (DomainException) { return Problem(statusCode: 400, detail: "CI o complemento inválido."); }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) { return new EmptyResult(); }
@@ -63,7 +55,7 @@ public class SecretariatParticipantsController(
     [HttpPost("sessions/{sessionId:long}/enrollments")]
     public async Task<IActionResult> CreateAndEnroll(long sessionId, [FromBody] NewSecretariatLeader request,
         [FromServices] SecretariatEnrollment enrollmentHandler, [FromServices] ICurrentUser currentUser,
-        [FromServices] DSC.Infrastructure.AccountInvitationDelivery invitations, CancellationToken cancellationToken)
+        [FromServices] IAccountInvitationDelivery invitations, CancellationToken cancellationToken)
     {
         try
         {
@@ -73,21 +65,19 @@ public class SecretariatParticipantsController(
             var invitation = "PENDING";
             try
             {
-                if (await invitations.DeliverAsync(result.Id, CancellationToken.None) == DSC.Infrastructure.InvitationDeliveryOutcome.Sent)
+                if (await invitations.DeliverAsync(result.Id, CancellationToken.None) == InvitationDeliveryOutcome.Sent)
                     invitation = "SENT";
             }
             catch (Exception ex) { logger.LogError("Falló la entrega de la invitación: {ExceptionType}", ex.GetType().Name); }
             return StatusCode(201, new { enrollmentId = result.Id, invitation });
         }
         catch (EmailInUseException) { return Problem(statusCode: 409, type: "urn:dsc:secretariat:email-in-use", detail: "El correo ya pertenece a otra cuenta."); }
+        catch (CiExtensionRequiredException) { return this.ExtensionRequiredProblem(); }
         catch (AmbiguousSecretariatCiException) { return Problem(statusCode: 409, type: "urn:dsc:secretariat:identity-changed", detail: "El CI ya tiene coincidencias. Vuelve a buscar."); }
         catch (PersonCiConflictException) { return Problem(statusCode: 409, type: "urn:dsc:secretariat:identity-changed", detail: "El CI ya tiene coincidencias. Vuelve a buscar."); }
-        catch (DomainException ex) { return Problem(statusCode: 400, detail: ex.Message); }
-        catch (EnrollmentConflictException ex)
-        {
-            var type = ex switch { AlreadyEnrolledException => "already-enrolled", SessionFullException => "session-full", _ => "enrollment-closed" };
-            return Problem(statusCode: 409, type: $"urn:dsc:enrollment:{type}", detail: ex.Message);
-        }
+        // Mensaje fijo: el de la excepción puede reflejar datos personales enviados por el cliente.
+        catch (DomainException) { return Problem(statusCode: 400, detail: "Los datos de la persona no son válidos."); }
+        catch (EnrollmentConflictException ex) { return this.EnrollmentConflictProblem(ex); }
         catch (KeyNotFoundException) { return NotFound(); }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) { return new EmptyResult(); }
         catch (Exception ex) { logger.LogError("Falló la inscripción de Secretaría: {ExceptionType}", ex.GetType().Name); return Problem(statusCode: 500, detail: "No se pudo completar la inscripción."); }
@@ -127,6 +117,10 @@ public class SecretariatParticipantsController(
         catch (DomainException ex)
         {
             return Problem(statusCode: 400, detail: ex.Message);
+        }
+        catch (CiExtensionRequiredException)
+        {
+            return (ObjectResult)this.ExtensionRequiredProblem();
         }
         catch (AmbiguousSecretariatCiException ex)
         {

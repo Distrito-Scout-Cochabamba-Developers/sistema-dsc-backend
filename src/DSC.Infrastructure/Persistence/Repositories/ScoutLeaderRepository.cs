@@ -2,7 +2,6 @@ using DSC.Domain.Entities;
 using DSC.Domain.Exceptions;
 using DSC.Domain.Repositories;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Storage;
 
 namespace DSC.Infrastructure.Persistence.Repositories;
 
@@ -11,39 +10,20 @@ namespace DSC.Infrastructure.Persistence.Repositories;
 /// </summary>
 public class ScoutLeaderRepository(ScoutDbContext dbContext) : IScoutLeaderRepository
 {
-    public async Task LockCiAsync(string ciNumber, CancellationToken cancellationToken, bool required = true)
-    {
-        // Proveedores no relacionales (pruebas en memoria) no tienen concurrencia real que serializar.
-        if (!required && !dbContext.Database.IsNpgsql()) return;
-        if (!dbContext.Database.IsNpgsql() || dbContext.Database.CurrentTransaction is null)
-            throw new InvalidOperationException("La inscripción asistida requiere una transacción PostgreSQL.");
-        if (dbContext.Database.CurrentTransaction.GetDbTransaction().IsolationLevel != System.Data.IsolationLevel.ReadCommitted)
-            throw new InvalidOperationException("La inscripción asistida requiere READ COMMITTED.");
-        await dbContext.Database.ExecuteSqlInterpolatedAsync(
-            $"SELECT pg_advisory_xact_lock({PersonCiLock.Namespace}, hashtext({PersonCiLock.KeyFor(ciNumber)}))", cancellationToken);
-    }
+    public Task LockCiAsync(string ciNumber, CancellationToken cancellationToken, bool required = true) =>
+        PersonCiLock.AcquireAsync(dbContext, ciNumber, required, cancellationToken);
 
-    public async Task<PersonCatalogIds> GetPersonCatalogIdsAsync(CancellationToken cancellationToken)
-    {
-        var status = await dbContext.PersonStatuses.AsNoTracking().Where(x => x.Code == "ACTIVE").Select(x => (short?)x.Id).SingleOrDefaultAsync(cancellationToken)
-            ?? throw new CatalogMissingException("person_status", "ACTIVE");
-        var phone = await dbContext.ContactMechanismTypes.AsNoTracking().Where(x => x.Code == "CELLPHONE").Select(x => (short?)x.Id).SingleOrDefaultAsync(cancellationToken)
-            ?? throw new CatalogMissingException("contact_mechanism_type", "CELLPHONE");
-        var purpose = await dbContext.ContactPurposeTypes.AsNoTracking().Where(x => x.Code == "PERSONAL").Select(x => (short?)x.Id).SingleOrDefaultAsync(cancellationToken)
-            ?? throw new CatalogMissingException("contact_purpose_type", "PERSONAL");
-        return new PersonCatalogIds(status, phone, purpose);
-    }
+    public Task<PersonCatalogIds> GetPersonCatalogIdsAsync(CancellationToken cancellationToken) =>
+        PersonCatalogs.ResolveAsync(dbContext, cancellationToken);
 
     public async Task<Person> CreateSecretariatLeaderAsync(string ci, string? extension, string firstName, string lastName, string phone, string email, CancellationToken cancellationToken)
     {
-        var status = await dbContext.PersonStatuses.SingleAsync(x => x.Code == "ACTIVE", cancellationToken);
-        var purpose = await dbContext.ContactPurposeTypes.SingleAsync(x => x.Code == "PERSONAL", cancellationToken);
-        var emailType = await dbContext.ContactMechanismTypes.SingleAsync(x => x.Code == "EMAIL", cancellationToken);
-        var phoneType = await dbContext.ContactMechanismTypes.SingleAsync(x => x.Code == "CELLPHONE", cancellationToken);
+        var catalogs = await PersonCatalogs.ResolveAsync(dbContext, cancellationToken);
+        var emailTypeId = await PersonCatalogs.EmailAsync(dbContext, cancellationToken);
         var today = DateOnly.FromDateTime(DateTime.UtcNow);
-        var person = new Person { IdCard = ci, IdCardExtension = extension, FirstName = firstName, FirstLastName = lastName, PersonStatusId = status.Id, ScoutLeader = new ScoutLeader(), ContactMechanisms = [
-            new() { ContactMechanismTypeId = phoneType.Id, ContactPurposeTypeId = purpose.Id, ContactValue = phone, IsPrimary = true, ValidFrom = today },
-            new() { ContactMechanismTypeId = emailType.Id, ContactPurposeTypeId = purpose.Id, ContactValue = email, IsPrimary = true, ValidFrom = today }
+        var person = new Person { IdCard = ci, IdCardExtension = extension, FirstName = firstName, FirstLastName = lastName, PersonStatusId = catalogs.ActiveStatusId, ScoutLeader = new ScoutLeader(), ContactMechanisms = [
+            new() { ContactMechanismTypeId = catalogs.CellphoneTypeId, ContactPurposeTypeId = catalogs.PersonalPurposeId, ContactValue = phone, IsPrimary = true, ValidFrom = today },
+            new() { ContactMechanismTypeId = emailTypeId, ContactPurposeTypeId = catalogs.PersonalPurposeId, ContactValue = email, IsPrimary = true, ValidFrom = today }
         ] };
         await AddAsync(person, cancellationToken);
         return person;
@@ -68,6 +48,9 @@ public class ScoutLeaderRepository(ScoutDbContext dbContext) : IScoutLeaderRepos
             .Take(2)
             .ToListAsync(cancellationToken);
     }
+
+    public async Task<IReadOnlyList<string?>> ExtensionsOfCiAsync(string ciNumber, CancellationToken cancellationToken) =>
+        await dbContext.Persons.AsNoTracking().Where(p => p.IdCard == ciNumber).Select(p => p.IdCardExtension).ToListAsync(cancellationToken);
 
     public async Task<Person?> GetByCiNumberAsync(
         string ciNumber,

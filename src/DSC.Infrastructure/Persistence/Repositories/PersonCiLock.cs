@@ -1,3 +1,6 @@
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage;
+
 namespace DSC.Infrastructure.Persistence.Repositories;
 
 /// <summary>
@@ -14,4 +17,20 @@ internal static class PersonCiLock
     public const int Namespace = 158_001;
 
     public static string KeyFor(string ciNumber) => "person-ci:" + ciNumber.Trim();
+
+    /// <summary>
+    /// Toma el lock del CI hasta el fin de la transacción ambiente. En PostgreSQL exige una transacción
+    /// READ COMMITTED; con <paramref name="required"/> falso se omite en proveedores no PostgreSQL (pruebas en memoria),
+    /// que no tienen concurrencia real que serializar.
+    /// </summary>
+    public static async Task AcquireAsync(ScoutDbContext dbContext, string ciNumber, bool required, CancellationToken cancellationToken)
+    {
+        if (!required && !dbContext.Database.IsNpgsql()) return;
+        if (!dbContext.Database.IsNpgsql() || dbContext.Database.CurrentTransaction is null)
+            throw new InvalidOperationException("La inscripción asistida requiere una transacción PostgreSQL.");
+        if (dbContext.Database.CurrentTransaction.GetDbTransaction().IsolationLevel != System.Data.IsolationLevel.ReadCommitted)
+            throw new InvalidOperationException("La inscripción asistida requiere READ COMMITTED.");
+        await dbContext.Database.ExecuteSqlInterpolatedAsync(
+            $"SELECT pg_advisory_xact_lock({Namespace}, hashtext({KeyFor(ciNumber)}))", cancellationToken);
+    }
 }

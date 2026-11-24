@@ -36,9 +36,13 @@ public class SecretariatEnrollment(IScoutLeaderRepository people, IUnitOfWork un
         return unitOfWork.ExecuteInTransactionAsync(async token =>
         {
             await people.LockCiAsync(ci.Number, token);
-            // Una búsqueda sin resultados para un complemento no autoriza crear otro CI idéntico.
-            if ((await people.FindByCiAsync(ci.Number, null, token)).Count != 0)
-                throw new AmbiguousSecretariatCiException();
+            // Un CI existente nunca se duplica ni se crea con otro complemento sin que el operador lo desambigüe.
+            var extension = string.IsNullOrEmpty(ci.Extension) ? null : ci.Extension;
+            switch (CiExtensionRule.Classify(await people.ExtensionsOfCiAsync(ci.Number, token), extension))
+            {
+                case CiPresence.ExactMatch: throw new AmbiguousSecretariatCiException();
+                case CiPresence.OtherComplement: throw new CiExtensionRequiredException();
+            }
             var person = await people.CreateSecretariatLeaderAsync(ci.Number, string.IsNullOrEmpty(ci.Extension) ? null : ci.Extension, input.FirstName.Trim(), input.LastName.Trim(), input.Phone.Trim(), input.Email.Trim(), token);
             var result = await enrollment.HandleAsync(new(sessionId, person.Id, "SECRETARIAT", "Inscripción asistida por Secretaría", operatorId, false), token);
             // Cuenta pendiente e invitación PENDING se confirman o revierten con el perfil y la inscripción.
@@ -59,7 +63,12 @@ public class SecretariatEnrollment(IScoutLeaderRepository people, IUnitOfWork un
             if (ci is not null)
             {
                 await people.LockCiAsync(ci.Number, token);
-                var matches = await people.FindByCiAsync(ci.Number, string.IsNullOrEmpty(ci.Extension) ? null : ci.Extension, token);
+                var extension = string.IsNullOrEmpty(ci.Extension) ? null : ci.Extension;
+                var matches = await people.FindByCiAsync(ci.Number, extension, token);
+                // Varias personas con el CI, o ninguna con ese complemento pero sí con otros: se pide el complemento.
+                if (matches.Count > 1 || (matches.Count == 0 && extension is not null
+                    && CiExtensionRule.Classify(await people.ExtensionsOfCiAsync(ci.Number, token), extension) == CiPresence.OtherComplement))
+                    throw new CiExtensionRequiredException();
                 if (matches.Count != 1 || matches[0].Id != personId)
                     throw new AmbiguousSecretariatCiException();
             }

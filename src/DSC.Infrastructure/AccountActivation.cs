@@ -12,7 +12,7 @@ public sealed class AccountActivation(
     ScoutDbContext db,
     IPasswordHasher passwords,
     TimeProvider clock
-)
+) : IAccountActivation
 {
     /// <summary>Reemplaza la invitación de una cuenta pendiente ya persistida. Devuelve el secreto solo al emisor.</summary>
     /// <param name="userId">Cuenta pendiente sin contraseña válida.</param>

@@ -43,6 +43,29 @@ public class SmtpAccountInvitationMailerTests
         await Assert.ThrowsAsync<InvalidOperationException>(() =>
             new SmtpAccountInvitationMailer(Config(25, withHost: false)).SendAsync(new("a@example.test", "u", "https://x.test"), CancellationToken.None));
 
+    [Fact]
+    public async Task UnresponsiveServerFailsWithinConfiguredTimeoutInsteadOfBlocking()
+    {
+        // Servidor que acepta la conexión pero nunca saluda: sin tope, la solicitud de alta quedaría colgada.
+        using var listener = new TcpListener(IPAddress.Loopback, 0);
+        listener.Start();
+        var port = ((IPEndPoint)listener.LocalEndpoint).Port;
+        var config = new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string?>
+        {
+            ["Smtp:Host"] = "127.0.0.1",
+            ["Smtp:Port"] = port.ToString(),
+            ["Smtp:EnableSsl"] = "false",
+            ["Smtp:From"] = "no-responder@example.test",
+            ["Smtp:TimeoutSeconds"] = "1",
+        }).Build();
+
+        var started = System.Diagnostics.Stopwatch.StartNew();
+        await Assert.ThrowsAnyAsync<Exception>(() =>
+            new SmtpAccountInvitationMailer(config).SendAsync(new("a@example.test", "u", "https://x.test"), CancellationToken.None));
+
+        Assert.True(started.Elapsed < TimeSpan.FromSeconds(6), $"Tardó {started.Elapsed}.");
+    }
+
     private static async Task<string> Serve(TcpListener listener)
     {
         using var client = await listener.AcceptTcpClientAsync();

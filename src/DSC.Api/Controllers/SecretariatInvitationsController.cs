@@ -1,4 +1,4 @@
-using DSC.Infrastructure;
+using DSC.Application.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -11,7 +11,7 @@ namespace DSC.Api.Controllers;
 [ApiController]
 [Authorize(Roles = "DISTRICT_SECRETARY")]
 [Route("v1/secretariat/invitations")]
-public class SecretariatInvitationsController(AccountInvitationDelivery delivery, ILogger<SecretariatInvitationsController> logger) : ControllerBase
+public class SecretariatInvitationsController(IAccountInvitationDelivery delivery, ILogger<SecretariatInvitationsController> logger) : ControllerBase
 {
     /// <summary>Invitaciones aún no entregadas (sin datos personales).</summary>
     [HttpGet("pending")]

@@ -122,16 +122,34 @@ public class SecretariatRoverEnrollmentHttpTests(RequirementsPostgres postgres) 
     }
 
     [Fact]
-    public async Task ExistingCiIsNeverReusedNorDuplicatedByCreation()
+    public async Task ExistingCiWithSameComplementIsNeverReusedNorDuplicatedByCreation()
     {
         var session = await CreateSessionAsync(capacity: 1);
-        db.Persons.Add(new Person { IdCard = "7003001", FirstName = "Existente", FirstLastName = "Ficticio", PersonStatusId = personStatus.Id });
+        db.Persons.Add(new Person { IdCard = "7003001", IdCardExtension = "CB", FirstName = "Existente", FirstLastName = "Ficticio", PersonStatusId = personStatus.Id });
         await db.SaveChangesAsync();
-        using var response = await Post(session.Id, new { ci = "7003001", extension = "LP", firstName = "Rover", lastName = "Ficticio" });
+        using var response = await Post(session.Id, new { ci = "7003001", extension = "cb", firstName = "Rover", lastName = "Ficticio" });
 
         Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
         Assert.Contains("person-exists", await response.Content.ReadAsStringAsync());
         Assert.Equal(1, await db.Persons.CountAsync(p => p.IdCard == "7003001"));
+        Assert.Empty(await db.TrainingModuleEnrollments.ToListAsync());
+    }
+
+    [Theory]
+    [InlineData("LP")]
+    [InlineData(null)]
+    public async Task ExistingCiWithAnotherComplementAsksForTheComplementInsteadOfCreatingOrRejectingBlindly(string? extension)
+    {
+        var session = await CreateSessionAsync(capacity: 1);
+        db.Persons.Add(new Person { IdCard = "7003002", IdCardExtension = "CB", FirstName = "Existente", FirstLastName = "Ficticio", PersonStatusId = personStatus.Id });
+        await db.SaveChangesAsync();
+        using var response = await Post(session.Id, new { ci = "7003002", extension, firstName = "Rover", lastName = "Ficticio" });
+
+        Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
+        var body = await response.Content.ReadAsStringAsync();
+        Assert.Contains("urn:dsc:secretariat:extension-required", body);
+        Assert.DoesNotContain("7003002", body);
+        Assert.Equal(1, await db.Persons.CountAsync(p => p.IdCard == "7003002"));
         Assert.Empty(await db.TrainingModuleEnrollments.ToListAsync());
     }
 

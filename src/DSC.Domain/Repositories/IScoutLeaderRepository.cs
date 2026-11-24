@@ -13,6 +13,8 @@ public interface IScoutLeaderRepository
         string? extension,
         CancellationToken cancellationToken
     );
+    /// <summary>Complementos (nulo = sin complemento) de las personas que ya tienen ese número de CI.</summary>
+    Task<IReadOnlyList<string?>> ExtensionsOfCiAsync(string ciNumber, CancellationToken cancellationToken);
     Task<Person?> GetByIdAsync(long id, CancellationToken cancellationToken);
     Task AddAsync(Person person, CancellationToken cancellationToken);
     Task UpdateAsync(Person person, CancellationToken cancellationToken);

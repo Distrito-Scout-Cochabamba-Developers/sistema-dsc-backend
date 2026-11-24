@@ -208,7 +208,9 @@ public class SecretariatParticipantLookupHttpTests : IAsyncLifetime
     public async Task Lookup_AmbiguousCiRequiresExtension_AndReturnsOnlyExactMatch()
     {
         Authenticate("DISTRICT_SECRETARY");
-        Assert.Equal(HttpStatusCode.Conflict, (await LookupAsync("5556667")).StatusCode);
+        var ambiguous = await LookupAsync("5556667");
+        Assert.Equal(HttpStatusCode.Conflict, ambiguous.StatusCode);
+        Assert.Contains("urn:dsc:secretariat:extension-required", await ambiguous.Content.ReadAsStringAsync());
         var response = await LookupAsync("5556667", "cb");
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         Assert.True(response.Headers.CacheControl?.NoStore);
@@ -221,7 +223,11 @@ public class SecretariatParticipantLookupHttpTests : IAsyncLifetime
         Assert.True(person.HasAccount);
         Assert.True(person.IsScoutLeader);
         Assert.True(person.IsProfileComplete);
-        Assert.Equal(HttpStatusCode.NotFound, (await LookupAsync("5556667", "SC")).StatusCode);
+        // El CI existe bajo otros complementos: se pide el complemento en lugar de un "no encontrado" ciego.
+        var otherComplement = await LookupAsync("5556667", "SC");
+        Assert.Equal(HttpStatusCode.Conflict, otherComplement.StatusCode);
+        Assert.Contains("urn:dsc:secretariat:extension-required", await otherComplement.Content.ReadAsStringAsync());
+        Assert.DoesNotContain("personId", await otherComplement.Content.ReadAsStringAsync());
         Assert.DoesNotContain(
             logs.Messages,
             line => line.Contains("5556667") || line.Contains("71234567")
@@ -354,7 +360,7 @@ public class SecretariatParticipantLookupPostgresTests(RequirementsPostgres post
         var handler = new DSC.Application.Queries.LookupSecretariatParticipantByCiQueryHandler(
             new ScoutLeaderRepository(db)
         );
-        await Assert.ThrowsAsync<AmbiguousSecretariatCiException>(() =>
+        await Assert.ThrowsAsync<CiExtensionRequiredException>(() =>
             handler.HandleAsync(new("5556667", null), CancellationToken.None)
         );
         var result = await handler.HandleAsync(new("5556667", "CB"), CancellationToken.None);

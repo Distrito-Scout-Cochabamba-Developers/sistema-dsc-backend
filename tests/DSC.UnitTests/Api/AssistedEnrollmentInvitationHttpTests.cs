@@ -318,6 +318,67 @@ public class AssistedEnrollmentInvitationHttpTests(RequirementsPostgres postgres
     }
 
     [Fact]
+    public async Task InvalidNewLeaderDataReturnsFixedMessageWithoutEchoingInput()
+    {
+        var session = await CreateSessionAsync(capacity: 1);
+        const string badEmail = "dato-sensible-invalido";
+        using var response = await Enroll(session.Id, Ci, badEmail);
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        var body = await response.Content.ReadAsStringAsync();
+        Assert.Equal("Los datos de la persona no son válidos.", JsonDocument.Parse(body).RootElement.GetProperty("detail").GetString());
+        Assert.DoesNotContain(badEmail, body);
+        Assert.DoesNotContain(Ci, body);
+    }
+
+    [Theory]
+    [InlineData("LP")]
+    [InlineData(null)]
+    public async Task NewLeaderWhoseCiExistsWithAnotherComplementAsksForTheComplement(string? extension)
+    {
+        var session = await CreateSessionAsync(capacity: 1);
+        db.Persons.Add(new Person { IdCard = Ci, IdCardExtension = "CB", FirstName = "Existente", FirstLastName = "Ficticio", PersonStatusId = (await db.PersonStatuses.SingleAsync(s => s.Code == "ACTIVE")).Id });
+        await db.SaveChangesAsync();
+        using var response = await Send(HttpMethod.Post, $"/api/v1/secretariat/participants/sessions/{session.Id}/enrollments",
+            new { ci = Ci, extension, firstName = "Ana", lastName = "Prueba", phone = "70000000", email = Email });
+
+        Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
+        var body = await response.Content.ReadAsStringAsync();
+        Assert.Contains("urn:dsc:secretariat:extension-required", body);
+        Assert.DoesNotContain(Ci, body);
+        Assert.Equal(1, await db.Persons.CountAsync(p => p.IdCard == Ci));
+        Assert.Empty(await db.TrainingModuleEnrollments.ToListAsync());
+        Assert.Empty(mailer.Sent);
+    }
+
+    [Fact]
+    public async Task NewLeaderWhoseCiExistsWithSameComplementIsAnIdentityChangeNotAComplementRequest()
+    {
+        var session = await CreateSessionAsync(capacity: 1);
+        db.Persons.Add(new Person { IdCard = Ci, FirstName = "Existente", FirstLastName = "Ficticio", PersonStatusId = (await db.PersonStatuses.SingleAsync(s => s.Code == "ACTIVE")).Id });
+        await db.SaveChangesAsync();
+        using var response = await Enroll(session.Id, Ci);
+
+        Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
+        Assert.Contains("urn:dsc:secretariat:identity-changed", await response.Content.ReadAsStringAsync());
+    }
+
+    [Fact]
+    public async Task ConfirmingExistingPersonWhoseCiSharesSeveralComplementsAsksForTheComplement()
+    {
+        var session = await CreateSessionAsync(capacity: 1);
+        var status = await db.PersonStatuses.SingleAsync(s => s.Code == "ACTIVE");
+        var first = new Person { IdCard = Ci, IdCardExtension = "CB", FirstName = "Uno", FirstLastName = "Ficticio", PersonStatusId = status.Id, ScoutLeader = new ScoutLeader() };
+        db.Persons.AddRange(first, new Person { IdCard = Ci, IdCardExtension = "LP", FirstName = "Dos", FirstLastName = "Ficticio", PersonStatusId = status.Id, ScoutLeader = new ScoutLeader() });
+        await db.SaveChangesAsync();
+        using var response = await Send(HttpMethod.Post, $"/api/v1/secretariat/participants/{first.Id}/sessions/{session.Id}/enrollments", new { ci = Ci });
+
+        Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
+        Assert.Contains("urn:dsc:secretariat:extension-required", await response.Content.ReadAsStringAsync());
+        Assert.Empty(await db.TrainingModuleEnrollments.ToListAsync());
+    }
+
+    [Fact]
     public async Task RetryOfUnknownEnrollmentIsNotFound()
     {
         using var retry = await Retry(987654);

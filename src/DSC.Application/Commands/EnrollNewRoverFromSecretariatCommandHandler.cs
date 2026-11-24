@@ -1,5 +1,6 @@
 using System.Text.RegularExpressions;
 using DSC.Application.Interfaces;
+using DSC.Application.Queries;
 using DSC.Domain.Entities;
 using DSC.Domain.Exceptions;
 using DSC.Domain.Repositories;
@@ -52,8 +53,12 @@ public partial class EnrollNewRoverFromSecretariatCommandHandler(
             async token =>
             {
                 await rovers.LockCiAsync(ci.Number, token);
-                if (await rovers.CiExistsAsync(ci.Number, token))
-                    throw new RoverPersonExistsException();
+                switch (CiExtensionRule.Classify(
+                    await rovers.ExtensionsOfCiAsync(ci.Number, token), string.IsNullOrEmpty(ci.Extension) ? null : ci.Extension))
+                {
+                    case CiPresence.ExactMatch: throw new RoverPersonExistsException();
+                    case CiPresence.OtherComplement: throw new CiExtensionRequiredException();
+                }
                 var person = await rovers.CreateAsync(
                     ci.Number,
                     string.IsNullOrEmpty(ci.Extension) ? null : ci.Extension,
