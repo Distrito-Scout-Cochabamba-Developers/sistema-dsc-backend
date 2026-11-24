@@ -14,7 +14,7 @@ public record class EnrollParticipantInSessionCommand(
     string EnrollmentSourceCode,
     string EnrollmentSourceName,
     long? RegisteredByUserId,
-    bool RoverWithoutAccount = false
+    bool RoverWithoutAccount
 );
 
 /// <summary>

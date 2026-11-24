@@ -35,7 +35,8 @@ public class EnrollInCalendarSessionCommandHandler(
                 personId,
                 CalendarSessionMapping.AuthenticatedEnrollmentSourceCode,
                 CalendarSessionMapping.AuthenticatedEnrollmentSourceName,
-                currentUser.Id
+                currentUser.Id,
+                false
             ),
             cancellationToken
         );

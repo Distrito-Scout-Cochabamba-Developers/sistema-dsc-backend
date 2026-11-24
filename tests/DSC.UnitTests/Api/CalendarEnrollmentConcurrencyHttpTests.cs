@@ -10,10 +10,12 @@ using DSC.Api.Controllers;
 using DSC.Api.Conventions;
 using DSC.Api.Middlewares;
 using DSC.Application;
+using DSC.Application.Commands;
 using DSC.Application.DTOs;
 using DSC.Domain.Entities;
 using DSC.Infrastructure;
 using DSC.Infrastructure.Persistence;
+using DSC.Infrastructure.Persistence.Repositories;
 using DSC.UnitTests.Application;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
@@ -158,13 +160,54 @@ public class CalendarEnrollmentConcurrencyHttpTests(RequirementsPostgres postgre
         await using var transaction = await writer.Database.BeginTransactionAsync();
         writer.Users.Add(new User { PersonId = rover.Id, UserStatusId = userStatus.Id, Username = "rover-ficticio", Email = "rover@example.test", Password = "ficticia" });
         await writer.SaveChangesAsync();
+        var blocker = ((NpgsqlConnection)writer.Database.GetDbConnection()).ProcessID;
         using var request = new HttpRequestMessage(HttpMethod.Post, $"/api/v1/secretariat/participants/{rover.Id}/sessions/{session.Id}/enrollments") { Content = JsonContent.Create(new { modality = "ROVER_WITHOUT_ACCOUNT" }) };
         request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", Token(secretary, "DISTRICT_SECRETARY"));
         var pending = client.SendAsync(request);
+        await AssertBlockedByAsync(blocker);
+        Assert.False(pending.IsCompleted);
         await transaction.CommitAsync();
         using var response = await pending;
         Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
         Assert.Empty(await db.TrainingModuleEnrollments.Where(e => e.PersonId == rover.Id).ToListAsync());
+    }
+
+    [Fact]
+    public async Task RoverConfirmationBlocksConcurrentAccountUntilCommit()
+    {
+        var session = await CreateSessionAsync(capacity: 1);
+        var secretary = await CreatePersonAsync("9876031", "Secretaria");
+        var rover = new Person { IdCard = "9876032", FirstName = "Rover", FirstLastName = "Prueba", PersonStatusId = personStatus.Id };
+        db.Persons.Add(rover);
+        await db.SaveChangesAsync();
+
+        await using var enrollmentDb = postgres.Open(db.Database.GetConnectionString()!);
+        await using var transaction = await enrollmentDb.Database.BeginTransactionAsync();
+        var handler = new EnrollParticipantInSessionCommandHandler(new TrainingModuleSessionRepository(enrollmentDb), new UnitOfWork(enrollmentDb));
+        await handler.HandleAsync(new(session.Id, rover.Id, "SECRETARIAT", "Inscripción asistida por Secretaría", userIds[secretary.Id], true));
+        var blocker = ((NpgsqlConnection)enrollmentDb.Database.GetDbConnection()).ProcessID;
+
+        await using var writer = postgres.Open(db.Database.GetConnectionString()!);
+        writer.Users.Add(new User { PersonId = rover.Id, UserStatusId = userStatus.Id, Username = "rover-otro", Email = "otro@example.test", Password = "ficticia" });
+        var pending = writer.SaveChangesAsync();
+        await AssertBlockedByAsync(blocker);
+        Assert.False(pending.IsCompleted);
+        Assert.False(await db.Users.AnyAsync(u => u.PersonId == rover.Id));
+        await transaction.CommitAsync();
+        await pending;
+        Assert.True(await db.TrainingModuleEnrollments.AnyAsync(e => e.PersonId == rover.Id && e.RoverWithoutAccount == true));
+        Assert.True(await db.Users.AnyAsync(u => u.PersonId == rover.Id));
+    }
+
+    private async Task AssertBlockedByAsync(int blockerPid)
+    {
+        using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(15));
+        await using var observer = new NpgsqlConnection(db.Database.GetConnectionString());
+        await observer.OpenAsync(timeout.Token);
+        await using var command = new NpgsqlCommand("SELECT EXISTS (SELECT 1 FROM pg_stat_activity WHERE @pid = ANY(pg_blocking_pids(pid)))", observer);
+        command.Parameters.AddWithValue("pid", blockerPid);
+        while (!(bool)(await command.ExecuteScalarAsync(timeout.Token))!)
+            await Task.Delay(25, timeout.Token);
     }
 
     [Fact]
@@ -233,6 +276,7 @@ public class CalendarEnrollmentConcurrencyHttpTests(RequirementsPostgres postgre
         var enrollment = await db.TrainingModuleEnrollments.Include(e => e.EnrollmentSource).SingleAsync(e => e.TrainingModuleSessionId == session.Id);
         Assert.Equal(userIds[secretary.Id], enrollment.RegisteredByUserId);
         Assert.Equal("SECRETARIAT", enrollment.EnrollmentSource.Code);
+        Assert.False(enrollment.RoverWithoutAccount);
     }
 
     [Fact]
@@ -275,6 +319,7 @@ public class CalendarEnrollmentConcurrencyHttpTests(RequirementsPostgres postgre
                     enrollment.TrainingModuleSessionId == session.Id
                 )
             );
+            Assert.False((await db.TrainingModuleEnrollments.SingleAsync(e => e.TrainingModuleSessionId == session.Id)).RoverWithoutAccount);
         }
         finally
         {

@@ -32,6 +32,8 @@ Cuerpo vacío. Cualquier usuario autenticado. Origen `enrollment_source.code = A
 
 Una persona no puede tener dos filas en `training_module_enrollment` para la misma sesión (índice único).
 
+La modalidad `rover_without_account` solo se conoce para inscripciones nuevas: `true` para Rover sin cuenta y `false` para las demás. Las históricas conservan `NULL`; no se infiere su clasificación. Al confirmarse como Rover, se verifica la ausencia de cuenta en la misma transacción; una cuenta puede crearse después.
+
 ### `POST /api/v1/admin/modules/{id}/sessions`
 
 Roles `ADMIN` o `DISTRICT_SECRETARY`.

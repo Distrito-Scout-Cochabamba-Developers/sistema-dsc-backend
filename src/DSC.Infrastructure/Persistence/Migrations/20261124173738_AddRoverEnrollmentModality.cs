@@ -14,8 +14,7 @@ namespace DSC.Infrastructure.Persistence.Migrations
                 name: "rover_without_account",
                 table: "training_module_enrollment",
                 type: "boolean",
-                nullable: false,
-                defaultValue: false);
+                nullable: true);
         }
 
         /// <inheritdoc />

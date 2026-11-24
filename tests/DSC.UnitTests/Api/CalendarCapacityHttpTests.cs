@@ -203,6 +203,26 @@ public class CalendarCapacityHttpTests(RequirementsPostgres postgres) : IAsyncLi
     }
 
     [Fact]
+    public async Task RoverModalityMigrationLeavesHistoricalEnrollmentUnknown()
+    {
+        const string previous = "20261124060906_AddAccountActivation";
+        await using var historical = await postgres.CreateDatabase(migrate: false, seed: false);
+        var migrator = historical.GetService<IMigrator>();
+        await migrator.MigrateAsync(previous);
+        await historical.Database.ExecuteSqlRawAsync("""
+            INSERT INTO person_status (id, code, name) VALUES (1, 'TEST', 'Prueba');
+            INSERT INTO person (id, id_card, first_name, first_last_name, person_status_id) VALUES (1, '1234567', 'Persona', 'Prueba', 1);
+            INSERT INTO training_module (id, name) VALUES (1, 'Módulo ficticio');
+            INSERT INTO training_module_session_status (id, code, name) VALUES (1, 'OPEN', 'Abierta');
+            INSERT INTO training_module_session (id, training_module_id, training_module_session_status_id) VALUES (1, 1, 1);
+            INSERT INTO enrollment_source (id, code, name) VALUES (1, 'TEST', 'Prueba');
+            INSERT INTO training_module_enrollment (training_module_session_id, person_id, enrollment_source_id) VALUES (1, 1, 1);
+            """);
+        await migrator.MigrateAsync();
+        Assert.Null((await historical.TrainingModuleEnrollments.SingleAsync()).RoverWithoutAccount);
+    }
+
+    [Fact]
     public async Task DeploymentSqlPreservesHistoricalLimitsFromTheFirstBlockWithAFacility()
     {
         const string previous = "20261113165822_RemoveTrainingModuleCodeAndAddNameUniqueIndex";
