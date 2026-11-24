@@ -1,4 +1,5 @@
 using DSC.Domain.Entities;
+using DSC.Domain.Exceptions;
 using DSC.Domain.Repositories;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
@@ -10,8 +11,10 @@ namespace DSC.Infrastructure.Persistence.Repositories;
 /// </summary>
 public class ScoutLeaderRepository(ScoutDbContext dbContext) : IScoutLeaderRepository
 {
-    public async Task LockCiAsync(string ciNumber, CancellationToken cancellationToken)
+    public async Task LockCiAsync(string ciNumber, CancellationToken cancellationToken, bool required = true)
     {
+        // Proveedores no relacionales (pruebas en memoria) no tienen concurrencia real que serializar.
+        if (!required && !dbContext.Database.IsNpgsql()) return;
         if (!dbContext.Database.IsNpgsql() || dbContext.Database.CurrentTransaction is null)
             throw new InvalidOperationException("La inscripción asistida requiere una transacción PostgreSQL.");
         if (dbContext.Database.CurrentTransaction.GetDbTransaction().IsolationLevel != System.Data.IsolationLevel.ReadCommitted)
@@ -78,7 +81,15 @@ public class ScoutLeaderRepository(ScoutDbContext dbContext) : IScoutLeaderRepos
     public async Task AddAsync(Person person, CancellationToken cancellationToken)
     {
         await dbContext.Persons.AddAsync(person, cancellationToken);
-        await dbContext.SaveChangesAsync(cancellationToken);
+        try
+        {
+            await dbContext.SaveChangesAsync(cancellationToken);
+        }
+        catch (DbUpdateException ex) when (ex.InnerException is Npgsql.PostgresException { SqlState: "23505", ConstraintName: "ux_person_ci_extension" })
+        {
+            dbContext.Entry(person).State = EntityState.Detached;
+            throw new PersonCiConflictException();
+        }
     }
 
     public async Task UpdateAsync(Person person, CancellationToken cancellationToken)

@@ -30,7 +30,7 @@ public class AtomicEnrollmentPostgresTests(RequirementsPostgres postgres)
         );
         var person = await AddPersonAsync(db, fixture.PersonStatusId, "9910001", "Celia");
         await CreateHandler(db).HandleAsync(
-            new(fixture.SessionId, person.Id, SourceCode, "Usuario", null)
+            new(fixture.SessionId, person.Id, SourceCode, "Usuario", null, false)
         );
         await transaction.RollbackAsync();
         db.ChangeTracker.Clear();
@@ -50,7 +50,7 @@ public class AtomicEnrollmentPostgresTests(RequirementsPostgres postgres)
             fixture.SessionId, 1
         );
         var attempt = CreateHandler(db).HandleAsync(
-            new(fixture.SessionId, person.Id, SourceCode, "Usuario", null)
+            new(fixture.SessionId, person.Id, SourceCode, "Usuario", null, false)
         );
         await Task.Delay(300);
         Assert.False(attempt.IsCompleted);
@@ -72,12 +72,12 @@ public class AtomicEnrollmentPostgresTests(RequirementsPostgres postgres)
         );
         Assert.Equal(0, await stale.TrainingModuleEnrollments.CountAsync());
         await CreateHandler(db).HandleAsync(
-            new(fixture.SessionId, first.Id, SourceCode, "Usuario", null)
+            new(fixture.SessionId, first.Id, SourceCode, "Usuario", null, false)
         );
 
         var error = await Assert.ThrowsAsync<InvalidOperationException>(() =>
             CreateHandler(stale).HandleAsync(
-                new(fixture.SessionId, second.Id, SourceCode, "Usuario", null)
+                new(fixture.SessionId, second.Id, SourceCode, "Usuario", null, false)
             )
         );
         Assert.Contains("READ COMMITTED", error.Message);
@@ -108,7 +108,7 @@ public class AtomicEnrollmentPostgresTests(RequirementsPostgres postgres)
                 second.Id,
                 SourceCode,
                 "Usuario autenticado",
-                null
+                null, false
             )
         );
 
@@ -121,6 +121,7 @@ public class AtomicEnrollmentPostgresTests(RequirementsPostgres postgres)
                 TrainingModuleSessionId = sessionId,
                 PersonId = first.Id,
                 EnrollmentSourceId = sourceId,
+                RoverWithoutAccount = false,
             }
         );
         await competitor.SaveChangesAsync();
@@ -156,7 +157,7 @@ public class AtomicEnrollmentPostgresTests(RequirementsPostgres postgres)
                             person.Id,
                             SourceCode,
                             "Usuario autenticado",
-                            null
+                            null, false
                         ),
                         cancellationToken
                     );
@@ -190,7 +191,7 @@ public class AtomicEnrollmentPostgresTests(RequirementsPostgres postgres)
                             999_999,
                             SourceCode,
                             "Usuario autenticado",
-                            null
+                            null, false
                         ),
                         cancellationToken
                     )
@@ -222,7 +223,7 @@ public class AtomicEnrollmentPostgresTests(RequirementsPostgres postgres)
                 first.Id,
                 SourceCode,
                 "Usuario autenticado",
-                null
+                null, false
             )
         );
         var secondAttempt = CreateHandler(secondDb).HandleAsync(
@@ -231,7 +232,7 @@ public class AtomicEnrollmentPostgresTests(RequirementsPostgres postgres)
                 second.Id,
                 SourceCode,
                 "Usuario autenticado",
-                null
+                null, false
             )
         );
 

@@ -16,6 +16,7 @@ public interface IScoutLeaderRepository
     Task<Person?> GetByIdAsync(long id, CancellationToken cancellationToken);
     Task AddAsync(Person person, CancellationToken cancellationToken);
     Task UpdateAsync(Person person, CancellationToken cancellationToken);
-    Task LockCiAsync(string ciNumber, CancellationToken cancellationToken);
+    /// <summary>Serializa altas por número de CI; con <paramref name="required"/> falso se omite en proveedores no PostgreSQL.</summary>
+    Task LockCiAsync(string ciNumber, CancellationToken cancellationToken, bool required = true);
     Task<Person> CreateSecretariatLeaderAsync(string ci, string? extension, string firstName, string lastName, string phone, string email, CancellationToken cancellationToken);
 }

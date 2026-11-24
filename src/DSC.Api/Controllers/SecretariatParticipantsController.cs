@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace DSC.Api.Controllers;
 
 public record SecretariatParticipantLookupRequest(string Ci, string? Extension);
+public record SecretariatEnrollmentRequest(string? Modality, string? Ci = null, string? Extension = null);
 
 [ApiController]
 [Authorize(Roles = "DISTRICT_SECRETARY")]
@@ -22,7 +23,7 @@ public class SecretariatParticipantsController(
     /// <summary>Confirma la inscripción asistida de un dirigente existente.</summary>
     [HttpPost("{personId:long}/sessions/{sessionId:long}/enrollments")]
     public async Task<IActionResult> Enroll(long personId, long sessionId,
-        [FromBody] SecretariatParticipantLookupRequest request,
+        [FromBody(EmptyBodyBehavior = Microsoft.AspNetCore.Mvc.ModelBinding.EmptyBodyBehavior.Allow)] SecretariatEnrollmentRequest? request,
         [FromServices] SecretariatEnrollment enrollmentHandler,
         [FromServices] ICurrentUser currentUser,
         CancellationToken cancellationToken)
@@ -30,9 +31,13 @@ public class SecretariatParticipantsController(
         try
         {
             if (currentUser.Id is null) return Unauthorized();
-            var enrollment = await enrollmentHandler.ExistingAsync(sessionId, personId, currentUser.Id.Value, request.Ci, request.Extension, cancellationToken);
+            if (request?.Modality is not null and not "ROVER_WITHOUT_ACCOUNT") return BadRequest();
+            var rover = request?.Modality == "ROVER_WITHOUT_ACCOUNT";
+            // CI es opcional para conservar el contrato de #157/#159; si llega, se reverifica bajo bloqueo.
+            var enrollment = await enrollmentHandler.ExistingAsync(sessionId, personId, currentUser.Id.Value, request?.Ci, request?.Extension, rover, cancellationToken);
             return StatusCode(StatusCodes.Status201Created, new { enrollmentId = enrollment.Id });
         }
+        catch (RoverHasAccountException) { return Problem(statusCode: 409, type: "urn:dsc:enrollment:rover-has-account", detail: "La persona ya tiene una cuenta."); }
         catch (EnrollmentConflictException ex)
         {
             var type = ex switch
@@ -66,6 +71,7 @@ public class SecretariatParticipantsController(
             return StatusCode(201, new { enrollmentId = result.Id });
         }
         catch (AmbiguousSecretariatCiException) { return Problem(statusCode: 409, type: "urn:dsc:secretariat:identity-changed", detail: "El CI ya tiene coincidencias. Vuelve a buscar."); }
+        catch (PersonCiConflictException) { return Problem(statusCode: 409, type: "urn:dsc:secretariat:identity-changed", detail: "El CI ya tiene coincidencias. Vuelve a buscar."); }
         catch (DomainException ex) { return Problem(statusCode: 400, detail: ex.Message); }
         catch (EnrollmentConflictException ex)
         {

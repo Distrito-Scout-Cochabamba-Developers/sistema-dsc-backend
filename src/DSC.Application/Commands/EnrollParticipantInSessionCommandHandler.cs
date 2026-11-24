@@ -13,7 +13,8 @@ public record class EnrollParticipantInSessionCommand(
     long PersonId,
     string EnrollmentSourceCode,
     string EnrollmentSourceName,
-    long? RegisteredByUserId
+    long? RegisteredByUserId,
+    bool RoverWithoutAccount
 );
 
 /// <summary>
@@ -40,7 +41,8 @@ public class EnrollParticipantInSessionCommandHandler(
                         command.PersonId,
                         command.EnrollmentSourceCode,
                         command.EnrollmentSourceName,
-                        command.RegisteredByUserId
+                        command.RegisteredByUserId,
+                        command.RoverWithoutAccount
                     ),
                     token
                 ),

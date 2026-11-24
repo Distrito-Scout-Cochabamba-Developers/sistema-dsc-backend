@@ -1,4 +1,5 @@
 using DSC.Application.DTOs;
+using DSC.Application.Interfaces;
 using DSC.Domain.Entities;
 using DSC.Domain.Exceptions;
 using DSC.Domain.Repositories;
@@ -9,7 +10,8 @@ namespace DSC.Application.Commands;
 public class RegisterDigitalAttendanceCommandHandler(
     ITrainingModuleRepository moduleRepository,
     IScoutLeaderRepository leaderRepository,
-    IModuleAttendanceRepository attendanceRepository
+    IModuleAttendanceRepository attendanceRepository,
+    IUnitOfWork unitOfWork
 )
 {
     public async Task<ModuleAttendanceResultDto> HandleAsync(
@@ -41,6 +43,25 @@ public class RegisterDigitalAttendanceCommandHandler(
         // 2. Validate CI Value Object
         var ci = new CiNumber(request.CiNumber, request.Extension);
 
+        // Mismo bloqueo por CI que la inscripción asistida: el alta de persona se serializa
+        // entre canales y, junto con el índice único, no puede duplicarse.
+        return await unitOfWork.ExecuteInTransactionAsync(
+            async token =>
+            {
+                await leaderRepository.LockCiAsync(ci.Number, token, required: false);
+                return await RegisterAsync(request, module, ci, token);
+            },
+            cancellationToken
+        );
+    }
+
+    private async Task<ModuleAttendanceResultDto> RegisterAsync(
+        RegisterDigitalAttendanceDto request,
+        TrainingModule module,
+        CiNumber ci,
+        CancellationToken cancellationToken
+    )
+    {
         // 3. Find or Create Person / Scout Leader
         var person = await leaderRepository.GetByCiNumberAsync(ci.Number, cancellationToken);
         if (person == null)

@@ -1078,6 +1078,10 @@ namespace DSC.Infrastructure.Persistence.Migrations
                         .HasColumnType("bigint")
                         .HasColumnName("registered_by_user_id");
 
+                    b.Property<bool?>("RoverWithoutAccount")
+                        .HasColumnType("boolean")
+                        .HasColumnName("rover_without_account");
+
                     b.Property<long>("TrainingModuleSessionId")
                         .HasColumnType("bigint")
                         .HasColumnName("training_module_session_id");

@@ -48,7 +48,8 @@ public class RegisterDigitalAttendanceHandlerTests
         var handler = new RegisterDigitalAttendanceCommandHandler(
             moduleRepo,
             leaderRepo,
-            attendanceRepo
+            attendanceRepo,
+            new UnitOfWork(db)
         );
 
         var request = new RegisterDigitalAttendanceDto(
@@ -102,7 +103,8 @@ public class RegisterDigitalAttendanceHandlerTests
         var handler = new RegisterDigitalAttendanceCommandHandler(
             moduleRepo,
             leaderRepo,
-            attendanceRepo
+            attendanceRepo,
+            new UnitOfWork(db)
         );
 
         var request = new RegisterDigitalAttendanceDto(
@@ -136,7 +138,8 @@ public class RegisterDigitalAttendanceHandlerTests
         var handler = new RegisterDigitalAttendanceCommandHandler(
             moduleRepo,
             leaderRepo,
-            attendanceRepo
+            attendanceRepo,
+            new UnitOfWork(db)
         );
 
         var request = new RegisterDigitalAttendanceDto(
@@ -174,7 +177,8 @@ public class RegisterDigitalAttendanceHandlerTests
         var handler = new RegisterDigitalAttendanceCommandHandler(
             moduleRepo,
             leaderRepo,
-            attendanceRepo
+            attendanceRepo,
+            new UnitOfWork(db)
         );
 
         var request = new RegisterDigitalAttendanceDto(
@@ -220,7 +224,8 @@ public class RegisterDigitalAttendanceHandlerTests
         var handler = new RegisterDigitalAttendanceCommandHandler(
             moduleRepo,
             leaderRepo,
-            attendanceRepo
+            attendanceRepo,
+            new UnitOfWork(db)
         );
 
         var request = new RegisterDigitalAttendanceDto(
