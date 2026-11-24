@@ -274,10 +274,9 @@ public class AtomicEnrollmentPostgresTests(RequirementsPostgres postgres)
         await db.Database.OpenConnectionAsync();
         await ((NpgsqlConnection)db.Database.GetDbConnection()).ReloadTypesAsync();
         var status = new TrainingModuleSessionStatus { Code = "OPEN", Name = "Abierta" };
-        var personStatus = new PersonStatus { Code = "ACTIVE", Name = "Activa" };
+        var personStatus = await db.PersonStatuses.SingleAsync(x => x.Code == "ACTIVE");
         var source = new EnrollmentSource { Code = SourceCode, Name = "Usuario autenticado" };
         db.TrainingModuleSessionStatuses.Add(status);
-        db.PersonStatuses.Add(personStatus);
         db.EnrollmentSources.Add(source);
         await db.SaveChangesAsync();
         var moduleId = await db.TrainingModules.Select(module => module.Id).FirstAsync();

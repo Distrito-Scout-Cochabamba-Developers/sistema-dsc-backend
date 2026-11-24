@@ -329,14 +329,6 @@ public class SecretariatParticipantLookupPostgresTests(RequirementsPostgres post
         await using var db = await postgres.CreateDatabase(seed: false);
         await db.Database.OpenConnectionAsync();
         await ((NpgsqlConnection)db.Database.GetDbConnection()).ReloadTypesAsync();
-        db.PersonStatuses.Add(
-            new PersonStatus
-            {
-                Id = 1,
-                Code = "ACTIVE",
-                Name = "Activo",
-            }
-        );
         db.Persons.AddRange(
             new Person
             {

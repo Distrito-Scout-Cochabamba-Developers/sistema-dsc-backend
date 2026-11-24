@@ -131,6 +131,42 @@ public class CalendarEnrollmentConcurrencyHttpTests(RequirementsPostgres postgre
     }
 
     [Fact]
+    public async Task DigitalAttendanceWaitsForSameCiAndSeesRolledBackAssistedPerson()
+    {
+        var session = await CreateSessionAsync(capacity: 0);
+        var secretary = await CreatePersonAsync("9100041", "Secretaria");
+        await using var blocker = postgres.Open(db.Database.GetConnectionString()!);
+        await using var transaction = await blocker.Database.BeginTransactionAsync();
+        await blocker.Database.ExecuteSqlInterpolatedAsync($"SELECT 1 FROM training_module_session WHERE id = {session.Id} FOR UPDATE");
+        using var assisted = NewLeaderRequest(session.Id, secretary, "9100042");
+        var pendingAssisted = client.SendAsync(assisted);
+        // Observar el bloqueo de convocatoria confirma que el alta ya obtuvo el bloqueo de CI.
+        var assistedBlocked = false;
+        for (var i = 0; i < 100 && !assistedBlocked; i++)
+        {
+            await using var probe = new NpgsqlCommand("SELECT EXISTS (SELECT 1 FROM pg_stat_activity WHERE datname = current_database() AND wait_event_type = 'Lock' AND query LIKE '%training_module_session%FOR UPDATE%')", (NpgsqlConnection)db.Database.GetDbConnection());
+            assistedBlocked = (bool)(await probe.ExecuteScalarAsync())!;
+            if (!assistedBlocked) await Task.Delay(50);
+        }
+        Assert.True(assistedBlocked);
+        using var attendance = new HttpRequestMessage(HttpMethod.Post, "/api/attendance/register")
+        {
+            Content = JsonContent.Create(new { sessionToken = module.Id.ToString(), ciNumber = "9100042", extension = "", firstName = "Dalia", lastName = "Prueba", phone = "" })
+        };
+        var pendingAttendance = client.SendAsync(attendance);
+        await Task.Delay(300);
+        Assert.False(pendingAttendance.IsCompleted);
+        await transaction.CommitAsync();
+        using var assistedResult = await pendingAssisted;
+        using var attendanceResult = await pendingAttendance;
+        Assert.Equal(HttpStatusCode.Conflict, assistedResult.StatusCode);
+        Assert.Equal(HttpStatusCode.Created, attendanceResult.StatusCode);
+        var person = await db.Persons.SingleAsync(p => p.IdCard == "9100042");
+        Assert.False(await db.TrainingModuleEnrollments.AnyAsync(e => e.PersonId == person.Id));
+        Assert.True(await db.ModuleAttendances.AnyAsync(a => a.ScoutLeaderId == person.Id));
+    }
+
+    [Fact]
     public async Task NewLeaderCannotBeCreatedForAmbiguousCi()
     {
         var session = await CreateSessionAsync(capacity: 2);
@@ -180,13 +216,10 @@ public class CalendarEnrollmentConcurrencyHttpTests(RequirementsPostgres postgre
         open = new TrainingModuleSessionStatus { Code = "OPEN", Name = "Abierta" };
         cancelled = new TrainingModuleSessionStatus { Code = "CANCELLED", Name = "Cancelada" };
         closed = new TrainingModuleSessionStatus { Code = "CLOSED", Name = "Cerrada" };
-        personStatus = new PersonStatus { Code = "ACTIVE", Name = "Activa" };
-        db.ContactMechanismTypes.AddRange(new ContactMechanismType { Code = "EMAIL", Name = "Correo" }, new ContactMechanismType { Code = "CELLPHONE", Name = "Celular" });
-        db.ContactPurposeTypes.Add(new ContactPurposeType { Code = "PERSONAL", Name = "Personal" });
+        personStatus = await db.PersonStatuses.SingleAsync(x => x.Code == "ACTIVE");
         userStatus = await db.UserStatuses.SingleAsync(status => status.Code == "ACTIVE");
         source = new EnrollmentSource { Code = "AUTHENTICATED_USER", Name = "Usuario autenticado" };
         db.TrainingModuleSessionStatuses.AddRange(open, cancelled, closed);
-        db.PersonStatuses.Add(personStatus);
         db.EnrollmentSources.Add(source);
         await db.SaveChangesAsync();
         module = await db.TrainingModules.FirstAsync();
