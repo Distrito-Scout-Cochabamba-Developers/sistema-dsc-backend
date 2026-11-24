@@ -42,6 +42,7 @@ public static class DependencyInjection
         services.AddScoped<IScoutLeaderRepository, ScoutLeaderRepository>();
         services.AddScoped<ITrainingModuleRepository, TrainingModuleRepository>();
         services.AddScoped<ITrainingModuleSessionRepository, TrainingModuleSessionRepository>();
+        services.AddScoped<IUnitOfWork, UnitOfWork>();
         services.AddScoped<ITrainingLineRepository, TrainingLineRepository>();
         services.AddScoped<ITrainingLevelRepository, TrainingLevelRepository>();
         services.AddScoped<IModuleAttendanceRepository, ModuleAttendanceRepository>();

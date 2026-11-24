@@ -8,6 +8,7 @@ internal static class CalendarSessionMapping
     internal static readonly TimeSpan BoliviaOffset = TimeSpan.FromHours(-4);
 
     internal const string AuthenticatedEnrollmentSourceCode = "AUTHENTICATED_USER";
+    internal const string AuthenticatedEnrollmentSourceName = "Usuario autenticado";
     internal const string DefaultSessionStatusCode = "OPEN";
 
     public static DateTimeOffset At(DateOnly date, TimeOnly time) =>

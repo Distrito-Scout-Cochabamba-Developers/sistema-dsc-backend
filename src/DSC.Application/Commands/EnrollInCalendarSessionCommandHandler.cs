@@ -1,6 +1,5 @@
 using DSC.Application.DTOs;
 using DSC.Application.Interfaces;
-using DSC.Domain.Entities;
 using DSC.Domain.Exceptions;
 using DSC.Domain.Repositories;
 
@@ -8,7 +7,13 @@ namespace DSC.Application.Commands;
 
 public record class EnrollInCalendarSessionCommand(long SessionId);
 
+/// <summary>
+/// Adaptador de autoservicio sobre la operación compartida de inscripción.
+/// El contrato HTTP se conserva: 201 con la sesión actualizada y 409 para
+/// duplicado, cupo agotado o ventana cerrada.
+/// </summary>
 public class EnrollInCalendarSessionCommandHandler(
+    EnrollParticipantInSessionCommandHandler enrollmentHandler,
     ITrainingModuleSessionRepository sessionRepository,
     ICurrentUser currentUser
 )
@@ -24,57 +29,26 @@ public class EnrollInCalendarSessionCommandHandler(
             );
 
         var personId = currentUser.PersonId.Value;
-        var session =
-            await sessionRepository.GetByIdForCalendarAsync(command.SessionId, cancellationToken)
-            ?? throw new KeyNotFoundException(
-                $"No se encontró ninguna convocatoria con el id '{command.SessionId}'."
-            );
-
-        EnsureCanEnroll(session, personId);
-
-        var source = await sessionRepository.GetOrCreateEnrollmentSourceByCodeAsync(
-            CalendarSessionMapping.AuthenticatedEnrollmentSourceCode,
-            "Usuario autenticado",
+        var enrollment = await enrollmentHandler.HandleAsync(
+            new EnrollParticipantInSessionCommand(
+                command.SessionId,
+                personId,
+                CalendarSessionMapping.AuthenticatedEnrollmentSourceCode,
+                CalendarSessionMapping.AuthenticatedEnrollmentSourceName,
+                currentUser.Id
+            ),
             cancellationToken
         );
 
-        var enrollment = new TrainingModuleEnrollment
-        {
-            TrainingModuleSessionId = session.Id,
-            PersonId = personId,
-            EnrollmentSourceId = source.Id,
-            RegisteredByUserId = currentUser.Id,
-        };
-
-        await sessionRepository.AddEnrollmentAsync(enrollment, cancellationToken);
-
         var updated =
-            await sessionRepository.GetByIdForCalendarAsync(session.Id, cancellationToken)
-            ?? session;
+            await sessionRepository.GetByIdForCalendarAsync(command.SessionId, cancellationToken)
+            ?? throw new InvalidOperationException(
+                "La inscripción se guardó pero no se pudo recargar la convocatoria."
+            );
 
         return new CalendarEnrollmentDto(
             enrollment.Id,
             CalendarSessionMapping.ToDto(updated, personId)
         );
-    }
-
-    private static void EnsureCanEnroll(TrainingModuleSession session, long personId)
-    {
-        var status = session.Status?.Code?.ToUpperInvariant();
-        if (status is "CANCELLED")
-            throw new InvalidOperationException("Esta convocatoria está cancelada.");
-
-        if (status is "CLOSED")
-            throw new InvalidOperationException("Esta convocatoria ya finalizó.");
-
-        if (!session.IsRegistrationOpen)
-            throw new InvalidOperationException("La inscripción de esta convocatoria está cerrada.");
-
-        if (session.Enrollments.Any(item => item.PersonId == personId))
-            throw new InvalidOperationException("Ya estás inscrito en esta sesión.");
-
-        var dto = CalendarSessionMapping.ToDto(session, personId);
-        if (dto.RemainingSeats == 0)
-            throw new InvalidOperationException("El cupo de esta sesión se agotó.");
     }
 }

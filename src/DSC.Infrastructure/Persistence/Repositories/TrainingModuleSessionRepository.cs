@@ -1,6 +1,8 @@
 using DSC.Domain.Entities;
+using DSC.Domain.Exceptions;
 using DSC.Domain.Repositories;
 using Microsoft.EntityFrameworkCore;
+using Npgsql;
 
 namespace DSC.Infrastructure.Persistence.Repositories;
 
@@ -121,17 +123,6 @@ public class TrainingModuleSessionRepository(ScoutDbContext dbContext)
             .Facilities.AsNoTracking()
             .FirstOrDefaultAsync(facility => facility.Id == id, cancellationToken);
 
-    public Task<bool> ExistsEnrollmentAsync(
-        long sessionId,
-        long personId,
-        CancellationToken cancellationToken = default
-    ) =>
-        dbContext.TrainingModuleEnrollments.AnyAsync(
-            enrollment =>
-                enrollment.TrainingModuleSessionId == sessionId && enrollment.PersonId == personId,
-            cancellationToken
-        );
-
     public async Task AddSessionAsync(
         TrainingModuleSession session,
         CancellationToken cancellationToken = default
@@ -141,21 +132,67 @@ public class TrainingModuleSessionRepository(ScoutDbContext dbContext)
         await dbContext.SaveChangesAsync(cancellationToken);
     }
 
-    public async Task AddEnrollmentAsync(
-        TrainingModuleEnrollment enrollment,
+    public async Task<TrainingModuleEnrollment> EnrollAsync(
+        SessionEnrollmentRequest request,
         CancellationToken cancellationToken = default
     )
     {
-        await dbContext.TrainingModuleEnrollments.AddAsync(enrollment, cancellationToken);
+        if (dbContext.Database.IsRelational())
+        {
+            if (dbContext.Database.CurrentTransaction is null)
+                throw new InvalidOperationException(
+                    "La inscripción atómica requiere una transacción ambiente."
+                );
+
+            // Serializa a los competidores por el último cupo antes de leer el
+            // conteo. La fila de la convocatoria es también la fuente del cupo.
+            await dbContext.Database.ExecuteSqlInterpolatedAsync(
+                $"SELECT 1 FROM training_module_session WHERE id = {request.SessionId} FOR UPDATE",
+                cancellationToken
+            );
+        }
+
+        var session =
+            await GetByIdForCalendarAsync(request.SessionId, cancellationToken)
+            ?? throw new KeyNotFoundException(
+                $"No se encontró ninguna convocatoria con el id '{request.SessionId}'."
+            );
+
+        session.EnsureCanEnroll(request.PersonId);
+
+        var source = await GetOrCreateEnrollmentSourceByCodeAsync(
+            request.EnrollmentSourceCode,
+            request.EnrollmentSourceName,
+            cancellationToken
+        );
+
+        var enrollment = new TrainingModuleEnrollment
+        {
+            TrainingModuleSessionId = session.Id,
+            PersonId = request.PersonId,
+            EnrollmentSourceId = source.Id,
+            RegisteredByUserId = request.RegisteredByUserId,
+        };
+
+        dbContext.TrainingModuleEnrollments.Add(enrollment);
         try
         {
             await dbContext.SaveChangesAsync(cancellationToken);
         }
-        catch (DbUpdateException)
+        catch (DbUpdateException exception) when (IsDuplicateEnrollment(exception))
         {
-            throw new InvalidOperationException("Ya estás inscrito en esta sesión.");
+            throw new AlreadyEnrolledException();
         }
+
+        return enrollment;
     }
+
+    private static bool IsDuplicateEnrollment(DbUpdateException exception) =>
+        exception.InnerException is PostgresException
+        {
+            SqlState: PostgresErrorCodes.UniqueViolation
+        } postgres
+        && postgres.ConstraintName == "IX_training_module_enrollment_training_module_session_id_perso~";
 
     public async Task ExpandCapacityAsync(
         long sessionId,

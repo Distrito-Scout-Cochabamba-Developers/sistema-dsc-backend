@@ -233,10 +233,7 @@ public class CalendarSessionHandlerTests
         );
 
         var user = new FakeCurrentUser { Id = 9, PersonId = 4 };
-        var enroll = new EnrollInCalendarSessionCommandHandler(
-            new TrainingModuleSessionRepository(db),
-            user
-        );
+        var enroll = CreateEnrollHandler(db, user);
 
         var result = await enroll.HandleAsync(new EnrollInCalendarSessionCommand(created.Id));
 
@@ -268,13 +265,13 @@ public class CalendarSessionHandlerTests
             )
         );
 
-        var enroll = new EnrollInCalendarSessionCommandHandler(
-            new TrainingModuleSessionRepository(db),
+        var enroll = CreateEnrollHandler(
+            db,
             new FakeCurrentUser { Id = 9, PersonId = 4 }
         );
         await enroll.HandleAsync(new EnrollInCalendarSessionCommand(created.Id));
 
-        var error = await Assert.ThrowsAsync<InvalidOperationException>(() =>
+        var error = await Assert.ThrowsAsync<AlreadyEnrolledException>(() =>
             enroll.HandleAsync(new EnrollInCalendarSessionCommand(created.Id))
         );
         Assert.Contains("inscrito", error.Message, StringComparison.OrdinalIgnoreCase);
@@ -304,12 +301,12 @@ public class CalendarSessionHandlerTests
             )
         );
 
-        var enroll = new EnrollInCalendarSessionCommandHandler(
-            new TrainingModuleSessionRepository(db),
+        var enroll = CreateEnrollHandler(
+            db,
             new FakeCurrentUser { Id = 9, PersonId = 4 }
         );
 
-        var error = await Assert.ThrowsAsync<InvalidOperationException>(() =>
+        var error = await Assert.ThrowsAsync<SessionCancelledException>(() =>
             enroll.HandleAsync(new EnrollInCalendarSessionCommand(created.Id))
         );
         Assert.Contains("cancelada", error.Message, StringComparison.OrdinalIgnoreCase);
@@ -359,20 +356,33 @@ public class CalendarSessionHandlerTests
             )
         );
 
-        var first = new EnrollInCalendarSessionCommandHandler(
-            new TrainingModuleSessionRepository(db),
+        var first = CreateEnrollHandler(
+            db,
             new FakeCurrentUser { Id = 1, PersonId = 1 }
         );
         await first.HandleAsync(new EnrollInCalendarSessionCommand(created.Id));
 
-        var second = new EnrollInCalendarSessionCommandHandler(
-            new TrainingModuleSessionRepository(db),
+        var second = CreateEnrollHandler(
+            db,
             new FakeCurrentUser { Id = 2, PersonId = 2 }
         );
-        var error = await Assert.ThrowsAsync<InvalidOperationException>(() =>
+        var error = await Assert.ThrowsAsync<SessionFullException>(() =>
             second.HandleAsync(new EnrollInCalendarSessionCommand(created.Id))
         );
         Assert.Contains("cupo", error.Message, StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static EnrollInCalendarSessionCommandHandler CreateEnrollHandler(
+        ScoutDbContext db,
+        ICurrentUser user
+    )
+    {
+        var repository = new TrainingModuleSessionRepository(db);
+        return new EnrollInCalendarSessionCommandHandler(
+            new EnrollParticipantInSessionCommandHandler(repository, new UnitOfWork(db)),
+            repository,
+            user
+        );
     }
 
     private sealed class FakeCurrentUser : ICurrentUser

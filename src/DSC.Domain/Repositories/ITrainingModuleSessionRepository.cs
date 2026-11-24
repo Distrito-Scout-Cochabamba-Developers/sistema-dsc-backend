@@ -2,6 +2,19 @@ using DSC.Domain.Entities;
 
 namespace DSC.Domain.Repositories;
 
+/// <summary>
+/// Datos mínimos de una inscripción compartida por autoservicio y Secretaría.
+/// El origen y el operador los decide el canal; la operación no crea un
+/// contador aparte: usa el cupo de <see cref="TrainingModuleSession"/>.
+/// </summary>
+public record SessionEnrollmentRequest(
+    long SessionId,
+    long PersonId,
+    string EnrollmentSourceCode,
+    string EnrollmentSourceName,
+    long? RegisteredByUserId
+);
+
 public interface ITrainingModuleSessionRepository
 {
     Task<IReadOnlyList<TrainingModuleSession>> ListForCalendarAsync(
@@ -42,12 +55,6 @@ public interface ITrainingModuleSessionRepository
         CancellationToken cancellationToken = default
     );
 
-    Task<bool> ExistsEnrollmentAsync(
-        long sessionId,
-        long personId,
-        CancellationToken cancellationToken = default
-    );
-
     Task AddSessionAsync(
         TrainingModuleSession session,
         CancellationToken cancellationToken = default
@@ -59,8 +66,14 @@ public interface ITrainingModuleSessionRepository
         CancellationToken cancellationToken = default
     );
 
-    Task AddEnrollmentAsync(
-        TrainingModuleEnrollment enrollment,
+    /// <summary>
+    /// Inscribe a una persona validando ventana, duplicado y cupo en una sola
+    /// operación. En PostgreSQL requiere una transacción ambiente (la abre
+    /// <c>IUnitOfWork</c>) y bloquea la fila de la convocatoria para serializar
+    /// competidores por el último cupo.
+    /// </summary>
+    Task<TrainingModuleEnrollment> EnrollAsync(
+        SessionEnrollmentRequest request,
         CancellationToken cancellationToken = default
     );
 }
