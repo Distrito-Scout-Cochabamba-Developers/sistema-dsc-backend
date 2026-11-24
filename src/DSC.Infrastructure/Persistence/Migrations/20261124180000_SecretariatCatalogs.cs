@@ -22,9 +22,9 @@ public sealed class SecretariatCatalogs : Migration
         INSERT INTO contact_mechanism_type (id, code, name) OVERRIDING SYSTEM VALUE
             SELECT COALESCE((SELECT MAX(id) FROM contact_mechanism_type), 0) + 1, 'CELLPHONE', 'Celular'
             WHERE NOT EXISTS (SELECT 1 FROM contact_mechanism_type WHERE code = 'CELLPHONE');
-        SELECT setval(pg_get_serial_sequence('person_status', 'id'), (SELECT MAX(id) FROM person_status));
-        SELECT setval(pg_get_serial_sequence('contact_purpose_type', 'id'), (SELECT MAX(id) FROM contact_purpose_type));
-        SELECT setval(pg_get_serial_sequence('contact_mechanism_type', 'id'), (SELECT MAX(id) FROM contact_mechanism_type));
+        DO $$ BEGIN PERFORM setval(pg_get_serial_sequence('person_status', 'id'), (SELECT MAX(id) FROM person_status)); END $$;
+        DO $$ BEGIN PERFORM setval(pg_get_serial_sequence('contact_purpose_type', 'id'), (SELECT MAX(id) FROM contact_purpose_type)); END $$;
+        DO $$ BEGIN PERFORM setval(pg_get_serial_sequence('contact_mechanism_type', 'id'), (SELECT MAX(id) FROM contact_mechanism_type)); END $$;
         -- Respaldo atómico del bloqueo por CI: NULL y vacío cuentan como el mismo complemento.
         CREATE UNIQUE INDEX IF NOT EXISTS ux_person_ci_extension ON person (id_card, COALESCE(id_card_extension, ''));
         """);
