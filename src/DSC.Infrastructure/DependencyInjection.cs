@@ -41,6 +41,7 @@ public static class DependencyInjection
         });
 
         services.AddScoped<IScoutLeaderRepository, ScoutLeaderRepository>();
+        services.AddScoped<IRoverRegistrationRepository, RoverRegistrationRepository>();
         services.AddScoped<ITrainingModuleRepository, TrainingModuleRepository>();
         services.AddScoped<ITrainingModuleSessionRepository, TrainingModuleSessionRepository>();
         services.AddScoped<IUnitOfWork, UnitOfWork>();
