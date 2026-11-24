@@ -16,15 +16,16 @@ public record SecretariatParticipantLookupRequest(string Ci, string? Extension);
 [Route("v1/secretariat/participants")]
 public class SecretariatParticipantsController(
     LookupSecretariatParticipantByCiQueryHandler handler,
-    EnrollParticipantInSessionCommandHandler enrollmentHandler,
-    IScoutLeaderRepository people,
-    ICurrentUser currentUser,
     ILogger<SecretariatParticipantsController> logger
 ) : ControllerBase
 {
     /// <summary>Confirma la inscripción asistida de un dirigente existente.</summary>
     [HttpPost("{personId:long}/sessions/{sessionId:long}/enrollments")]
-    public async Task<IActionResult> Enroll(long personId, long sessionId, CancellationToken cancellationToken)
+    public async Task<IActionResult> Enroll(long personId, long sessionId,
+        [FromServices] EnrollParticipantInSessionCommandHandler enrollmentHandler,
+        [FromServices] IScoutLeaderRepository people,
+        [FromServices] ICurrentUser currentUser,
+        CancellationToken cancellationToken)
     {
         try
         {
