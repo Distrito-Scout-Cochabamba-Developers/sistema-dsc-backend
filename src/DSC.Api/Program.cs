@@ -167,6 +167,7 @@ public partial class Program
         var app = builder.Build();
 
         // 3. Global Exception Handling RFC 7807 Problem Details
+        app.UseMiddleware<SecretariatLookupPrivacyMiddleware>();
         app.UseMiddleware<GlobalExceptionHandlingMiddleware>();
 
         if (app.Environment.IsDevelopment())

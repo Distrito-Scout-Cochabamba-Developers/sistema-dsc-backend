@@ -9,6 +9,27 @@ namespace DSC.Infrastructure.Persistence.Repositories;
 /// </summary>
 public class ScoutLeaderRepository(ScoutDbContext dbContext) : IScoutLeaderRepository
 {
+    public async Task<IReadOnlyList<Person>> FindByCiAsync(
+        string ciNumber,
+        string? extension,
+        CancellationToken cancellationToken
+    )
+    {
+        var query = dbContext.Persons.AsNoTracking().Where(person => person.IdCard == ciNumber);
+        if (extension is not null)
+            query = query.Where(person =>
+                person.IdCardExtension != null && person.IdCardExtension.ToUpper() == extension
+            );
+
+        return await query
+            .Include(person => person.ContactMechanisms)
+            .Include(person => person.User)
+            .Include(person => person.ScoutLeader)
+            .OrderBy(person => person.Id)
+            .Take(2)
+            .ToListAsync(cancellationToken);
+    }
+
     public async Task<Person?> GetByCiNumberAsync(
         string ciNumber,
         CancellationToken cancellationToken
