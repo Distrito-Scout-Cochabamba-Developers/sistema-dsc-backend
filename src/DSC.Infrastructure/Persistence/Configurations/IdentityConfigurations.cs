@@ -41,6 +41,12 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
         builder.Property(x => x.Password).HasColumnName("password").HasMaxLength(255).IsRequired();
 
         builder.Property(x => x.UserStatusId).HasColumnName("user_status_id").IsRequired();
+        builder
+            .Property(x => x.ActivationTokenHash)
+            .HasColumnName("activation_token_hash")
+            .HasMaxLength(64);
+        builder.Property(x => x.ActivationExpiresAt).HasColumnName("activation_expires_at");
+        builder.HasIndex(x => x.ActivationTokenHash).IsUnique();
 
         builder
             .Property(x => x.IsEmailVerified)

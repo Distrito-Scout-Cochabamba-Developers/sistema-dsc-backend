@@ -14,6 +14,8 @@ public class User
     public string Password { get; set; } = string.Empty;
     public short UserStatusId { get; set; }
     public bool IsEmailVerified { get; set; }
+    public string? ActivationTokenHash { get; set; }
+    public DateTime? ActivationExpiresAt { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 

@@ -1,6 +1,7 @@
 using DSC.Application.Commands;
 using DSC.Application.DTOs;
 using DSC.Application.Interfaces;
+using DSC.Infrastructure;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -11,6 +12,29 @@ namespace DSC.Api.Controllers;
 public class AuthController(LoginCommandHandler loginHandler, ICurrentUser currentUser)
     : ControllerBase
 {
+    /// <summary>Canjea una invitación y habilita el login normal; no emite sesión.</summary>
+    [HttpPost("activate")]
+    [AllowAnonymous]
+    [RequestSizeLimit(4096)]
+    [ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> Activate(
+        [FromBody] AccountActivationRequest request,
+        [FromServices] AccountActivation activation,
+        CancellationToken cancellationToken
+    ) =>
+        await activation.RedeemAsync(request.Token, request.Password, cancellationToken)
+            ? NoContent()
+            : Problem(statusCode: 400, title: "No se pudo activar la cuenta con estos datos.");
+
+    /// <summary>Datos sensibles de canje. No registrar ni devolver el contenido.</summary>
+    public sealed class AccountActivationRequest
+    {
+        public string? Token { get; init; }
+        public string? Password { get; init; }
+    }
+
     /// <summary>
     /// Autentica con email o nombre de usuario y devuelve un JWT Bearer.
     /// </summary>

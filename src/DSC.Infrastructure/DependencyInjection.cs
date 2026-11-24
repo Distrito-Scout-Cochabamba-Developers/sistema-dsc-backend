@@ -5,6 +5,7 @@ using DSC.Infrastructure.Persistence;
 using DSC.Infrastructure.Persistence.Repositories;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace DSC.Infrastructure;
 
@@ -48,6 +49,8 @@ public static class DependencyInjection
         services.AddScoped<IModuleAttendanceRepository, ModuleAttendanceRepository>();
         services.AddScoped<IUserRepository, UserRepository>();
         services.AddScoped<IPasswordHasher, BCryptPasswordHasher>();
+        services.TryAddSingleton(TimeProvider.System);
+        services.AddScoped<AccountActivation>();
         services.AddScoped<IJwtTokenGenerator, JwtTokenGenerator>();
 
         return services;
