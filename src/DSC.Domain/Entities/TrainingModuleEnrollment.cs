@@ -9,6 +9,7 @@ public class TrainingModuleEnrollment
     public long TrainingModuleSessionId { get; set; }
     public long PersonId { get; set; }
     public short EnrollmentSourceId { get; set; }
+    public bool RoverWithoutAccount { get; set; }
     public bool Attended { get; set; }
     public DateTime? AttendanceRegisteredAt { get; set; }
     public long? RegisteredByUserId { get; set; }

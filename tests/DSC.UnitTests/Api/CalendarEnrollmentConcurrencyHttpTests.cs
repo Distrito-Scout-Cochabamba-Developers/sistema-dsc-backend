@@ -118,6 +118,56 @@ public class CalendarEnrollmentConcurrencyHttpTests(RequirementsPostgres postgre
     }
 
     [Fact]
+    public async Task ExistingRoverWithoutAccountCanBeEnrolled()
+    {
+        var session = await CreateSessionAsync(capacity: 1);
+        var secretary = await CreatePersonAsync("9876001", "Secretaria");
+        var rover = new Person { IdCard = "9876002", FirstName = "Rover", FirstLastName = "Prueba", PersonStatusId = personStatus.Id };
+        db.Persons.Add(rover);
+        await db.SaveChangesAsync();
+        using var request = new HttpRequestMessage(HttpMethod.Post, $"/api/v1/secretariat/participants/{rover.Id}/sessions/{session.Id}/enrollments") { Content = JsonContent.Create(new { modality = "ROVER_WITHOUT_ACCOUNT" }) };
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", Token(secretary, "DISTRICT_SECRETARY"));
+        using var response = await client.SendAsync(request);
+        Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+        Assert.False(await db.Users.AnyAsync(u => u.PersonId == rover.Id));
+        Assert.True((await db.TrainingModuleEnrollments.SingleAsync(e => e.PersonId == rover.Id)).RoverWithoutAccount);
+    }
+
+    [Fact]
+    public async Task RoverWithAccountIsRejectedWithoutEnrollment()
+    {
+        var session = await CreateSessionAsync(capacity: 1);
+        var secretary = await CreatePersonAsync("9876011", "Secretaria");
+        var person = await CreatePersonAsync("9876012", "Persona");
+        using var request = new HttpRequestMessage(HttpMethod.Post, $"/api/v1/secretariat/participants/{person.Id}/sessions/{session.Id}/enrollments") { Content = JsonContent.Create(new { modality = "ROVER_WITHOUT_ACCOUNT" }) };
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", Token(secretary, "DISTRICT_SECRETARY"));
+        using var response = await client.SendAsync(request);
+        Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
+        Assert.Empty(await db.TrainingModuleEnrollments.Where(e => e.PersonId == person.Id).ToListAsync());
+    }
+
+    [Fact]
+    public async Task ConcurrentAccountCreationCommittedFirstRejectsRover()
+    {
+        var session = await CreateSessionAsync(capacity: 1);
+        var secretary = await CreatePersonAsync("9876021", "Secretaria");
+        var rover = new Person { IdCard = "9876022", FirstName = "Rover", FirstLastName = "Prueba", PersonStatusId = personStatus.Id };
+        db.Persons.Add(rover);
+        await db.SaveChangesAsync();
+        await using var writer = postgres.Open(db.Database.GetConnectionString()!);
+        await using var transaction = await writer.Database.BeginTransactionAsync();
+        writer.Users.Add(new User { PersonId = rover.Id, UserStatusId = userStatus.Id, Username = "rover-ficticio", Email = "rover@example.test", Password = "ficticia" });
+        await writer.SaveChangesAsync();
+        using var request = new HttpRequestMessage(HttpMethod.Post, $"/api/v1/secretariat/participants/{rover.Id}/sessions/{session.Id}/enrollments") { Content = JsonContent.Create(new { modality = "ROVER_WITHOUT_ACCOUNT" }) };
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", Token(secretary, "DISTRICT_SECRETARY"));
+        var pending = client.SendAsync(request);
+        await transaction.CommitAsync();
+        using var response = await pending;
+        Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
+        Assert.Empty(await db.TrainingModuleEnrollments.Where(e => e.PersonId == rover.Id).ToListAsync());
+    }
+
+    [Fact]
     public async Task AssistedConfirmationDoesNotExposePersonalDataInResponseOrLogs()
     {
         const string ci = "9876543";

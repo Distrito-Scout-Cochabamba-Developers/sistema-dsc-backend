@@ -12,7 +12,8 @@ public record SessionEnrollmentRequest(
     long PersonId,
     string EnrollmentSourceCode,
     string EnrollmentSourceName,
-    long? RegisteredByUserId
+    long? RegisteredByUserId,
+    bool RoverWithoutAccount = false
 );
 
 public interface ITrainingModuleSessionRepository

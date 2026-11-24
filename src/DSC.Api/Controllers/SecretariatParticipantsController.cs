@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace DSC.Api.Controllers;
 
 public record SecretariatParticipantLookupRequest(string Ci, string? Extension);
+public record SecretariatEnrollmentRequest(string? Modality);
 
 [ApiController]
 [Authorize(Roles = "DISTRICT_SECRETARY")]
@@ -22,6 +23,7 @@ public class SecretariatParticipantsController(
     /// <summary>Confirma la inscripción asistida de un dirigente existente.</summary>
     [HttpPost("{personId:long}/sessions/{sessionId:long}/enrollments")]
     public async Task<IActionResult> Enroll(long personId, long sessionId,
+        [FromBody(EmptyBodyBehavior = Microsoft.AspNetCore.Mvc.ModelBinding.EmptyBodyBehavior.Allow)] SecretariatEnrollmentRequest? request,
         [FromServices] EnrollParticipantInSessionCommandHandler enrollmentHandler,
         [FromServices] IScoutLeaderRepository people,
         [FromServices] ICurrentUser currentUser,
@@ -30,12 +32,15 @@ public class SecretariatParticipantsController(
         try
         {
             if (currentUser.Id is null) return Unauthorized();
+            if (request?.Modality is not null and not "ROVER_WITHOUT_ACCOUNT") return BadRequest();
+            var rover = request?.Modality == "ROVER_WITHOUT_ACCOUNT";
             var person = await people.GetByIdAsync(personId, cancellationToken);
-            if (person?.ScoutLeader is null) return NotFound();
+            if (person is null || (!rover && person.ScoutLeader is null)) return NotFound();
             var enrollment = await enrollmentHandler.HandleAsync(
-                new(sessionId, personId, "SECRETARIAT", "Inscripción asistida por Secretaría", currentUser.Id), cancellationToken);
+                new(sessionId, personId, "SECRETARIAT", "Inscripción asistida por Secretaría", currentUser.Id, rover), cancellationToken);
             return StatusCode(StatusCodes.Status201Created, new { enrollmentId = enrollment.Id });
         }
+        catch (RoverHasAccountException) { return Problem(statusCode: 409, type: "urn:dsc:enrollment:rover-has-account", detail: "La persona ya tiene una cuenta."); }
         catch (EnrollmentConflictException ex)
         {
             var type = ex switch

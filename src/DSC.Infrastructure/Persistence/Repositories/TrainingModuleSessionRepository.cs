@@ -162,6 +162,18 @@ public class TrainingModuleSessionRepository(ScoutDbContext dbContext)
             );
         }
 
+        if (request.RoverWithoutAccount)
+        {
+            if (dbContext.Database.IsRelational())
+                // FOR UPDATE entra en conflicto con KEY SHARE de la FK al crear una cuenta.
+                await dbContext.Database.ExecuteSqlInterpolatedAsync(
+                    $"SELECT 1 FROM person WHERE id = {request.PersonId} FOR UPDATE", cancellationToken);
+            if (!await dbContext.Persons.AnyAsync(p => p.Id == request.PersonId, cancellationToken))
+                throw new KeyNotFoundException();
+            if (await dbContext.Users.AnyAsync(u => u.PersonId == request.PersonId, cancellationToken))
+                throw new RoverHasAccountException();
+        }
+
         var session =
             await GetByIdForCalendarAsync(request.SessionId, cancellationToken)
             ?? throw new KeyNotFoundException(
@@ -182,6 +194,7 @@ public class TrainingModuleSessionRepository(ScoutDbContext dbContext)
             PersonId = request.PersonId,
             EnrollmentSourceId = source.Id,
             RegisteredByUserId = request.RegisteredByUserId,
+            RoverWithoutAccount = request.RoverWithoutAccount,
         };
 
         dbContext.TrainingModuleEnrollments.Add(enrollment);

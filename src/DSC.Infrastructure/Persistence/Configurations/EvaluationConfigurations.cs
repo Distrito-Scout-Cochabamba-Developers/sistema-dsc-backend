@@ -40,6 +40,8 @@ public class TrainingModuleEnrollmentConfiguration
 
         builder.Property(x => x.PersonId).HasColumnName("person_id").IsRequired();
 
+        builder.Property(x => x.RoverWithoutAccount).HasColumnName("rover_without_account").HasDefaultValue(false).IsRequired();
+
         builder
             .Property(x => x.EnrollmentSourceId)
             .HasColumnName("enrollment_source_id")
