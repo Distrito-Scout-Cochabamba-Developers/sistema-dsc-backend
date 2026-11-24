@@ -93,12 +93,17 @@ public sealed class AccountInvitationDelivery(
             .Select(i => new PendingInvitationDto(i.EnrollmentId, i.Attempts, i.LastFailureCode, i.CreatedAt))
             .ToListAsync(cancellationToken);
 
-    /// <summary>Origen HTTPS configurado en el servidor; nunca derivado de la solicitud.</summary>
+    /// <summary>
+    /// Origen configurado en el servidor; nunca derivado de la solicitud. Debe ser HTTPS sin ruta.
+    /// Única excepción: con Activation:AllowLoopbackHttp=true se acepta http solo en un host de loopback (localhost), para pruebas locales.
+    /// </summary>
     private string? ActivationOrigin()
     {
         var configured = configuration["Activation:FrontendOrigin"];
-        return Uri.TryCreate(configured, UriKind.Absolute, out var uri)
-            && uri.Scheme == Uri.UriSchemeHttps
+        if (!Uri.TryCreate(configured, UriKind.Absolute, out var uri)) return null;
+        var schemeAllowed = uri.Scheme == Uri.UriSchemeHttps
+            || (uri.Scheme == Uri.UriSchemeHttp && uri.IsLoopback && bool.TryParse(configuration["Activation:AllowLoopbackHttp"], out var allowLoopback) && allowLoopback);
+        return schemeAllowed
             && string.IsNullOrEmpty(uri.UserInfo)
             && uri.AbsolutePath == "/"
             && uri.Query.Length == 0

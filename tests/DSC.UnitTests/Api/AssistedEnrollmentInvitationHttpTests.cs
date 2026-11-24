@@ -53,6 +53,7 @@ public class AssistedEnrollmentInvitationHttpTests(RequirementsPostgres postgres
     private readonly FakeMailer mailer = new();
     private readonly Logs logs = new();
     private string? origin = Origin;
+    private bool allowLoopbackHttp;
 
     public async Task InitializeAsync()
     {
@@ -84,7 +85,7 @@ public class AssistedEnrollmentInvitationHttpTests(RequirementsPostgres postgres
         builder.Logging.ClearProviders();
         builder.Logging.AddProvider(logs);
         if (origin is not null)
-            builder.Configuration.AddInMemoryCollection(new Dictionary<string, string?> { ["Activation:FrontendOrigin"] = origin });
+            builder.Configuration.AddInMemoryCollection(new Dictionary<string, string?> { ["Activation:FrontendOrigin"] = origin, ["Activation:AllowLoopbackHttp"] = allowLoopbackHttp.ToString() });
         builder.Services.AddControllers(o => o.Conventions.Add(new GlobalRoutePrefixConvention(new RouteAttribute("api"))))
             .AddApplicationPart(typeof(CalendarController).Assembly);
         builder.Services.AddApplication();
@@ -280,6 +281,25 @@ public class AssistedEnrollmentInvitationHttpTests(RequirementsPostgres postgres
         Assert.False(await db.Persons.AnyAsync(p => p.IdCard == Ci));
         Assert.Empty(await db.TrainingModuleEnrollments.ToListAsync());
         Assert.Empty(mailer.Sent);
+    }
+
+    [Theory]
+    [InlineData(true, "http://localhost:4200", "SENT")]
+    [InlineData(true, "http://dsc.example.test", "PENDING")]
+    [InlineData(false, "http://localhost:4200", "PENDING")]
+    public async Task HttpLoopbackOriginIsAcceptedOnlyWhenExplicitlyAllowed(bool allow, string configuredOrigin, string expected)
+    {
+        await app.DisposeAsync();
+        client.Dispose();
+        origin = configuredOrigin;
+        allowLoopbackHttp = allow;
+        await StartAppAsync();
+        var session = await CreateSessionAsync(capacity: 1);
+        using var response = await Enroll(session.Id, Ci);
+
+        Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+        Assert.Contains($"\"invitation\":\"{expected}\"", await response.Content.ReadAsStringAsync());
+        Assert.Equal(expected == "SENT" ? 1 : 0, mailer.Sent.Count);
     }
 
     [Fact]

@@ -101,6 +101,12 @@ public class SmtpAccountInvitationMailerTests
     private static string DecodeBody(string raw)
     {
         var idx = raw.IndexOf("\r\n\r\n", StringComparison.Ordinal);
+        if (idx >= 0 && raw.Contains("Content-Transfer-Encoding: quoted-printable", StringComparison.OrdinalIgnoreCase))
+        {
+            var qp = raw[(idx + 4)..].Replace("=\r\n", "");
+            qp = System.Text.RegularExpressions.Regex.Replace(qp, "=([0-9A-F]{2})", m => ((char)Convert.ToInt32(m.Groups[1].Value, 16)).ToString());
+            return raw + "\n" + qp;
+        }
         if (idx < 0 || !raw.Contains("Content-Transfer-Encoding: base64", StringComparison.OrdinalIgnoreCase)) return raw;
         var b64 = raw[(idx + 4)..].Split("\r\n.\r\n")[0].Replace("\r\n", "");
         try { return raw + "\n" + Encoding.UTF8.GetString(Convert.FromBase64String(b64)); } catch (FormatException) { return raw; }

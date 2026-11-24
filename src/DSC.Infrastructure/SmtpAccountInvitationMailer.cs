@@ -1,13 +1,16 @@
-using System.Net;
-using System.Net.Mail;
 using DSC.Application.Interfaces;
+using MailKit;
+using MailKit.Net.Smtp;
+using MailKit.Security;
 using Microsoft.Extensions.Configuration;
+using MimeKit;
 
 namespace DSC.Infrastructure;
 
 /// <summary>
-/// Transporte SMTP. Configuración (variables de entorno / .env fuera de Git):
-/// Smtp__Host, Smtp__Port (587), Smtp__EnableSsl (true), Smtp__Username, Smtp__Password, Smtp__From.
+/// Transporte SMTP con MailKit. Configuración (variables de entorno / .env fuera de Git):
+/// Smtp__Host, Smtp__Port (587), Smtp__EnableSsl (true), Smtp__Username, Smtp__Password, Smtp__From, Smtp__TimeoutSeconds (5).
+/// Con EnableSsl=true: puerto 465 usa TLS implícito; cualquier otro puerto exige STARTTLS (sin STARTTLS falla, no envía en claro).
 /// Texto plano sin enlaces de seguimiento ni contraseñas.
 /// </summary>
 public sealed class SmtpAccountInvitationMailer(IConfiguration configuration) : IAccountInvitationMailer
@@ -22,19 +25,21 @@ public sealed class SmtpAccountInvitationMailer(IConfiguration configuration) : 
             throw new InvalidOperationException("SMTP no configurado.");
         var port = int.TryParse(configuration["Smtp:Port"], out var p) ? p : 587;
         var ssl = !bool.TryParse(configuration["Smtp:EnableSsl"], out var s) || s;
+        var security = !ssl
+            ? SecureSocketOptions.None
+            : port == 465 ? SecureSocketOptions.SslOnConnect : SecureSocketOptions.StartTls;
 
         var timeoutSeconds = int.TryParse(configuration["Smtp:TimeoutSeconds"], out var t) ? Math.Clamp(t, 1, 30) : DefaultTimeoutSeconds;
         var timeout = TimeSpan.FromSeconds(timeoutSeconds);
-        using var client = new SmtpClient(host, port) { EnableSsl = ssl, Timeout = (int)timeout.TotalMilliseconds };
-        var user = configuration["Smtp:Username"];
-        if (!string.IsNullOrEmpty(user))
-            client.Credentials = new NetworkCredential(user, configuration["Smtp:Password"]);
-        using var mail = new MailMessage(from, message.To)
+
+        var mail = new MimeMessage();
+        mail.From.Add(MailboxAddress.Parse(from));
+        mail.To.Add(MailboxAddress.Parse(message.To));
+        mail.Subject = "Activa tu cuenta del Distrito Scout Cochabamba";
+        mail.Body = new TextPart("plain")
         {
-            Subject = "Activa tu cuenta del Distrito Scout Cochabamba",
-            IsBodyHtml = false,
-            Body = string.Join(
-                Environment.NewLine,
+            Text = string.Join(
+                "\r\n",
                 "Se registró tu inscripción y se creó tu cuenta.",
                 "",
                 $"Tu nombre de usuario: {message.Username}",
@@ -45,12 +50,19 @@ public sealed class SmtpAccountInvitationMailer(IConfiguration configuration) : 
                 "Si no esperabas este correo, ignóralo."
             ),
         };
-        // SmtpClient.Timeout no cubre todas las fases asíncronas: el tope se impone también con cancelación.
+
+        // El timeout propio de MailKit cubre las lecturas/escrituras; el token acota además el total.
         using var limit = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         limit.CancelAfter(timeout);
+        using var client = new SmtpClient { Timeout = (int)timeout.TotalMilliseconds };
         try
         {
-            await client.SendMailAsync(mail, limit.Token);
+            await client.ConnectAsync(host, port, security, limit.Token);
+            var user = configuration["Smtp:Username"];
+            if (!string.IsNullOrEmpty(user))
+                await client.AuthenticateAsync(user, configuration["Smtp:Password"] ?? string.Empty, limit.Token);
+            await client.SendAsync(mail, limit.Token);
+            await client.DisconnectAsync(true, CancellationToken.None);
         }
         catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
         {
