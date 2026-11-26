@@ -10,8 +10,6 @@ obj
 **/obj
 **/[Bb]in/
 **/[Oo]bj/
-_bmad
-_bmad-output
 tests
 *.md
 .env

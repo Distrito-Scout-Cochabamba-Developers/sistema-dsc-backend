@@ -2,8 +2,6 @@
 **/bin/**
 **/obj/**
 **/Generated Files/**
-_bmad/**
-_bmad-output/**
 .vs/**
 .idea/**
 node_modules/**
