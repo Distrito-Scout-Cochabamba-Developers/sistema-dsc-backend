@@ -1,7 +1,7 @@
 namespace DSC.Domain.Entities;
 
 /// <summary>
-/// Catálogo general de módulos de formación curricular estándar.
+/// Catálogo de módulos general de módulos de formación curricular estándar.
 /// </summary>
 public class TrainingModule
 {

@@ -57,7 +57,7 @@ if (activePersonStatus is null)
     };
     db.PersonStatuses.Add(activePersonStatus);
     await db.SaveChangesAsync();
-    Console.WriteLine("Catálogo person_status 'ACTIVE' creado.");
+    Console.WriteLine("Catálogo de módulos person_status 'ACTIVE' creado.");
 }
 
 var activeUserStatus = await db.UserStatuses.SingleOrDefaultAsync(x => x.Code == "ACTIVE");
@@ -71,7 +71,7 @@ if (activeUserStatus is null)
     };
     db.UserStatuses.Add(activeUserStatus);
     await db.SaveChangesAsync();
-    Console.WriteLine("Catálogo user_status 'ACTIVE' creado.");
+    Console.WriteLine("Catálogo de módulos user_status 'ACTIVE' creado.");
 }
 
 var rolesByCode = await db.Roles.ToDictionaryAsync(
@@ -181,7 +181,7 @@ try
                         )
                     )
                         throw new InvalidOperationException(
-                            $"La persona con CI {idCard} ya tiene la cuenta '{user.Username}'."
+                            $"La persona con Carnet de Identidad {idCard} ya tiene la cuenta '{user.Username}'."
                         );
                 }
 
@@ -196,7 +196,7 @@ try
 
                 if (user is not null && person is not null && user.PersonId != person.Id)
                     throw new InvalidOperationException(
-                        $"El usuario '{username}' y la persona con CI {idCard} no coinciden."
+                        $"El usuario '{username}' y la persona con Carnet de Identidad {idCard} no coinciden."
                     );
 
                 if (person is null)
@@ -211,16 +211,17 @@ try
                         SecondLastName = NormalizeOptional(seed.SecondLastName),
                         PersonStatusId = activePersonStatus.Id,
                         IsProfileComplete = false,
+                        FormationCondition = seed.FormationCondition,
                     };
                     db.Persons.Add(person);
                     await db.SaveChangesAsync();
                     createdPeople++;
-                    Console.WriteLine($"Persona creada: {person.FullName} (CI {idCard})");
+                    Console.WriteLine($"Persona creada: {person.FullName} (Carnet de Identidad {idCard})");
                 }
                 else
                 {
                     reusedPeople++;
-                    Console.WriteLine($"Persona existente: {person.FullName} (CI {idCard})");
+                    Console.WriteLine($"Persona existente: {person.FullName} (Carnet de Identidad {idCard})");
                 }
 
                 if (user is null)
@@ -385,6 +386,8 @@ static void ValidateManifest(SeedManifest manifest)
 
         if (user.Roles.Count == 0)
             throw new InvalidOperationException($"El usuario '{user.Username}' no tiene roles.");
+        if (user.FormationCondition is not (null or "ROVER" or "LEADER"))
+            throw new InvalidOperationException("formationCondition debe ser ROVER, LEADER o null.");
     }
 
     var duplicateUsernames = manifest
@@ -416,7 +419,7 @@ static void ValidateManifest(SeedManifest manifest)
         );
     if (duplicateIdCards.Length > 0)
         throw new InvalidOperationException(
-            $"CI duplicados en el manifiesto: {string.Join(", ", duplicateIdCards)}"
+            $"Carnet de Identidad duplicados en el manifiesto: {string.Join(", ", duplicateIdCards)}"
         );
 }
 
@@ -463,5 +466,6 @@ internal sealed class SeedUser
     public string? IdCardExtension { get; set; }
     public string Username { get; set; } = string.Empty;
     public string Email { get; set; } = string.Empty;
+    public string? FormationCondition { get; set; }
     public List<string> Roles { get; set; } = [];
 }

@@ -19,6 +19,7 @@ public class Person
     public long? PhotoFileId { get; set; }
     public short PersonStatusId { get; set; }
     public bool IsProfileComplete { get; set; }
+    public string? FormationCondition { get; set; }
 
     /// <summary>
     /// Nombre completo computado.

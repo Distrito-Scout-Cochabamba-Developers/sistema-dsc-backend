@@ -21,7 +21,7 @@ public class ScoutLeaderRepository(ScoutDbContext dbContext) : IScoutLeaderRepos
         var catalogs = await PersonCatalogs.ResolveAsync(dbContext, cancellationToken);
         var emailTypeId = await PersonCatalogs.EmailAsync(dbContext, cancellationToken);
         var today = DateOnly.FromDateTime(DateTime.UtcNow);
-        var person = new Person { IdCard = ci, IdCardExtension = extension, FirstName = firstName, FirstLastName = lastName, PersonStatusId = catalogs.ActiveStatusId, ScoutLeader = new ScoutLeader(), ContactMechanisms = [
+        var person = new Person { IdCard = ci, IdCardExtension = extension, FirstName = firstName, FirstLastName = lastName, PersonStatusId = catalogs.ActiveStatusId, FormationCondition = "LEADER", ScoutLeader = new ScoutLeader(), ContactMechanisms = [
             new() { ContactMechanismTypeId = catalogs.CellphoneTypeId, ContactPurposeTypeId = catalogs.PersonalPurposeId, ContactValue = phone, IsPrimary = true, ValidFrom = today },
             new() { ContactMechanismTypeId = emailTypeId, ContactPurposeTypeId = catalogs.PersonalPurposeId, ContactValue = email, IsPrimary = true, ValidFrom = today }
         ] };

@@ -19,15 +19,10 @@ public class TrainingModuleSessionRepository(ScoutDbContext dbContext)
     {
         var query = CalendarQuery();
 
-        if (from.HasValue)
-            query = query.Where(session =>
-                session.Schedules.Any(block => block.SessionDate >= from.Value)
-            );
-
-        if (to.HasValue)
-            query = query.Where(session =>
-                session.Schedules.Any(block => block.SessionDate <= to.Value)
-            );
+        if (from.HasValue || to.HasValue)
+            query = query.Where(session => session.Schedules.Any(block =>
+                (!from.HasValue || block.SessionDate >= from.Value) &&
+                (!to.HasValue || block.SessionDate <= to.Value)));
 
         return await query
             .OrderBy(session => session.Id)
@@ -155,29 +150,25 @@ public class TrainingModuleSessionRepository(ScoutDbContext dbContext)
                 );
 
             // Serializa a los competidores por el último cupo antes de leer el
-            // conteo. La fila de la convocatoria es también la fuente del cupo.
+            // conteo. La fila de la programación es también la fuente del cupo.
             await dbContext.Database.ExecuteSqlInterpolatedAsync(
                 $"SELECT 1 FROM training_module_session WHERE id = {request.SessionId} FOR UPDATE",
                 cancellationToken
             );
         }
 
-        if (request.RoverWithoutAccount)
-        {
-            if (dbContext.Database.IsRelational())
-                // FOR UPDATE entra en conflicto con KEY SHARE de la FK al crear una cuenta.
-                await dbContext.Database.ExecuteSqlInterpolatedAsync(
-                    $"SELECT 1 FROM person WHERE id = {request.PersonId} FOR UPDATE", cancellationToken);
-            if (!await dbContext.Persons.AnyAsync(p => p.Id == request.PersonId, cancellationToken))
-                throw new KeyNotFoundException();
-            if (await dbContext.Users.AnyAsync(u => u.PersonId == request.PersonId, cancellationToken))
-                throw new RoverHasAccountException();
-        }
+        if (dbContext.Database.IsRelational())
+            await dbContext.Database.ExecuteSqlInterpolatedAsync(
+                $"SELECT 1 FROM person WHERE id = {request.PersonId} FOR UPDATE", cancellationToken);
+        var person = await dbContext.Persons.AsNoTracking().SingleOrDefaultAsync(p => p.Id == request.PersonId, cancellationToken)
+            ?? throw new KeyNotFoundException();
+        if (request.EnrollmentSourceCode == "SECRETARIAT" && person.FormationCondition is not ("ROVER" or "LEADER"))
+            throw new DomainException("La condición de formación de la persona no está registrada.");
 
         var session =
             await GetByIdForCalendarAsync(request.SessionId, cancellationToken)
             ?? throw new KeyNotFoundException(
-                $"No se encontró ninguna convocatoria con el id '{request.SessionId}'."
+                $"No se encontró ninguna programación con el id '{request.SessionId}'."
             );
 
         session.EnsureCanEnroll(request.PersonId);
@@ -194,7 +185,8 @@ public class TrainingModuleSessionRepository(ScoutDbContext dbContext)
             PersonId = request.PersonId,
             EnrollmentSourceId = source.Id,
             RegisteredByUserId = request.RegisteredByUserId,
-            RoverWithoutAccount = request.RoverWithoutAccount,
+            RoverWithoutAccount = null,
+            FormationCondition = person.FormationCondition,
         };
 
         dbContext.TrainingModuleEnrollments.Add(enrollment);
@@ -235,7 +227,7 @@ public class TrainingModuleSessionRepository(ScoutDbContext dbContext)
 
         if (!await session.AnyAsync(cancellationToken))
             throw new KeyNotFoundException(
-                $"No se encontró la convocatoria con el id '{sessionId}'."
+                $"No se encontró la programación con el id '{sessionId}'."
             );
 
         throw new InvalidOperationException("La ampliación no puede reducir el cupo actual.");

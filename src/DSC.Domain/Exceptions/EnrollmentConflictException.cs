@@ -10,37 +10,37 @@ public class EnrollmentConflictException : InvalidOperationException
         : base(message) { }
 }
 
-/// <summary>La persona ya tiene una inscripción en la convocatoria; no consume otra plaza.</summary>
+/// <summary>La persona ya tiene una inscripción en la programación; no consume otra plaza.</summary>
 public sealed class AlreadyEnrolledException : EnrollmentConflictException
 {
     public AlreadyEnrolledException()
         : base("Ya estás inscrito en esta sesión.") { }
 }
 
-/// <summary>El cupo propio de la convocatoria se agotó.</summary>
+/// <summary>El cupo propio de la programación se agotó.</summary>
 public sealed class SessionFullException : EnrollmentConflictException
 {
     public SessionFullException()
         : base("El cupo de esta sesión se agotó.") { }
 }
 
-/// <summary>La convocatoria no admite inscripciones en este momento.</summary>
+/// <summary>La programación no admite inscripciones en este momento.</summary>
 public sealed class EnrollmentClosedException : EnrollmentConflictException
 {
     public EnrollmentClosedException()
-        : base("La inscripción de esta convocatoria está cerrada.") { }
+        : base("La inscripción de esta programación está cerrada.") { }
 }
 
-/// <summary>La convocatoria fue cancelada.</summary>
+/// <summary>La programación fue cancelada.</summary>
 public sealed class SessionCancelledException : EnrollmentConflictException
 {
     public SessionCancelledException()
-        : base("Esta convocatoria está cancelada.") { }
+        : base("Esta programación está cancelada.") { }
 }
 
-/// <summary>La convocatoria ya finalizó.</summary>
+/// <summary>La programación ya finalizó.</summary>
 public sealed class SessionFinishedException : EnrollmentConflictException
 {
     public SessionFinishedException()
-        : base("Esta convocatoria ya finalizó.") { }
+        : base("Esta programación ya finalizó.") { }
 }

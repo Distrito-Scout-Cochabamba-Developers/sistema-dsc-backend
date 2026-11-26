@@ -11,6 +11,7 @@ public class TrainingModuleEnrollment
     public short EnrollmentSourceId { get; set; }
     /// <summary>Null en inscripciones históricas cuya modalidad se desconoce.</summary>
     public bool? RoverWithoutAccount { get; set; }
+    public string? FormationCondition { get; set; }
     public bool Attended { get; set; }
     public DateTime? AttendanceRegisteredAt { get; set; }
     public long? RegisteredByUserId { get; set; }

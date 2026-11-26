@@ -53,7 +53,7 @@ public static class CalendarCatalogSeeder
             cancellationToken
         );
 
-        Console.WriteLine("Catálogo de calendario: estados, orígenes de inscripción y sesiones de demo.");
+        Console.WriteLine("Catálogo de módulos de calendario: estados, orígenes de inscripción y sesiones de demo.");
     }
 
     private static async Task EnsureStatusAsync(

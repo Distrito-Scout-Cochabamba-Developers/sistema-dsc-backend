@@ -10,7 +10,7 @@ public sealed class SecretariatCatalogs : Migration
 {
     protected override void Up(MigrationBuilder migrationBuilder) => migrationBuilder.Sql("""
         -- Ids explícitos (max+1) y secuencia sincronizada: una instalación con filas insertadas a mano no colisiona.
-        -- Verificaciones previas del índice. Nunca imprimen CI ni datos de personas.
+        -- Verificaciones previas del índice. Nunca imprimen Carnet de Identidad ni datos de personas.
         DO $$
         DECLARE
             existing_def text;
@@ -31,7 +31,7 @@ public sealed class SecretariatCatalogs : Migration
                     SELECT 1 FROM person GROUP BY id_card, COALESCE(id_card_extension, '') HAVING count(*) > 1
                 ) d;
                 IF duplicate_groups > 0 THEN
-                    RAISE EXCEPTION 'Hay % grupo(s) de personas con CI duplicados (mismo CI y complemento). Fusione o corrija los duplicados antes de migrar; consulte docs/database-migrations.md.', duplicate_groups;
+                    RAISE EXCEPTION 'Hay % grupo(s) de personas con Carnet de Identidad duplicados (mismo Carnet de Identidad y complemento). Fusione o corrija los duplicados antes de migrar; consulte docs/database-migrations.md.', duplicate_groups;
                 END IF;
             END IF;
         END $$;
@@ -50,7 +50,7 @@ public sealed class SecretariatCatalogs : Migration
         DO $$ BEGIN PERFORM setval(pg_get_serial_sequence('person_status', 'id'), (SELECT MAX(id) FROM person_status)); END $$;
         DO $$ BEGIN PERFORM setval(pg_get_serial_sequence('contact_purpose_type', 'id'), (SELECT MAX(id) FROM contact_purpose_type)); END $$;
         DO $$ BEGIN PERFORM setval(pg_get_serial_sequence('contact_mechanism_type', 'id'), (SELECT MAX(id) FROM contact_mechanism_type)); END $$;
-        -- Respaldo atómico del bloqueo por CI: NULL y vacío cuentan como el mismo complemento.
+        -- Respaldo atómico del bloqueo por Carnet de Identidad: NULL y vacío cuentan como el mismo complemento.
         CREATE UNIQUE INDEX IF NOT EXISTS ux_person_ci_extension ON person (id_card, COALESCE(id_card_extension, ''));
         """);
 

@@ -532,6 +532,11 @@ namespace DSC.Infrastructure.Persistence.Migrations
                         .HasColumnType("character varying(120)")
                         .HasColumnName("first_name");
 
+                    b.Property<string>("FormationCondition")
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)")
+                        .HasColumnName("formation_condition");
+
                     b.Property<GenderType?>("Gender")
                         .HasColumnType("gender_type")
                         .HasColumnName("gender");
@@ -1135,6 +1140,11 @@ namespace DSC.Infrastructure.Persistence.Migrations
                     b.Property<short>("EnrollmentSourceId")
                         .HasColumnType("smallint")
                         .HasColumnName("enrollment_source_id");
+
+                    b.Property<string>("FormationCondition")
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)")
+                        .HasColumnName("formation_condition");
 
                     b.Property<long>("PersonId")
                         .HasColumnType("bigint")

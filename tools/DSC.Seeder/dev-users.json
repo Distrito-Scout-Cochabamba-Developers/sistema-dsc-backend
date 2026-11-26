@@ -53,6 +53,7 @@
       "firstLastName": "Prueba",
       "idCard": "9000007",
       "username": "apu",
+      "formationCondition": "LEADER",
       "email": "apu@example.test",
       "roles": ["OPERATIONS_OFFICER"]
     },

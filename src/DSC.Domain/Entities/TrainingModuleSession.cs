@@ -3,7 +3,7 @@ using DSC.Domain.Exceptions;
 namespace DSC.Domain.Entities;
 
 /// <summary>
-/// Convocatoria o dictado concreto de un módulo de formación en el distrito.
+/// Programación o dictado concreto de un módulo de formación en el distrito.
 /// </summary>
 public class TrainingModuleSession
 {
@@ -25,7 +25,7 @@ public class TrainingModuleSession
     public ICollection<TrainingModuleEnrollment> Enrollments { get; set; } = [];
 
     /// <summary>
-    /// Reglas de ventana, duplicado y cupo propio de la convocatoria. Debe
+    /// Reglas de ventana, duplicado y cupo propio de la programación. Debe
     /// invocarse sobre una lectura bloqueada y con <see cref="Enrollments"/>
     /// cargadas; un duplicado se evalúa antes que el cupo para que no consuma
     /// una plaza.

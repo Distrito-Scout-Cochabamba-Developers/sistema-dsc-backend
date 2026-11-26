@@ -30,6 +30,7 @@ public class RoverRegistrationRepository(ScoutDbContext dbContext) : IRoverRegis
             FirstName = firstName,
             FirstLastName = lastName,
             PersonStatusId = catalogs.ActiveStatusId,
+            FormationCondition = "ROVER",
         };
         if (phone is not null)
         {

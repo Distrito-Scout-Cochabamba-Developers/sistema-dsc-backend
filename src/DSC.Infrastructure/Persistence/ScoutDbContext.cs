@@ -38,7 +38,7 @@ public class ScoutDbContext(DbContextOptions<ScoutDbContext> options) : DbContex
     public DbSet<UserRole> UserRoles => Set<UserRole>();
     public DbSet<AccountInvitation> AccountInvitations => Set<AccountInvitation>();
 
-    // 5. Catálogo Curricular y Plantillas Maestras
+    // 5. Catálogo de módulos Curricular y Plantillas Maestras
     public DbSet<TrainingLine> TrainingLines => Set<TrainingLine>();
     public DbSet<TrainingLevel> TrainingLevels => Set<TrainingLevel>();
     public DbSet<TrainingLevelRequirement> TrainingLevelRequirements =>
@@ -52,7 +52,7 @@ public class ScoutDbContext(DbContextOptions<ScoutDbContext> options) : DbContex
     public DbSet<TrainingModuleLessonPlanTemplateActivity> TrainingModuleLessonPlanTemplateActivities =>
         Set<TrainingModuleLessonPlanTemplateActivity>();
 
-    // 6. Convocatorias, Sesiones y Trazabilidad de Estados
+    // 6. Programaciones, Sesiones y Trazabilidad de Estados
     public DbSet<TrainingModuleSessionStatus> TrainingModuleSessionStatuses =>
         Set<TrainingModuleSessionStatus>();
     public DbSet<TrainingModuleSession> TrainingModuleSessions => Set<TrainingModuleSession>();

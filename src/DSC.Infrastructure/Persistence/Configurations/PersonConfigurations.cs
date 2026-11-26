@@ -36,6 +36,7 @@ public class PersonConfiguration : IEntityTypeConfiguration<Person>
         builder.Property(x => x.IdCard).HasColumnName("id_card").HasMaxLength(20).IsRequired();
 
         builder.Property(x => x.IdCardExtension).HasColumnName("id_card_extension").HasMaxLength(5);
+        builder.Property(x => x.FormationCondition).HasColumnName("formation_condition").HasMaxLength(10);
 
         builder
             .Property(x => x.FirstName)

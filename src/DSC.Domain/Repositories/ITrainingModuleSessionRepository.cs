@@ -71,7 +71,7 @@ public interface ITrainingModuleSessionRepository
     /// Inscribe a una persona validando ventana, duplicado y cupo en una sola
     /// operación. En PostgreSQL requiere una transacción ambiente (la abre
     /// <c>IUnitOfWork</c>) de nivel READ COMMITTED y bloquea la fila de la
-    /// convocatoria para serializar competidores por el último cupo.
+    /// programación para serializar competidores por el último cupo.
     /// </summary>
     Task<TrainingModuleEnrollment> EnrollAsync(
         SessionEnrollmentRequest request,

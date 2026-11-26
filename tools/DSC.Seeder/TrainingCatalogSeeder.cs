@@ -1,5 +1,5 @@
 ﻿// ============================================================================
-// Catálogo de Formación Scout - Líneas, Niveles, Módulos y Requisitos
+// Catálogo de módulos de Formación Scout - Líneas, Niveles, Módulos y Requisitos
 // ============================================================================
 
 using DSC.Domain.Entities;
@@ -322,7 +322,7 @@ public static class TrainingCatalogSeeder
     {
         Console.WriteLine();
         Console.WriteLine("==================================================");
-        Console.WriteLine("Cargando Catálogo de Formación Scout");
+        Console.WriteLine("Cargando Catálogo de módulos de Formación Scout");
         Console.WriteLine("==================================================");
 
         var existingLines = await db.TrainingLines.ToDictionaryAsync(
@@ -495,7 +495,7 @@ public static class TrainingCatalogSeeder
 
         await AssertCatalogValidAsync(db, cancellationToken);
         Console.WriteLine(
-            "Verificación del catálogo: OK (3 líneas, 7 niveles, 107 módulos, 4 requisitos válidos)."
+            "Verificación del catálogo de módulos: OK (3 líneas, 7 niveles, 107 módulos, 4 requisitos válidos)."
         );
     }
 
