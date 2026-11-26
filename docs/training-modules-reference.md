@@ -1,6 +1,6 @@
 # Grilla de módulos DSC
 
-Referencia aportada por el usuario durante la reconstrucción de pruebas de HU 1.3. No es una semilla ni un catálogo codificado oficial. Se conservan los nombres recibidos; no se infieren equivalencias entre títulos similares.
+Referencia aportada por el usuario durante la reconstrucción de pruebas de HU 1.3. No es una semilla ni un catálogo de módulos codificado oficial. Se conservan los nombres recibidos; no se infieren equivalencias entre títulos similares.
 
 **IM I-II — Insignia de Madera I-II:** nivel único de Programa de Jóvenes (PJ), 12 módulos totales, mínimo 2 de los 4 elegibles obligatorios. Otros ejemplos aportados: Tribu Tierra, Como llegar a ser 24, El sistema de equipos. La grilla incluye «Para llegar a ser 24»; no se afirma una equivalencia oficial con «Como llegar a ser 24».
 

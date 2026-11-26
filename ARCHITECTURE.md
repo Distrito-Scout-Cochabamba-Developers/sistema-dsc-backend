@@ -91,7 +91,7 @@ public record class CiNumber
     public CiNumber(string value)
     {
         if (string.IsNullOrWhiteSpace(value) || value.Length < 5)
-            throw new DomainException("El número de CI no es válido.");
+            throw new DomainException("El número de Carnet de Identidad no es válido.");
 
         Value = value.Trim();
     }
@@ -180,7 +180,7 @@ public class RegisterScoutMemberHandler(IScoutMemberRepository repository)
         var ci = new CiNumber(command.Ci);
 
         if (await repository.ExistsCiAsync(ci.Value, cancellationToken))
-            throw new InvalidOperationException("Ya existe un miembro registrado con este CI.");
+            throw new InvalidOperationException("Ya existe un miembro registrado con este Carnet de Identidad.");
 
         var member = ScoutMember.Create(command.FirstName, command.LastName, ci, command.BirthDate);
 
@@ -289,7 +289,7 @@ public class ScoutMembersController(RegisterScoutMemberHandler handler) : Contro
 
 ## 📚 Documentación de features
 
-Contratos y cambios recientes (catálogo de módulos, calendario de convocatorias, catálogos que exige el POST de asistencia) viven en [`docs/`](./docs/README.md). Este archivo sigue siendo la guía de capas y dependencias.
+Contratos y cambios recientes (catálogo de módulos de módulos, calendario de programaciones, catálogos que exige el POST de asistencia) viven en [`docs/`](./docs/README.md). Este archivo sigue siendo la guía de capas y dependencias.
 
 ---
 

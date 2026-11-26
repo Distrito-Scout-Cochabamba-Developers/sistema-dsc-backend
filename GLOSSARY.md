@@ -29,7 +29,17 @@ Nivel único de la línea Programa de Jóvenes (PJ), no dos niveles separados.
 _Avoid_: IM I e IM II como niveles independientes.
 
 **TrainingModule (módulo de formación)**:
-Unidad del catálogo curricular perteneciente a una o más líneas de formación, no a niveles.
+Contenido formativo del catálogo de módulos curricular, perteneciente a una o más líneas de formación, que se imparte en una o varias sesiones.
+
+**Programación de un módulo de formación**:
+Oferta de un módulo para fechas concretas, a la que las personas pueden inscribirse. Una nueva programación del mismo módulo permite una nueva inscripción; el cupo corresponde a la programación.
+_Avoid_: Convocatoria.
+
+**Sesión**:
+Encuentro presencial o virtual que forma parte de un módulo de formación programado. Sus fechas, horarios y modalidades pueden diferir; la inscripción comprende todas sus sesiones.
+
+**Disertante**:
+Persona que imparte una sesión de formación. Cada sesión tiene un solo disertante; distintas sesiones de una programación pueden tener disertantes diferentes.
 
 **MandatoryModule (módulo obligatorio)**:
 Módulo de la lista reglamentaria elegible de un nivel; pertenecer a esa lista no implica que deban aprobarse todos sus módulos. Una aprobación acreditada en el historial puede reutilizarse para satisfacer requisitos de otros niveles sin repetir el módulo.
@@ -47,17 +57,13 @@ No posee periodos de vigencia por fechas.
 _Avoid_: CurriculumPlan con DateRange, cuota fija de voluntarios.
 
 **Rover**:
-Joven de la modalidad Rover que se inscribe a una convocatoria. La modalidad "Rover sin cuenta" pertenece a la inscripción, no a la persona: se registra con CI, nombres, apellidos y celular opcional, sin credenciales, afiliación, rama ni rol, y se rechaza si la persona ya tiene cuenta.
+Joven de la modalidad Rover que se inscribe a una programación. La modalidad "Rover sin cuenta" pertenece a la inscripción, no a la persona: se registra con Carnet de Identidad, nombres, apellidos y celular opcional, sin credenciales, afiliación, rama ni rol, y se rechaza si la persona ya tiene cuenta.
 _Avoid_: tratar al Rover sin cuenta como dirigente o como usuario.
 
 **Secretaría (Secretaría Distrital)**:
-Rol `DISTRICT_SECRETARY` que busca personas por CI e inscribe de forma asistida (dirigente existente, dirigente nuevo o Rover sin cuenta) en una convocatoria. Es el único rol autorizado para los endpoints de Secretaría; ADMIN no los usa.
+Rol `DISTRICT_SECRETARY` que busca personas por Carnet de Identidad e inscribe de forma asistida (dirigente existente, dirigente nuevo o Rover sin cuenta) en una programación. Es el único rol autorizado para los endpoints de Secretaría; ADMIN no los usa.
 _Avoid_: Administración, ADMIN.
-
-**Convocatoria**:
-Sesión programada de un módulo de formación (`TrainingModuleSession`) con cupo propio, ventana de inscripción y estado. Es la unidad en la que se inscribe una persona; el cupo es de la convocatoria, no del módulo.
-_Avoid_: Módulo (el catálogo curricular), evento.
 
 **Invitación**:
 Correo con un enlace de un solo uso (vence en 24 horas) para que una persona creada por la inscripción asistida elija su contraseña y active su cuenta. Queda PENDING si el envío falla y solo se reintenta manualmente; nunca duplica la inscripción.
-_Avoid_: Recuperación de contraseña, invitación a la convocatoria.
+_Avoid_: Recuperación de contraseña, invitación a la programación.

@@ -314,14 +314,14 @@ El trabajo posterior añadió pipelines a ambos repositorios.
 | Acción | Resultado |
 | --- | --- |
 | `git pull` | Actualiza tu copia local |
-| `git push` | Publica tus commits en GitHub y dispara CI |
-| CI del frontend | Escanea secretos, ejecuta pruebas, compila y guarda `frontend-browser` |
-| CI del backend | Escanea secretos, revisa formato, compila, ejecuta xUnit y guarda `api-publish` |
+| `git push` | Publica tus commits en GitHub y dispara Carnet de Identidad |
+| Carnet de Identidad del frontend | Escanea secretos, ejecuta pruebas, compila y guarda `frontend-browser` |
+| Carnet de Identidad del backend | Escanea secretos, revisa formato, compila, ejecuta xUnit y guarda `api-publish` |
 | Subida a los paneles de hosting | Publica la versión que usarán los visitantes |
 
 ### Resultado del pipeline backend
 
-El 13 de noviembre quedó aprobado [Backend CI #3](https://github.com/Distrito-Scout-Cochabamba-Developers/sistema-dsc-backend/actions/runs/43505468116), correspondiente al commit `21a2f32` de `back-pablo`.
+El 13 de noviembre quedó aprobado [Backend Carnet de Identidad #3](https://github.com/Distrito-Scout-Cochabamba-Developers/sistema-dsc-backend/actions/runs/43505468116), correspondiente al commit `21a2f32` de `back-pablo`.
 
 - Gitleaks aprobó el escaneo del historial.
 - CSharpier aprobó el formato C#.
@@ -329,7 +329,7 @@ El 13 de noviembre quedó aprobado [Backend CI #3](https://github.com/Distrito-S
 - Las 62 pruebas xUnit pasaron localmente y la etapa xUnit también aprobó en GitHub.
 - Se generaron los artefactos `xunit-test-results` y `api-publish`.
 
-Para obtener el paquete del backend desde CI, abre **GitHub → Actions → Backend CI → ejecución correcta → Artifacts → api-publish**. Revisa la raíz del ZIP descargado y publica su contenido mediante el procedimiento de MonsterASP.
+Para obtener el paquete del backend desde Carnet de Identidad, abre **GitHub → Actions → Backend Carnet de Identidad → ejecución correcta → Artifacts → api-publish**. Revisa la raíz del ZIP descargado y publica su contenido mediante el procedimiento de MonsterASP.
 
 El frontend genera `frontend-browser` para el mismo propósito. Los workflows configuran una retención de siete días. Si el artefacto caducó, genera una nueva ejecución o compila localmente.
 

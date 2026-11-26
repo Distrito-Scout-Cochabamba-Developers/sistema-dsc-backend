@@ -74,11 +74,11 @@ Si los binarios están en otra ubicación, indicar opcionalmente `-PgBin`:
 
 La comprobación crea exclusivamente un clúster PostgreSQL nativo, aislado y efímero. No acepta una cadena de conexión ni utiliza la base configurada de la aplicación; no instala PostgreSQL. Verifica las rutas de migración independientemente de la suite xUnit. Los fallos de tickets de esa suite se siguen por separado; no son resultados de esta comprobación de migraciones.
 
-## Catálogos de persona e índice único de CI (AB#158)
+## Catálogos de persona e índice único de Carnet de Identidad (AB#158)
 
 `20261124180000_SecretariatCatalogs` agrega, sin alterar ids existentes, los códigos `ACTIVE` (`person_status`), `PERSONAL` (`contact_purpose_type`), `EMAIL` y `CELLPHONE` (`contact_mechanism_type`), y crea el índice único `ux_person_ci_extension` sobre `person (id_card, COALESCE(id_card_extension, ''))`. La asistencia digital, la inscripción asistida y el alta de Rover resuelven estos catálogos **por código**, nunca por id fijo.
 
-**Paso previo de despliegue (obligatorio, antes de migrar o ejecutar el script idempotente):** respaldar la base y comprobar que no hay personas con el mismo CI y complemento. La consulta devuelve solo cantidades; no imprime CI ni nombres:
+**Paso previo de despliegue (obligatorio, antes de migrar o ejecutar el script idempotente):** respaldar la base y comprobar que no hay personas con el mismo Carnet de Identidad y complemento. La consulta devuelve solo cantidades; no imprime Carnet de Identidad ni nombres:
 
 ```sql
 SELECT count(*) AS grupos_duplicados FROM (
@@ -86,6 +86,6 @@ SELECT count(*) AS grupos_duplicados FROM (
 ) d;
 ```
 
-Si es mayor que cero, fusionar o corregir los duplicados desde un canal controlado (no en este log) y repetir. La migración repite la comprobación y **falla con un mensaje claro** (`grupo(s) de personas con CI duplicados`) sin crear el índice ni mostrar CI. También falla, sin omitirlo en silencio, si ya existe un objeto llamado `ux_person_ci_extension` que no sea un índice único válido con la definición esperada (por ejemplo un índice homónimo no único): eliminarlo o renombrarlo tras revisarlo y reintentar. Un índice ya existente y correcto se acepta (idempotente).
+Si es mayor que cero, fusionar o corregir los duplicados desde un canal controlado (no en este log) y repetir. La migración repite la comprobación y **falla con un mensaje claro** (`grupo(s) de personas con Carnet de Identidad duplicados`) sin crear el índice ni mostrar Carnet de Identidad. También falla, sin omitirlo en silencio, si ya existe un objeto llamado `ux_person_ci_extension` que no sea un índice único válido con la definición esperada (por ejemplo un índice homónimo no único): eliminarlo o renombrarlo tras revisarlo y reintentar. Un índice ya existente y correcto se acepta (idempotente).
 
-**Bloqueo por CI.** El alta de personas se serializa con `pg_advisory_xact_lock(158001, hashtext('person-ci:' || ci))` (forma de dos enteros; el primero es el espacio de nombres reservado, constante `PersonCiLock.Namespace`). Es el mismo bloqueo en los tres canales de alta. Otras funcionalidades que usen advisory locks deben elegir otro espacio de nombres. Una colisión de `hashtext` solo serializa de más dos CI distintos; la unicidad la garantiza el índice.
+**Bloqueo por Carnet de Identidad.** El alta de personas se serializa con `pg_advisory_xact_lock(158001, hashtext('person-ci:' || ci))` (forma de dos enteros; el primero es el espacio de nombres reservado, constante `PersonCiLock.Namespace`). Es el mismo bloqueo en los tres canales de alta. Otras funcionalidades que usen advisory locks deben elegir otro espacio de nombres. Una colisión de `hashtext` solo serializa de más dos Carnet de Identidad distintos; la unicidad la garantiza el índice.

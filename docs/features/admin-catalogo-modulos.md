@@ -1,4 +1,4 @@
-# Administración del catálogo de módulos
+# Administración del catálogo de módulos de módulos
 
 - **Estado:** Entregado (2026-10-22)
 - **Roles:** `ADMIN`, `DISTRICT_SECRETARY` (claim JWT `roles`)

@@ -1,10 +1,12 @@
-# Calendario de convocatorias e inscripción
+# Calendario de programaciones e inscripción
+
+Actualmente `TrainingModuleSession` representa la programación inscribible y `training_module_schedule` almacena bloques de horario. Estos bloques no implementan todavía sesiones como encuentros independientes con disertante y modalidad propios.
 
 - **Estado:** Entregado (2026-11-21)
-- **Scalar:** grupo **Calendario**. Alta de convocatorias en **Módulos**.
+- **Scalar:** grupo **Calendario**. Alta de programaciones en **Módulos**.
 - **Frontend:** `/calendario` con `trainingCalendarApiEnabled: true`
 
-Fecha y hora **no** viven en el catálogo ni en la sesión. El listado proyecta `training_module` + `training_module_session` + `training_module_schedule`.
+Fecha y hora **no** viven en el catálogo de módulos ni en la sesión. El listado proyecta `training_module` + `training_module_session` + `training_module_schedule`.
 
 ## Contrato HTTP
 
@@ -27,7 +29,7 @@ Cuerpo vacío. Cualquier usuario autenticado. Origen `enrollment_source.code = A
 | 201 | `{ enrollmentId, session }` |
 | 401 | sin JWT |
 | 400 | el JWT no trae `personId` |
-| 404 | convocatoria inexistente o sin horarios |
+| 404 | programación inexistente o sin horarios |
 | 409 | ya inscrito, cupo agotado, inscripción cerrada, cancelada o finalizada |
 
 Una persona no puede tener dos filas en `training_module_enrollment` para la misma sesión (índice único).
@@ -71,7 +73,7 @@ Devuelve `204` al ampliar o repetir el valor actual; `400` por cuerpo inválido,
 | Campo | Origen |
 | ----- | ------ |
 | `id` | `training_module_session.id` |
-| `moduleCode` | `training_module.id` en texto (el catálogo ya no tiene `code`) |
+| `moduleCode` | `training_module.id` en texto (el catálogo de módulos ya no tiene `code`) |
 | `moduleName` | `training_module.name` |
 | `moduleTypeCode` / `moduleTypeName` | primera línea de formación del módulo (orden por código) |
 | `startsAt` / `endsAt` | primer y último bloque de `training_module_schedule` |
@@ -84,7 +86,7 @@ Devuelve `204` al ampliar o repetir el valor actual; `400` por cuerpo inválido,
 
 ### Estados
 
-Catálogo `training_module_session_status` → JSON del calendario:
+Catálogo de módulos `training_module_session_status` → JSON del calendario:
 
 | BD | API |
 | -- | --- |
@@ -97,13 +99,13 @@ Catálogo `training_module_session_status` → JSON del calendario:
 
 ## Datos locales
 
-El seeder (`tools/DSC.Seeder`) crea estados, orígenes de inscripción y tres convocatorias demo (Primeros auxilios, Liderazgo, Trabajo en Equipo) ancladas a hoy, si esos módulos existen.
+El seeder (`tools/DSC.Seeder`) crea estados, orígenes de inscripción y tres programaciones demo (Primeros auxilios, Liderazgo, Trabajo en Equipo) ancladas a hoy, si esos módulos existen.
 
 Sin sesiones, el GET devuelve `[]` y el calendario queda vacío (ya no usa fixtures).
 
 ## Cómo probar
 
-1. Sembrar catálogo + usuarios.
+1. Sembrar catálogo de módulos + usuarios.
 2. `GET /api/v1/calendar/sessions`.
 3. Login `pablo.rocha` / `1234`.
 4. `POST /api/v1/calendar/sessions/{id}/enrollments` con Bearer.
@@ -111,6 +113,6 @@ Sin sesiones, el GET devuelve `[]` y el calendario queda vacío (ya no usa fixtu
 
 ## Fuera de alcance
 
-- UI admin de convocatorias (solo API).
-- Inscripción por Secretaría (CI).
+- UI admin de programaciones (solo API).
+- Inscripción por Secretaría (Carnet de Identidad).
 - Una tarjeta de calendario por cada día de un dictado de varios bloques: la grilla usa `startsAt` (primer bloque).

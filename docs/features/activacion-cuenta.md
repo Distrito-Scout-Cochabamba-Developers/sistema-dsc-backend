@@ -13,7 +13,7 @@
 - `204 No Content`: contraseña BCrypt, estado `ACTIVE`, correo verificado y consumo del token en un único `UPDATE` condicional. Sin JWT; se usa el login existente.
 - `400 Problem Details`: no distingue token desconocido, expirado, ya usado, cuenta no elegible o contraseña rechazada. Un fallo no consume el enlace.
 
-El token vive como SHA-256 en `user.activation_token_hash`. Solo hay uno vigente por cuenta; el estado, hash y expiración se comprueban al escribir. Dos canjes concurrentes no pueden ganar. La migración agrega columnas anulables y asegura el catálogo `PENDING_VERIFICATION` / `ACTIVE`, sin cambiar cuentas existentes.
+El token vive como SHA-256 en `user.activation_token_hash`. Solo hay uno vigente por cuenta; el estado, hash y expiración se comprueban al escribir. Dos canjes concurrentes no pueden ganar. La migración agrega columnas anulables y asegura el catálogo de módulos `PENDING_VERIFICATION` / `ACTIVE`, sin cambiar cuentas existentes.
 
 Mantener desactivada la captura de cuerpos HTTP de esta ruta (aplicación, proxy y telemetría), el registro sensible de EF y el registro de enlaces en el correo. El fragmento URL no viaja al servidor. El endpoint pide `Cache-Control: no-store`. El correo, alta y reintentos pertenecen a AB#161; no cambia Rover.
 

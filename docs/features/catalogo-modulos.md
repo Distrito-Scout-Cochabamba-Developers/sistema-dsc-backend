@@ -1,4 +1,4 @@
-# Catálogo de módulos de formación
+# Módulos de formación de formación
 
 - **Estado:** Entregado (2026-10-16)
 - **Motivo:** El frontend lista módulos desde PostgreSQL y solo abre el formulario de asistencia al elegir uno.
@@ -56,6 +56,6 @@ Sin filas en `training_module` el GET devuelve `[]` y el POST de asistencia resp
 
 ## Fuera de alcance
 
-- Convocatoria (`TrainingModuleSession`: fecha, horario, QR admin). El `code` del módulo curricular hace de token de sesión.
+- Programación (`TrainingModuleSession`: fecha, horario, QR admin). El `code` del módulo curricular hace de token de sesión.
 
 Administración (POST/PUT, líneas, roles): [admin-catalogo-modulos.md](./admin-catalogo-modulos.md).

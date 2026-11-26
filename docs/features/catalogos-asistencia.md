@@ -15,7 +15,7 @@
 
 `LookupLeaderByCiQueryHandler` también trata el tipo `2` como celular.
 
-En Docker esas tablas de catálogo estaban vacías (`contact_mechanism_type`, `contact_purpose_type`). El insert a `person_contact_mechanism` violaba la FK.
+En Docker esas tablas de catálogo de módulos estaban vacías (`contact_mechanism_type`, `contact_purpose_type`). El insert a `person_contact_mechanism` violaba la FK.
 
 `person_status` `ACTIVE` ya era `id = 1` por la semilla de usuario.
 
@@ -30,7 +30,7 @@ Archivo: `docker/seed-dev-user.sql` (idempotente, `OVERRIDING SYSTEM VALUE` para
 | `contact_mechanism_type` | 1 | `EMAIL` |
 | `contact_mechanism_type` | 2 | `CELLPHONE` |
 
-Tras sembrar, el POST responde **201**. Un segundo POST del mismo CI al mismo módulo responde **409**.
+Tras sembrar, el POST responde **201**. Un segundo POST del mismo Carnet de Identidad al mismo módulo responde **409**.
 
 ## Deuda
 
@@ -40,4 +40,4 @@ Resolver los tipos por `code` (`CELLPHONE`, `PERSONAL`, `ACTIVE`) en el handler,
 
 - Handler: `src/DSC.Application/Commands/RegisterDigitalAttendanceCommandHandler.cs`
 - Lookup: `src/DSC.Application/Queries/LookupLeaderByCiQueryHandler.cs`
-- Catálogo de módulos: [catalogo-modulos.md](./catalogo-modulos.md)
+- Módulos de formación: [catalogo-modulos.md](./catalogo-modulos.md)

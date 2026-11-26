@@ -13,7 +13,7 @@ Alcance deducido de la spec de la Historia 2.3 (sin acceso al tablero): tras con
 
 - Entrega "al menos una vez", no exactamente una. Si el correo sale pero la confirmación en BD falla, o el servidor SMTP lo acepta y se pierde, un reintento envía otro enlace (el anterior queda invalidado por la reemisión). No se promete lo contrario.
 - Un bloqueo de fila (`SELECT ... FOR UPDATE`) serializa emisión y envío por cuenta: reintentos simultáneos envían un solo correo.
-- Enlace: `https://<Activation__FrontendOrigin>/auth/activar#token=<43 caracteres>`; el origen viene de configuración del servidor y debe ser HTTPS sin ruta, si no la entrega falla como `InvalidActivationOrigin`. El token va en el fragmento (no llega al servidor ni a logs de proxy). No contiene CI, correo ni nombre.
+- Enlace: `https://<Activation__FrontendOrigin>/auth/activar#token=<43 caracteres>`; el origen viene de configuración del servidor y debe ser HTTPS sin ruta, si no la entrega falla como `InvalidActivationOrigin`. El token va en el fragmento (no llega al servidor ni a logs de proxy). No contiene Carnet de Identidad, correo ni nombre.
 - No se registra correo, enlace, token ni mensaje de excepción (puede contener correo); solo id de invitación y tipo de excepción.
 - Fuera de alcance: invitar a dirigentes existentes sin cuenta; Rover (no tiene cuenta por diseño).
 
