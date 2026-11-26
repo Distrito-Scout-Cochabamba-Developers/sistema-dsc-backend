@@ -9,7 +9,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace DSC.Api.Controllers;
 
-public record SecretariatParticipantLookupRequest(string Ci, string? Extension);
+public record SecretariatParticipantLookupRequest(string Ci, string? Extension, long? SessionId = null);
 public record SecretariatEnrollmentRequest(string? Modality, string? Ci = null, string? Extension = null);
 
 [ApiController]
@@ -31,9 +31,9 @@ public class SecretariatParticipantsController(
         try
         {
             if (currentUser.Id is null) return Unauthorized();
-            if (request?.Modality is not null and not "ROVER_WITHOUT_ACCOUNT") return BadRequest();
-            var rover = request?.Modality == "ROVER_WITHOUT_ACCOUNT";
-            // CI es opcional para conservar el contrato de #157/#159; si llega, se reverifica bajo bloqueo.
+            if (request?.Modality is not null) return BadRequest();
+            var rover = false;
+            // Carnet de Identidad es opcional para conservar el contrato de #157/#159; si llega, se reverifica bajo bloqueo.
             var enrollment = await enrollmentHandler.ExistingAsync(sessionId, personId, currentUser.Id.Value, request?.Ci, request?.Extension, rover, cancellationToken);
             return StatusCode(StatusCodes.Status201Created, new { enrollmentId = enrollment.Id });
         }
@@ -42,7 +42,7 @@ public class SecretariatParticipantsController(
         catch (KeyNotFoundException) { return NotFound(); }
         catch (CiExtensionRequiredException) { return this.ExtensionRequiredProblem(); }
         catch (AmbiguousSecretariatCiException) { return Problem(statusCode: 409, type: "urn:dsc:secretariat:identity-changed", detail: "La identidad ya no es inequívoca. Vuelve a buscar."); }
-        catch (DomainException) { return Problem(statusCode: 400, detail: "CI o complemento inválido."); }
+        catch (DomainException) { return Problem(statusCode: 400, detail: "La condición de formación o los datos de identidad no son válidos."); }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) { return new EmptyResult(); }
         catch (Exception ex)
         {
@@ -73,8 +73,8 @@ public class SecretariatParticipantsController(
         }
         catch (EmailInUseException) { return Problem(statusCode: 409, type: "urn:dsc:secretariat:email-in-use", detail: "El correo ya pertenece a otra cuenta."); }
         catch (CiExtensionRequiredException) { return this.ExtensionRequiredProblem(); }
-        catch (AmbiguousSecretariatCiException) { return Problem(statusCode: 409, type: "urn:dsc:secretariat:identity-changed", detail: "El CI ya tiene coincidencias. Vuelve a buscar."); }
-        catch (PersonCiConflictException) { return Problem(statusCode: 409, type: "urn:dsc:secretariat:identity-changed", detail: "El CI ya tiene coincidencias. Vuelve a buscar."); }
+        catch (AmbiguousSecretariatCiException) { return Problem(statusCode: 409, type: "urn:dsc:secretariat:identity-changed", detail: "El Carnet de Identidad ya tiene coincidencias. Vuelve a buscar."); }
+        catch (PersonCiConflictException) { return Problem(statusCode: 409, type: "urn:dsc:secretariat:identity-changed", detail: "El Carnet de Identidad ya tiene coincidencias. Vuelve a buscar."); }
         // Mensaje fijo: el de la excepción puede reflejar datos personales enviados por el cliente.
         catch (DomainException) { return Problem(statusCode: 400, detail: "Los datos de la persona no son válidos."); }
         catch (EnrollmentConflictException ex) { return this.EnrollmentConflictProblem(ex); }
@@ -82,11 +82,11 @@ public class SecretariatParticipantsController(
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) { return new EmptyResult(); }
         catch (Exception ex) { logger.LogError("Falló la inscripción de Secretaría: {ExceptionType}", ex.GetType().Name); return Problem(statusCode: 500, detail: "No se pudo completar la inscripción."); }
     }
-    /// <summary>Busca una persona por CI sin crear una inscripción.</summary>
+    /// <summary>Busca una persona por Carnet de Identidad sin crear una inscripción.</summary>
     [HttpPost("lookup")]
-    [EndpointSummary("Busca un participante por CI (Secretaría)")]
+    [EndpointSummary("Busca un participante por Carnet de Identidad (Secretaría)")]
     [EndpointDescription(
-        "Requiere el rol DISTRICT_SECRETARY. Si hay varias personas con el mismo CI, requiere una extensión que identifique una sola. No crea perfiles ni inscripciones."
+        "Requiere el rol DISTRICT_SECRETARY. Si hay varias personas con el mismo Carnet de Identidad, requiere una extensión que identifique una sola. No crea perfiles ni inscripciones."
     )]
     [ProducesResponseType(typeof(SecretariatParticipantDto), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
@@ -97,6 +97,7 @@ public class SecretariatParticipantsController(
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
     public async Task<ActionResult<SecretariatParticipantDto>> Lookup(
         [FromBody] SecretariatParticipantLookupRequest request,
+        [FromServices] ITrainingModuleSessionRepository sessions,
         CancellationToken cancellationToken
     )
     {
@@ -106,13 +107,16 @@ public class SecretariatParticipantsController(
                 new LookupSecretariatParticipantByCiQuery(request.Ci, request.Extension),
                 cancellationToken
             );
+            if (request.SessionId is <= 0) return BadRequest();
+            var session = request.SessionId is null ? null : await sessions.GetByIdForCalendarAsync(request.SessionId.Value, cancellationToken);
+            if (request.SessionId is not null && session is null) return NotFound();
             return participant is null
                 ? Problem(
                     statusCode: 404,
                     type: "urn:dsc:secretariat:participant-not-found",
-                    detail: "No se encontró una persona con el CI indicado."
+                    detail: "No se encontró una persona con el Carnet de Identidad indicado."
                 )
-                : Ok(participant);
+                : Ok(participant with { IsEnrolled = session?.Enrollments.Any(e => e.PersonId == participant.PersonId) });
         }
         catch (DomainException ex)
         {

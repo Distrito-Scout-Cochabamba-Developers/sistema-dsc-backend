@@ -6,7 +6,7 @@ namespace DSC.Api.Controllers;
 
 /// <summary>
 /// Invitaciones de activación de cuentas creadas por la inscripción asistida. El reintento es solo manual.
-/// Las respuestas no contienen correo, usuario, enlace ni CI.
+/// Las respuestas no contienen correo, usuario, enlace ni Carnet de Identidad.
 /// </summary>
 [ApiController]
 [Authorize(Roles = "DISTRICT_SECRETARY")]

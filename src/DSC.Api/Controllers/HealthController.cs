@@ -49,7 +49,7 @@ public class HealthController(ScoutDbContext dbContext) : ControllerBase
     }
 
     /// <summary>
-    /// Diagnóstico rápido de tablas y conteo de registros en el catálogo.
+    /// Diagnóstico rápido de tablas y conteo de registros en el catálogo de módulos.
     /// </summary>
     [HttpGet("db-check")]
     [ProducesResponseType(StatusCodes.Status200OK)]

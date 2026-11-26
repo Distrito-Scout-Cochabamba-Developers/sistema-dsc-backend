@@ -87,11 +87,11 @@ public class GlobalExceptionHandlingMiddleware(
                 notFoundEx.Message
             ),
 
-            // Conflicto de CI (alta concurrente): mensaje fijo, sin CI ni datos de la persona.
+            // Conflicto de Carnet de Identidad (alta concurrente): mensaje fijo, sin Carnet de Identidad ni datos de la persona.
             PersonCiConflictException => (
                 HttpStatusCode.Conflict,
-                "Conflicto de CI",
-                "Ya existe una persona con el mismo CI. Vuelve a buscar."
+                "Conflicto de Carnet de Identidad",
+                "Ya existe una persona con el mismo Carnet de Identidad. Vuelve a buscar."
             ),
 
             InvalidOperationException conflictEx => (

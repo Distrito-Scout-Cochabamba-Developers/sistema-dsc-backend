@@ -25,7 +25,7 @@ internal static class CalendarSessionMapping
 
         if (blocks.Length == 0)
             throw new InvalidOperationException(
-                $"La convocatoria {session.Id} no tiene bloques de horario."
+                $"La programación {session.Id} no tiene bloques de horario."
             );
 
         var first = blocks[0];

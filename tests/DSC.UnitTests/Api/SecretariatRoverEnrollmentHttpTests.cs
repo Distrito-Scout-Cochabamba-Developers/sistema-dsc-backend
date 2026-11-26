@@ -105,7 +105,7 @@ public class SecretariatRoverEnrollmentHttpTests(RequirementsPostgres postgres) 
         Assert.False(await db.ScoutLeaders.AnyAsync(l => l.PersonId == person.Id));
         Assert.False(await db.ScoutAffiliations.AnyAsync(a => a.PersonId == person.Id));
         var enrollment = await db.TrainingModuleEnrollments.SingleAsync(e => e.PersonId == person.Id);
-        Assert.True(enrollment.RoverWithoutAccount);
+        Assert.Equal("ROVER", enrollment.FormationCondition);
         Assert.Equal(secretaryUserId, enrollment.RegisteredByUserId);
     }
 

@@ -2,7 +2,7 @@ using System.Text.Json.Serialization;
 
 namespace DSC.Application.DTOs;
 
-/// <summary>Bloque de horario de una convocatoria (una fila de schedule).</summary>
+/// <summary>Bloque de horario de una programación (una fila de schedule).</summary>
 public record class WriteTrainingModuleScheduleDto(
     DateOnly SessionDate,
     TimeOnly StartTime,
@@ -12,7 +12,7 @@ public record class WriteTrainingModuleScheduleDto(
     string? PartTitle = null
 );
 
-/// <summary>Alta de convocatoria ligada a un módulo del catálogo.</summary>
+/// <summary>Alta de programación ligada a un módulo del catálogo de módulos.</summary>
 public record class WriteTrainingModuleSessionDto(
     IReadOnlyList<WriteTrainingModuleScheduleDto> Schedules,
     string? StatusCode = null,

@@ -20,7 +20,7 @@ public record class EnrollParticipantInSessionCommand(
 /// <summary>
 /// Operación compartida por autoservicio y Secretaría (#157). Valida ventana,
 /// duplicado y cupo en una sola transacción y no usa un contador adicional:
-/// el cupo es el de la convocatoria (#155). Para #158/#160, el alta de la
+/// el cupo es el de la programación (#155). Para #158/#160, el alta de la
 /// persona y esta inscripción deben ejecutarse dentro del mismo
 /// <see cref="IUnitOfWork"/>; la operación se une a la transacción ambiente.
 /// </summary>

@@ -19,10 +19,10 @@ public class SecretariatEnrollment(IScoutLeaderRepository people, IUnitOfWork un
         try
         {
             var parsed = new CiNumber(ci, extension ?? "");
-            if (parsed.Number.Any(c => c is < '0' or > '9')) throw new DomainException("CI inválido.");
+            if (parsed.Number.Any(c => c is < '0' or > '9')) throw new DomainException("Carnet de Identidad inválido.");
             return parsed;
         }
-        catch (DomainException) { throw new DomainException("CI o complemento inválido."); }
+        catch (DomainException) { throw new DomainException("Carnet de Identidad o complemento inválido."); }
     }
 
     public Task<TrainingModuleEnrollment> CreateAsync(long sessionId, long operatorId, NewSecretariatLeader input, CancellationToken cancellationToken)
@@ -36,7 +36,7 @@ public class SecretariatEnrollment(IScoutLeaderRepository people, IUnitOfWork un
         return unitOfWork.ExecuteInTransactionAsync(async token =>
         {
             await people.LockCiAsync(ci.Number, token);
-            // Un CI existente nunca se duplica ni se crea con otro complemento sin que el operador lo desambigüe.
+            // Un Carnet de Identidad existente nunca se duplica ni se crea con otro complemento sin que el operador lo desambigüe.
             var extension = string.IsNullOrEmpty(ci.Extension) ? null : ci.Extension;
             switch (CiExtensionRule.Classify(await people.ExtensionsOfCiAsync(ci.Number, token), extension))
             {
@@ -52,8 +52,8 @@ public class SecretariatEnrollment(IScoutLeaderRepository people, IUnitOfWork un
     }
 
     /// <summary>
-    /// Inscribe a una persona existente. Con CI se reverifica la identidad bajo bloqueo;
-    /// sin CI se conserva el contrato de #157 (solo identificador de persona).
+    /// Inscribe a una persona existente. Con Carnet de Identidad se reverifica la identidad bajo bloqueo;
+    /// sin Carnet de Identidad se conserva el contrato de #157 (solo identificador de persona).
     /// </summary>
     public Task<TrainingModuleEnrollment> ExistingAsync(long sessionId, long personId, long operatorId, string? ciValue, string? extension, bool rover, CancellationToken cancellationToken)
     {
@@ -65,7 +65,7 @@ public class SecretariatEnrollment(IScoutLeaderRepository people, IUnitOfWork un
                 await people.LockCiAsync(ci.Number, token);
                 var extension = string.IsNullOrEmpty(ci.Extension) ? null : ci.Extension;
                 var matches = await people.FindByCiAsync(ci.Number, extension, token);
-                // Varias personas con el CI, o ninguna con ese complemento pero sí con otros: se pide el complemento.
+                // Varias personas con el Carnet de Identidad, o ninguna con ese complemento pero sí con otros: se pide el complemento.
                 if (matches.Count > 1 || (matches.Count == 0 && extension is not null
                     && CiExtensionRule.Classify(await people.ExtensionsOfCiAsync(ci.Number, token), extension) == CiPresence.OtherComplement))
                     throw new CiExtensionRequiredException();
@@ -73,7 +73,9 @@ public class SecretariatEnrollment(IScoutLeaderRepository people, IUnitOfWork un
                     throw new AmbiguousSecretariatCiException();
             }
             var person = await people.GetByIdAsync(personId, token);
-            if (person is null || (!rover && person.ScoutLeader is null)) throw new KeyNotFoundException();
+            if (person is null) throw new KeyNotFoundException();
+            if (person.FormationCondition is not ("ROVER" or "LEADER"))
+                throw new DomainException("La condición de formación de la persona no está registrada.");
             return await enrollment.HandleAsync(new(sessionId, personId, "SECRETARIAT", "Inscripción asistida por Secretaría", operatorId, rover), token);
         }, cancellationToken);
     }

@@ -103,6 +103,7 @@ public class SecretariatParticipantLookupHttpTests : IAsyncLifetime
                     SecondLastName = "Pérez",
                     PersonStatusId = 1,
                     IsProfileComplete = true,
+                    FormationCondition = "LEADER",
                     User = new User
                     {
                         Username = "carlos",
@@ -148,6 +149,7 @@ public class SecretariatParticipantLookupHttpTests : IAsyncLifetime
                     FirstName = "Rover",
                     FirstLastName = "Scout",
                     PersonStatusId = 1,
+                    FormationCondition = "ROVER",
                 },
                 new Person
                 {
@@ -168,6 +170,10 @@ public class SecretariatParticipantLookupHttpTests : IAsyncLifetime
                     PersonStatusId = 1,
                 }
             );
+            var module = new TrainingModule { Name = "Prueba" };
+            var session = new TrainingModuleSession { Id = 42, TrainingModule = module, Status = new TrainingModuleSessionStatus { Code = "OPEN", Name = "Abierta" }, Schedules = [new TrainingModuleSchedule { SessionDate = new DateOnly(2027, 1, 1) }] };
+            session.Enrollments.Add(new TrainingModuleEnrollment { PersonId = 1 });
+            db.TrainingModuleSessions.Add(session);
             await db.SaveChangesAsync();
         }
 
@@ -223,7 +229,7 @@ public class SecretariatParticipantLookupHttpTests : IAsyncLifetime
         Assert.True(person.HasAccount);
         Assert.True(person.IsScoutLeader);
         Assert.True(person.IsProfileComplete);
-        // El CI existe bajo otros complementos: se pide el complemento en lugar de un "no encontrado" ciego.
+        // El Carnet de Identidad existe bajo otros complementos: se pide el complemento en lugar de un "no encontrado" ciego.
         var otherComplement = await LookupAsync("5556667", "SC");
         Assert.Equal(HttpStatusCode.Conflict, otherComplement.StatusCode);
         Assert.Contains("urn:dsc:secretariat:extension-required", await otherComplement.Content.ReadAsStringAsync());
@@ -257,7 +263,25 @@ public class SecretariatParticipantLookupHttpTests : IAsyncLifetime
         using var scope = app.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<ScoutDbContext>();
         Assert.Equal(5, await db.Persons.CountAsync());
-        Assert.Empty(await db.TrainingModuleEnrollments.ToListAsync());
+        Assert.Single(await db.TrainingModuleEnrollments.ToListAsync());
+    }
+
+    [Fact]
+    public async Task Lookup_ReportsEnrollmentForSelectedSessionAndNeverInfersCondition()
+    {
+        Authenticate("DISTRICT_SECRETARY");
+        var enrolled = await client.PostAsJsonAsync(Path, new { ci = "5556667", extension = "cb", sessionId = 42 });
+        var result = (await enrolled.Content.ReadFromJsonAsync<SecretariatParticipantDto>())!;
+        Assert.Equal("LEADER", result.Condition);
+        Assert.True(result.IsEnrolled);
+        var unknown = await client.PostAsJsonAsync(Path, new { ci = "5556667", extension = "LP", sessionId = 42 });
+        var other = (await unknown.Content.ReadFromJsonAsync<SecretariatParticipantDto>())!;
+        Assert.Null(other.Condition);
+        Assert.False(other.IsEnrolled);
+        var missing = await client.PostAsJsonAsync(Path, new { ci = "7778889", sessionId = 999 });
+        Assert.Equal(HttpStatusCode.NotFound, missing.StatusCode);
+        var legacy = await LookupAsync("7778889");
+        Assert.Null((await legacy.Content.ReadFromJsonAsync<SecretariatParticipantDto>())!.IsEnrolled);
     }
 
     [Theory]

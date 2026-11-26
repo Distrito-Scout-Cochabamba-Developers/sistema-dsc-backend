@@ -225,7 +225,7 @@ public class RegisterDigitalAttendanceHandlerTests
 
         var request = new RegisterDigitalAttendanceDto(
             SessionToken: sampleModule.Id.ToString(),
-            CiNumber: "7654321A", // Invalid alphabetic CI
+            CiNumber: "7654321A", // Invalid alphabetic Carnet de Identidad
             Extension: "CB",
             FirstName: "Juan",
             LastName: "Pérez",

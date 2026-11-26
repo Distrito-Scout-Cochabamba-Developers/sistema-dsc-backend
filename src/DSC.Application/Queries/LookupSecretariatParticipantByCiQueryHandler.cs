@@ -8,12 +8,12 @@ namespace DSC.Application.Queries;
 public record LookupSecretariatParticipantByCiQuery(string CiNumber, string? Extension);
 
 public class AmbiguousSecretariatCiException(
-    string message = "El CI tiene varias coincidencias. El complemento debe identificar a una sola persona."
+    string message = "El Carnet de Identidad tiene varias coincidencias. El complemento debe identificar a una sola persona."
 ) : InvalidOperationException(message);
 
-/// <summary>El CI existe con varios complementos o solo con otros: la API pide el complemento que lo desambigüe.</summary>
+/// <summary>El Carnet de Identidad existe con varios complementos o solo con otros: la API pide el complemento que lo desambigüe.</summary>
 public sealed class CiExtensionRequiredException()
-    : AmbiguousSecretariatCiException("El CI tiene coincidencias con otros complementos. Indica el complemento que identifique a la persona.");
+    : AmbiguousSecretariatCiException("El Carnet de Identidad tiene coincidencias con otros complementos. Indica el complemento que identifique a la persona.");
 
 public class LookupSecretariatParticipantByCiQueryHandler(IScoutLeaderRepository leaderRepository)
 {
@@ -30,7 +30,7 @@ public class LookupSecretariatParticipantByCiQueryHandler(IScoutLeaderRepository
         catch (DomainException)
         {
             // This value object's errors echo user input; never propagate those here.
-            throw new DomainException("CI o complemento inválido.");
+            throw new DomainException("Carnet de Identidad o complemento inválido.");
         }
         var matches = await leaderRepository.FindByCiAsync(
             ci.Number,
@@ -44,7 +44,7 @@ public class LookupSecretariatParticipantByCiQueryHandler(IScoutLeaderRepository
         var person = matches.SingleOrDefault();
         if (person is null)
         {
-            // Con complemento sin coincidencia, pero con el CI existente bajo otro: se pide el complemento correcto.
+            // Con complemento sin coincidencia, pero con el Carnet de Identidad existente bajo otro: se pide el complemento correcto.
             if (!string.IsNullOrEmpty(ci.Extension) && (await leaderRepository.ExtensionsOfCiAsync(ci.Number, cancellationToken)).Count > 0)
                 throw new CiExtensionRequiredException();
             return null;
@@ -84,7 +84,8 @@ public class LookupSecretariatParticipantByCiQueryHandler(IScoutLeaderRepository
             phone,
             person.User is not null,
             person.ScoutLeader is not null,
-            person.IsProfileComplete
+            person.IsProfileComplete,
+            person.FormationCondition is "ROVER" or "LEADER" ? person.FormationCondition : null
         );
     }
 }

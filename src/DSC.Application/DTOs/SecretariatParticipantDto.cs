@@ -9,5 +9,7 @@ public record SecretariatParticipantDto(
     string Phone,
     bool HasAccount,
     bool IsScoutLeader,
-    bool IsProfileComplete
+    bool IsProfileComplete,
+    string? Condition = null,
+    bool? IsEnrolled = null
 );

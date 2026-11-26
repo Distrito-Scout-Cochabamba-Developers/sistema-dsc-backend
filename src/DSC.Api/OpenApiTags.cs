@@ -1,7 +1,7 @@
 namespace DSC.Api;
 
 /// <summary>
-/// Tags OpenAPI / Scalar. Asistencia y catálogo admin van en grupos distintos.
+/// Tags OpenAPI / Scalar. Asistencia y catálogo de módulos admin van en grupos distintos.
 /// </summary>
 public static class OpenApiTags
 {

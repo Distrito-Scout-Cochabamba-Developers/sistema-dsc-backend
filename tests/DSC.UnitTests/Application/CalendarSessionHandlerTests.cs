@@ -25,6 +25,7 @@ public class CalendarSessionHandlerTests
 
     private static async Task<TrainingModule> SeedModuleAsync(ScoutDbContext db)
     {
+        db.Persons.AddRange(Enumerable.Range(1, 4).Select(id => new Person { Id = id, IdCard = id.ToString(), FirstName = "Prueba", FirstLastName = "Persona", PersonStatusId = 1 }));
         db.TrainingLines.Add(new TrainingLine(1, "PJ", "Programa de Jóvenes"));
         db.TrainingModuleSessionStatuses.AddRange(
             new TrainingModuleSessionStatus

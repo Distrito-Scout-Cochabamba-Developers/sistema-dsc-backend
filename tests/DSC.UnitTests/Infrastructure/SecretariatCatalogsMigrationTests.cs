@@ -63,7 +63,7 @@ public class SecretariatCatalogsMigrationTests(RequirementsPostgres postgres)
 
         var ex = await Assert.ThrowsAsync<PostgresException>(() => db.GetService<IMigrator>().MigrateAsync(Target));
 
-        Assert.Contains("CI duplicados", ex.MessageText);
+        Assert.Contains("Carnet de Identidad duplicados", ex.MessageText);
         Assert.DoesNotContain("9100077", ex.MessageText + ex.Detail + ex.Hint);
         Assert.False(await db.Database.SqlQueryRaw<int>("SELECT 1 AS \"Value\" FROM pg_indexes WHERE indexname = 'ux_person_ci_extension'").AnyAsync());
     }

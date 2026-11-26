@@ -20,7 +20,7 @@ public record EnrollNewRoverFromSecretariatCommand(
 
 /// <summary>
 /// Rover nuevo (#160): alta mínima + inscripción en una sola transacción. Si la
-/// inscripción falla (cupo, ventana, duplicado, convocatoria inexistente) no queda
+/// inscripción falla (cupo, ventana, duplicado, programación inexistente) no queda
 /// perfil, contacto ni inscripción. No crea cuenta, dirigente, afiliación ni rol.
 /// </summary>
 public partial class EnrollNewRoverFromSecretariatCommandHandler(
@@ -37,7 +37,7 @@ public partial class EnrollNewRoverFromSecretariatCommandHandler(
         CancellationToken cancellationToken = default
     )
     {
-        // Los mensajes de validación no incluyen el CI ni el celular: no deben llegar a respuestas ni logs.
+        // Los mensajes de validación no incluyen el Carnet de Identidad ni el celular: no deben llegar a respuestas ni logs.
         var firstName = command.FirstName?.Trim() ?? "";
         var lastName = command.LastName?.Trim() ?? "";
         var phone = string.IsNullOrWhiteSpace(command.Phone) ? null : command.Phone.Trim();
@@ -47,7 +47,7 @@ public partial class EnrollNewRoverFromSecretariatCommandHandler(
             throw new RequestValidationException("El celular no es válido.");
         CiNumber ci;
         try { ci = new CiNumber(command.Ci ?? "", command.Extension ?? ""); }
-        catch (DomainException) { throw new RequestValidationException("CI o complemento inválido."); }
+        catch (DomainException) { throw new RequestValidationException("Carnet de Identidad o complemento inválido."); }
 
         return unitOfWork.ExecuteInTransactionAsync(
             async token =>

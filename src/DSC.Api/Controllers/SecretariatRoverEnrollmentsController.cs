@@ -35,7 +35,7 @@ public class SecretariatRoverEnrollmentsController(
             return StatusCode(StatusCodes.Status201Created, new { enrollmentId = enrollment.Id });
         }
         catch (RequestValidationException ex) { return Problem(statusCode: 400, detail: ex.Message); }
-        catch (RoverPersonExistsException) { return Problem(statusCode: 409, type: "urn:dsc:enrollment:person-exists", detail: "Ya existe una persona con el CI indicado. Búsquela antes de inscribirla."); }
+        catch (RoverPersonExistsException) { return Problem(statusCode: 409, type: "urn:dsc:enrollment:person-exists", detail: "Ya existe una persona con el Carnet de Identidad indicado. Búsquela antes de inscribirla."); }
         catch (CiExtensionRequiredException) { return this.ExtensionRequiredProblem(); }
         catch (EnrollmentConflictException ex) { return this.EnrollmentConflictProblem(ex); }
         catch (KeyNotFoundException) { return NotFound(); }

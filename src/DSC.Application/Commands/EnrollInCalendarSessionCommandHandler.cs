@@ -44,7 +44,7 @@ public class EnrollInCalendarSessionCommandHandler(
         var updated =
             await sessionRepository.GetByIdForCalendarAsync(command.SessionId, cancellationToken)
             ?? throw new InvalidOperationException(
-                "La inscripción se guardó pero no se pudo recargar la convocatoria."
+                "La inscripción se guardó pero no se pudo recargar la programación."
             );
 
         return new CalendarEnrollmentDto(

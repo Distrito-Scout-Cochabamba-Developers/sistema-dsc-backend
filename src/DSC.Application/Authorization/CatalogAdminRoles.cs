@@ -1,7 +1,7 @@
 namespace DSC.Application.Authorization;
 
 /// <summary>
-/// Roles que pueden administrar el catálogo curricular (`role.code` / claim JWT `roles`).
+/// Roles que pueden administrar el catálogo de módulos curricular (`role.code` / claim JWT `roles`).
 /// </summary>
 public static class CatalogAdminRoles
 {

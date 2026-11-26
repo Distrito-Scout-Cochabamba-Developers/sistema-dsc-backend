@@ -22,7 +22,7 @@ public class AdminCatalogController(
 ) : ControllerBase
 {
     /// <summary>
-    /// Lista el catálogo curricular para administración.
+    /// Lista el catálogo de módulos curricular para administración.
     /// </summary>
     [HttpGet("modules")]
     [EndpointSummary("Lista módulos de formación (admin / secretaría)")]
@@ -149,10 +149,10 @@ public class AdminCatalogController(
     /// Lista líneas de formación para el formulario de alta/edición.
     /// </summary>
     /// <summary>
-    /// Crea una convocatoria (sesión + bloques de horario) para un módulo del catálogo.
+    /// Crea una programación con bloques de horario para un módulo del catálogo de módulos.
     /// </summary>
     [HttpPost("modules/{id:long}/sessions")]
-    [EndpointSummary("Crea una convocatoria de un módulo")]
+    [EndpointSummary("Crea una programación de un módulo")]
     [EndpointDescription(
         "Requiere JWT con rol ADMIN o DISTRICT_SECRETARY. Fecha y horas van en schedules (training_module_schedule). statusCode por defecto OPEN. La sede (facilityId) es opcional."
     )]
@@ -180,7 +180,7 @@ public class AdminCatalogController(
 
     [HttpPut("sessions/{id:long}/capacity")]
     [Authorize(Roles = CatalogAdminRoles.Admin)]
-    [EndpointSummary("Amplía el cupo de una convocatoria (solo ADMIN)")]
+    [EndpointSummary("Amplía el cupo de una programación (solo ADMIN)")]
     [EndpointDescription(
         "capacity es obligatorio: entero no negativo para ampliar o null para quitar el límite."
     )]
@@ -204,7 +204,7 @@ public class AdminCatalogController(
     [HttpGet("training-lines")]
     [EndpointSummary("Lista líneas de formación (AE, PJ, GI)")]
     [EndpointDescription(
-        "Requiere JWT con rol ADMIN o DISTRICT_SECRETARY. Devuelve training_line ordenado por id para el catálogo admin."
+        "Requiere JWT con rol ADMIN o DISTRICT_SECRETARY. Devuelve training_line ordenado por id para el catálogo de módulos admin."
     )]
     [ProducesResponseType(typeof(IReadOnlyList<TrainingLineDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]

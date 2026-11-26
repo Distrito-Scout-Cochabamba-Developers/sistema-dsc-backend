@@ -6,7 +6,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 
 namespace DSC.UnitTests.Api;
 
-/// <summary>El conflicto de CI de la asistencia digital (endpoint anónimo) responde 409 sin datos personales.</summary>
+/// <summary>El conflicto de Carnet de Identidad de la asistencia digital (endpoint anónimo) responde 409 sin datos personales.</summary>
 public class PersonCiConflictMiddlewareTests
 {
     [Fact]

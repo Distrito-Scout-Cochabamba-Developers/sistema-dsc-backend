@@ -182,7 +182,7 @@ public class AtomicEnrollmentPostgresTests(RequirementsPostgres postgres)
         var unitOfWork = new UnitOfWork(db);
         var repository = new TrainingModuleSessionRepository(db);
 
-        var error = await Assert.ThrowsAsync<DbUpdateException>(() =>
+        var error = await Assert.ThrowsAsync<KeyNotFoundException>(() =>
             unitOfWork.ExecuteInTransactionAsync(
                 cancellationToken =>
                     repository.EnrollAsync(

@@ -99,7 +99,7 @@ public class CreateTrainingModuleSessionCommandHandler(
         var created =
             await sessionRepository.GetByIdForCalendarAsync(session.Id, cancellationToken)
             ?? throw new InvalidOperationException(
-                "La convocatoria se creó pero no se pudo recargar."
+                "La programación se creó pero no se pudo recargar."
             );
 
         return CalendarSessionMapping.ToDto(created, currentPersonId: null);
@@ -111,7 +111,7 @@ public class CreateTrainingModuleSessionCommandHandler(
     {
         if (schedules is null || schedules.Count == 0)
             throw new RequestValidationException(
-                "La convocatoria debe tener al menos un bloque de horario."
+                "La programación debe tener al menos un bloque de horario."
             );
 
         foreach (var block in schedules)

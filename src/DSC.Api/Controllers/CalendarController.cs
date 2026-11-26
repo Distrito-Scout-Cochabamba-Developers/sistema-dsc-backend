@@ -15,11 +15,11 @@ public class CalendarController(
 ) : ControllerBase
 {
     /// <summary>
-    /// Lista convocatorias con fecha (bloques de <c>training_module_schedule</c>).
+    /// Lista programaciones con fecha (bloques de <c>training_module_schedule</c>).
     /// </summary>
     [HttpGet("sessions")]
     [AllowAnonymous]
-    [EndpointSummary("Lista convocatorias del calendario")]
+    [EndpointSummary("Lista programaciones del calendario")]
     [EndpointDescription(
         "Público. from/to opcionales (YYYY-MM-DD) filtran por session_date. Con Bearer, isEnrolled refleja a la persona del JWT."
     )]
@@ -27,22 +27,24 @@ public class CalendarController(
     public async Task<ActionResult<IReadOnlyList<CalendarSessionDto>>> ListSessions(
         [FromQuery] DateOnly? from,
         [FromQuery] DateOnly? to,
+        [FromQuery] string? name,
         CancellationToken cancellationToken
     )
     {
+        if (from > to) return BadRequest();
         var sessions = await listHandler.HandleAsync(
             new ListCalendarSessionsQuery(from, to),
             cancellationToken
         );
-        return Ok(sessions);
+        return Ok(string.IsNullOrWhiteSpace(name) ? sessions : sessions.Where(s => s.ModuleName.Contains(name.Trim(), StringComparison.OrdinalIgnoreCase)).ToArray());
     }
 
     /// <summary>
-    /// Inscribe a la persona del JWT en una convocatoria.
+    /// Inscribe a la persona del JWT en una programación.
     /// </summary>
     [HttpPost("sessions/{id:long}/enrollments")]
     [Authorize]
-    [EndpointSummary("Inscribe al usuario autenticado en una convocatoria")]
+    [EndpointSummary("Inscribe al usuario autenticado en una programación")]
     [EndpointDescription(
         "Requiere JWT. Cuerpo vacío. 201 con la sesión actualizada. 409 si ya está inscrito, el cupo se agotó o la inscripción está cerrada."
     )]

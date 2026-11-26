@@ -40,10 +40,10 @@ public class RegisterDigitalAttendanceCommandHandler(
                 $"No se encontró ningún módulo de capacitación activo con el identificador '{request.SessionToken}'."
             );
 
-        // 2. Validate CI Value Object
+        // 2. Validate Carnet de Identidad Value Object
         var ci = new CiNumber(request.CiNumber, request.Extension);
 
-        // Mismo bloqueo por CI que la inscripción asistida: el alta de persona se serializa
+        // Mismo bloqueo por Carnet de Identidad que la inscripción asistida: el alta de persona se serializa
         // entre canales y, junto con el índice único, no puede duplicarse.
         return await unitOfWork.ExecuteInTransactionAsync(
             async token =>
@@ -138,7 +138,7 @@ public class RegisterDigitalAttendanceCommandHandler(
         );
         if (alreadyRegistered)
             throw new InvalidOperationException(
-                $"El dirigente con CI '{ci}' ya registró su asistencia para el módulo '{module.Name}'."
+                $"El dirigente con Carnet de Identidad '{ci}' ya registró su asistencia para el módulo '{module.Name}'."
             );
 
         // 5. Create Attendance Record

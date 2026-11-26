@@ -18,7 +18,7 @@ public static class EnrollmentConflictProblems
         return controller.Problem(statusCode: 409, type: $"urn:dsc:enrollment:{type}", detail: exception.Message);
     }
 
-    /// <summary>409 que pide el complemento del CI para desambiguar; no revela nombres ni identificadores.</summary>
+    /// <summary>409 que pide el complemento del Carnet de Identidad para desambiguar; no revela nombres ni identificadores.</summary>
     public static IActionResult ExtensionRequiredProblem(this ControllerBase controller) =>
-        controller.Problem(statusCode: 409, type: "urn:dsc:secretariat:extension-required", detail: "El CI tiene coincidencias con otros complementos. Indica el complemento y vuelve a buscar.");
+        controller.Problem(statusCode: 409, type: "urn:dsc:secretariat:extension-required", detail: "El Carnet de Identidad tiene coincidencias con otros complementos. Indica el complemento y vuelve a buscar.");
 }

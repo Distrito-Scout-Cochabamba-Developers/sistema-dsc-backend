@@ -16,7 +16,7 @@ public class AttendanceController(
 ) : ControllerBase
 {
     /// <summary>
-    /// Lista el catálogo de módulos de formación para la pantalla de inscripción.
+    /// Lista el catálogo de módulos de módulos de formación para la pantalla de inscripción.
     /// </summary>
     [HttpGet("modules")]
     [EndpointSummary("Lista módulos de formación (asistencia, anónimo)")]
@@ -63,10 +63,10 @@ public class AttendanceController(
     }
 
     /// <summary>
-    /// Busca un dirigente scout por número de CI para autocompletar el formulario de asistencia.
+    /// Busca un dirigente scout por número de Carnet de Identidad para autocompletar el formulario de asistencia.
     /// </summary>
     [HttpGet("lookup-ci/{ci}")]
-    [EndpointSummary("Busca un dirigente por CI (asistencia, anónimo)")]
+    [EndpointSummary("Busca un dirigente por Carnet de Identidad (asistencia, anónimo)")]
     [EndpointDescription(
         "Público. Autocompleta el formulario de asistencia a un módulo. Query opcional: extension."
     )]
@@ -90,7 +90,7 @@ public class AttendanceController(
                 {
                     Status = StatusCodes.Status404NotFound,
                     Title = "Dirigente No Encontrado",
-                    Detail = $"No se encontró ningún dirigente registrado con el CI '{ci}'.",
+                    Detail = $"No se encontró ningún dirigente registrado con el Carnet de Identidad '{ci}'.",
                 }
             );
 

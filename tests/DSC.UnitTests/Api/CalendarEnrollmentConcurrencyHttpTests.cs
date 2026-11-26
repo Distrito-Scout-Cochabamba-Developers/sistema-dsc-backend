@@ -146,7 +146,7 @@ public class CalendarEnrollmentConcurrencyHttpTests(RequirementsPostgres postgre
         await blocker.Database.ExecuteSqlInterpolatedAsync($"SELECT 1 FROM training_module_session WHERE id = {session.Id} FOR UPDATE");
         using var assisted = NewLeaderRequest(session.Id, secretary, "9100042");
         var pendingAssisted = client.SendAsync(assisted);
-        // Observar el bloqueo de convocatoria confirma que el alta ya obtuvo el bloqueo de CI.
+        // Observar el bloqueo de convocatoria confirma que el alta ya obtuvo el bloqueo de Carnet de Identidad.
         var assistedBlocked = false;
         for (var i = 0; i < 100 && !assistedBlocked; i++)
         {
@@ -293,19 +293,19 @@ public class CalendarEnrollmentConcurrencyHttpTests(RequirementsPostgres postgre
     {
         var session = await CreateSessionAsync(capacity: 1);
         var secretary = await CreatePersonAsync("9876001", "Secretaria");
-        var rover = new Person { IdCard = "9876002", FirstName = "Rover", FirstLastName = "Prueba", PersonStatusId = personStatus.Id };
+        var rover = new Person { IdCard = "9876002", FirstName = "Rover", FirstLastName = "Prueba", PersonStatusId = personStatus.Id, FormationCondition = "ROVER" };
         db.Persons.Add(rover);
         await db.SaveChangesAsync();
-        using var request = new HttpRequestMessage(HttpMethod.Post, $"/api/v1/secretariat/participants/{rover.Id}/sessions/{session.Id}/enrollments") { Content = JsonContent.Create(new { modality = "ROVER_WITHOUT_ACCOUNT" }) };
+        using var request = new HttpRequestMessage(HttpMethod.Post, $"/api/v1/secretariat/participants/{rover.Id}/sessions/{session.Id}/enrollments");
         request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", Token(secretary, "DISTRICT_SECRETARY"));
         using var response = await client.SendAsync(request);
         Assert.Equal(HttpStatusCode.Created, response.StatusCode);
         Assert.False(await db.Users.AnyAsync(u => u.PersonId == rover.Id));
-        Assert.True((await db.TrainingModuleEnrollments.SingleAsync(e => e.PersonId == rover.Id)).RoverWithoutAccount);
+        Assert.Equal("ROVER", (await db.TrainingModuleEnrollments.SingleAsync(e => e.PersonId == rover.Id)).FormationCondition);
     }
 
     [Fact]
-    public async Task RoverWithAccountIsRejectedWithoutEnrollment()
+    public async Task LegacyModalityIsRejectedWithoutEnrollment()
     {
         var session = await CreateSessionAsync(capacity: 1);
         var secretary = await CreatePersonAsync("9876011", "Secretaria");
@@ -313,16 +313,31 @@ public class CalendarEnrollmentConcurrencyHttpTests(RequirementsPostgres postgre
         using var request = new HttpRequestMessage(HttpMethod.Post, $"/api/v1/secretariat/participants/{person.Id}/sessions/{session.Id}/enrollments") { Content = JsonContent.Create(new { modality = "ROVER_WITHOUT_ACCOUNT" }) };
         request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", Token(secretary, "DISTRICT_SECRETARY"));
         using var response = await client.SendAsync(request);
-        Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
         Assert.Empty(await db.TrainingModuleEnrollments.Where(e => e.PersonId == person.Id).ToListAsync());
     }
 
     [Fact]
-    public async Task ConcurrentAccountCreationCommittedFirstRejectsRover()
+    public async Task UnknownConditionCannotBeInferredFromAccountOrLeader()
+    {
+        var session = await CreateSessionAsync(capacity: 1);
+        var secretary = await CreatePersonAsync("9876091", "Secretaria");
+        var person = await CreatePersonAsync("9876092", "Dirigente");
+        db.ScoutLeaders.Add(new ScoutLeader { PersonId = person.Id });
+        await db.SaveChangesAsync();
+        using var request = new HttpRequestMessage(HttpMethod.Post, $"/api/v1/secretariat/participants/{person.Id}/sessions/{session.Id}/enrollments");
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", Token(secretary, "DISTRICT_SECRETARY"));
+        using var response = await client.SendAsync(request);
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        Assert.False(await db.TrainingModuleEnrollments.AnyAsync(e => e.PersonId == person.Id));
+    }
+
+    [Fact]
+    public async Task ConcurrentAccountCreationDoesNotChangeRoverCondition()
     {
         var session = await CreateSessionAsync(capacity: 1);
         var secretary = await CreatePersonAsync("9876021", "Secretaria");
-        var rover = new Person { IdCard = "9876022", FirstName = "Rover", FirstLastName = "Prueba", PersonStatusId = personStatus.Id };
+        var rover = new Person { IdCard = "9876022", FirstName = "Rover", FirstLastName = "Prueba", PersonStatusId = personStatus.Id, FormationCondition = "ROVER" };
         db.Persons.Add(rover);
         await db.SaveChangesAsync();
         await using var writer = postgres.Open(db.Database.GetConnectionString()!);
@@ -330,15 +345,15 @@ public class CalendarEnrollmentConcurrencyHttpTests(RequirementsPostgres postgre
         writer.Users.Add(new User { PersonId = rover.Id, UserStatusId = userStatus.Id, Username = "rover-ficticio", Email = "rover@example.test", Password = "ficticia" });
         await writer.SaveChangesAsync();
         var blocker = ((NpgsqlConnection)writer.Database.GetDbConnection()).ProcessID;
-        using var request = new HttpRequestMessage(HttpMethod.Post, $"/api/v1/secretariat/participants/{rover.Id}/sessions/{session.Id}/enrollments") { Content = JsonContent.Create(new { modality = "ROVER_WITHOUT_ACCOUNT" }) };
+        using var request = new HttpRequestMessage(HttpMethod.Post, $"/api/v1/secretariat/participants/{rover.Id}/sessions/{session.Id}/enrollments");
         request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", Token(secretary, "DISTRICT_SECRETARY"));
         var pending = client.SendAsync(request);
         await AssertBlockedByAsync(blocker);
         Assert.False(pending.IsCompleted);
         await transaction.CommitAsync();
         using var response = await pending;
-        Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
-        Assert.Empty(await db.TrainingModuleEnrollments.Where(e => e.PersonId == rover.Id).ToListAsync());
+        Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+        Assert.Equal("ROVER", (await db.TrainingModuleEnrollments.SingleAsync(e => e.PersonId == rover.Id)).FormationCondition);
     }
 
     [Fact]
@@ -346,7 +361,7 @@ public class CalendarEnrollmentConcurrencyHttpTests(RequirementsPostgres postgre
     {
         var session = await CreateSessionAsync(capacity: 1);
         var secretary = await CreatePersonAsync("9876031", "Secretaria");
-        var rover = new Person { IdCard = "9876032", FirstName = "Rover", FirstLastName = "Prueba", PersonStatusId = personStatus.Id };
+        var rover = new Person { IdCard = "9876032", FirstName = "Rover", FirstLastName = "Prueba", PersonStatusId = personStatus.Id, FormationCondition = "ROVER" };
         db.Persons.Add(rover);
         await db.SaveChangesAsync();
 
@@ -364,7 +379,7 @@ public class CalendarEnrollmentConcurrencyHttpTests(RequirementsPostgres postgre
         Assert.False(await db.Users.AnyAsync(u => u.PersonId == rover.Id));
         await transaction.CommitAsync();
         await pending;
-        Assert.True(await db.TrainingModuleEnrollments.AnyAsync(e => e.PersonId == rover.Id && e.RoverWithoutAccount == true));
+        Assert.True(await db.TrainingModuleEnrollments.AnyAsync(e => e.PersonId == rover.Id && e.FormationCondition == "ROVER"));
         Assert.True(await db.Users.AnyAsync(u => u.PersonId == rover.Id));
     }
 
@@ -386,6 +401,7 @@ public class CalendarEnrollmentConcurrencyHttpTests(RequirementsPostgres postgre
         const string phone = "76543210";
         var session = await CreateSessionAsync(capacity: 1);
         var leader = await CreatePersonAsync(ci, "Dirigente");
+        leader.FormationCondition = "LEADER";
         var secretary = await CreatePersonAsync("9876544", "Secretaria");
         db.ScoutLeaders.Add(new ScoutLeader { PersonId = leader.Id });
         db.Add(new PersonContactMechanism { PersonId = leader.Id, ContactMechanismType = new() { Code = "TEST_PHONE", Name = "Teléfono ficticio" }, ContactPurposeType = new() { Code = "TEST_PERSONAL", Name = "Personal ficticio" }, ContactValue = phone });
@@ -428,6 +444,7 @@ public class CalendarEnrollmentConcurrencyHttpTests(RequirementsPostgres postgre
     {
         var session = await CreateSessionAsync(capacity: 1);
         var leader = await CreatePersonAsync("9100021", "Dirigente");
+        leader.FormationCondition = "LEADER";
         var secretary = await CreatePersonAsync("9100022", "Secretaria");
         db.ScoutLeaders.Add(new ScoutLeader { PersonId = leader.Id });
         await db.SaveChangesAsync();
@@ -445,7 +462,7 @@ public class CalendarEnrollmentConcurrencyHttpTests(RequirementsPostgres postgre
         var enrollment = await db.TrainingModuleEnrollments.Include(e => e.EnrollmentSource).SingleAsync(e => e.TrainingModuleSessionId == session.Id);
         Assert.Equal(userIds[secretary.Id], enrollment.RegisteredByUserId);
         Assert.Equal("SECRETARIAT", enrollment.EnrollmentSource.Code);
-        Assert.False(enrollment.RoverWithoutAccount);
+        Assert.Equal("LEADER", enrollment.FormationCondition);
     }
 
     [Fact]
@@ -454,6 +471,7 @@ public class CalendarEnrollmentConcurrencyHttpTests(RequirementsPostgres postgre
         var session = await CreateSessionAsync(capacity: 1);
         var first = await CreatePersonAsync("9100011", "Ana");
         var second = await CreatePersonAsync("9100012", "Beto");
+        second.FormationCondition = "LEADER";
         var secretary = await CreatePersonAsync("9100013", "Secretaria");
         db.ScoutLeaders.Add(new ScoutLeader { PersonId = second.Id });
         await db.SaveChangesAsync();
@@ -488,7 +506,7 @@ public class CalendarEnrollmentConcurrencyHttpTests(RequirementsPostgres postgre
                     enrollment.TrainingModuleSessionId == session.Id
                 )
             );
-            Assert.False((await db.TrainingModuleEnrollments.SingleAsync(e => e.TrainingModuleSessionId == session.Id)).RoverWithoutAccount);
+            Assert.Null((await db.TrainingModuleEnrollments.SingleAsync(e => e.TrainingModuleSessionId == session.Id)).FormationCondition);
         }
         finally
         {
